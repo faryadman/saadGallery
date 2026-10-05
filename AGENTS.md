@@ -29,9 +29,10 @@ cat docs/ROADMAP.md
 
 # 2) وضعیت Git و تغییرات اخیر
 #    (ریموت رسمی: https://github.com/faryadman/saadGallery.git — شاخه main)
-#    .git/config در snapshot ذخیره نمی‌شود؛ اگر origin یا هویت نبود، بازسازی کن:
-#      git remote add origin https://github.com/faryadman/saadGallery.git
-#      git config user.name "SadGallery Agent" && git config user.email "agent@sadgallery.local"
+#    ⚠️ .git/config در این محیط پس از هر فراخوانی از دست می‌رود ⇒ هویت Git و origin
+#       باید «در همان دستور کامیت» داده شوند. برای همین از این اسکریپت استفاده کن:
+#         bash scripts/git-commit.sh "docs(status): پیام"
+#       (دستور `git config user.name ...` تنها در همان یک فراخوانی اثر دارد.)
 git remote -v || true
 git log --oneline -15
 git status --short
