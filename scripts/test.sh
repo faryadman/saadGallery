@@ -22,6 +22,11 @@ fi
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export DOTNET_NOLOGO=1
 
+# کش NuGet را بیرون از $HOME نگه دار (سندباکس) تا snapshot فضای کار پر نشود
+if [ -d /opt/nuget-packages ] || mkdir -p /opt/nuget-packages 2>/dev/null; then
+    export NUGET_PACKAGES="${NUGET_PACKAGES:-/opt/nuget-packages}"
+fi
+
 echo "== SadGallery tests =="
 dotnet --version
 
