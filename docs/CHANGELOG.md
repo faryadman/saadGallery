@@ -21,6 +21,10 @@
 - `scripts/dev-setup.sh` (نصب SDK در سندباکس، غیرماندگار) و `scripts/test.sh`.
 - `.gitignore` و `.editorconfig` با قواعد سخت‌گیرانه سطح هشدار امنیتی.
 
+### Repository
+- مخزن رسمی پروژه تعیین و بررسی شد: `https://github.com/faryadman/saadGallery.git` — نتیجه بررسی: عمومی، خالی (صفر ref) ⇒ تأیید Greenfield بودن پروژه. شاخه محلی به `main` تغییر نام یافت؛ آدرس ریموت در `README.md` و `AGENTS.md` ثبت شد (چون `.git/config` در snapshot محیط ایجنت ذخیره نمی‌شود).
+- `Q-REPO-1` در `OPEN_QUESTIONS.md` ثبت شد (تفاوت نام مخزن `saadGallery` با نام فنی `SadGallery`).
+
 ### Verified (خروجی واقعی، نه ادعا)
 - `scripts/dev-setup.sh` در سندباکس با موفقیت **.NET SDK 10.0.401** (Host 10.0.12، ~۶۲۲MB) را در `/opt/dotnet` نصب کرد.
 - قالب `dotnet new mvc` در دسترس است.

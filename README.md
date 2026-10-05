@@ -9,6 +9,18 @@
 
 ---
 
+## مخزن رسمی
+
+```
+git@github.com / https://github.com/faryadman/saadGallery.git   (شاخه اصلی: main)
+```
+
+> ⚠️ اگر ریموت در محیط شما وجود ندارد، با این یک خط بازسازی می‌شود (فایل `.git/config` در snapshot محیط ایجنت ذخیره نمی‌شود، به همین دلیل آدرس در همین فایل ثبت شده است):
+> ```bash
+> git init -b main && git remote add origin https://github.com/faryadman/saadGallery.git
+> ```
+> نکته نام‌گذاری: نام مخزن روی GitHub `saadGallery` است و نام فنی پروژه در کد `SadGallery`. تفاوت عمدی و بی‌اثر بر کد است (به `docs/OPEN_QUESTIONS.md` → `Q-REPO-1` مراجعه کنید).
+
 ## این مخزن در این لحظه چه چیزی دارد؟
 
 فاز صفر پروژه، یعنی «شناخت و طرح»: مستندات دائمی، معماری، مدل داده، مدل تهدید، Roadmap با معیار پذیرش، و فهرست سؤالات باز. هیچ کد اجرایی، هیچ Migration و هیچ کلید واقعی در مخزن نیست.

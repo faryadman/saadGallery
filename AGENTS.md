@@ -28,6 +28,10 @@ cat docs/PROJECT_STATUS.md
 cat docs/ROADMAP.md
 
 # 2) وضعیت Git و تغییرات اخیر
+#    (ریموت رسمی: https://github.com/faryadman/saadGallery.git — شاخه main)
+#    .git/config در snapshot ذخیره نمی‌شود؛ اگر origin نبود، بازسازی کن:
+#      git remote add origin https://github.com/faryadman/saadGallery.git
+git remote -v || true
 git log --oneline -15
 git status --short
 
