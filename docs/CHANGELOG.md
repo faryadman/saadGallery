@@ -21,6 +21,12 @@
 - `scripts/dev-setup.sh` (نصب SDK در سندباکس، غیرماندگار) و `scripts/test.sh`.
 - `.gitignore` و `.editorconfig` با قواعد سخت‌گیرانه سطح هشدار امنیتی.
 
+### Published
+- **فاز صفر روی مخزن رسمی منتشر شد**: `https://github.com/faryadman/saadGallery.git` — شاخه `main`، ۶ کامیت، ۳۰ فایل.
+- آخرین کامیت منتشرشده: `eeefdbb` («تثبیت بیت اجرای git-commit.sh»).
+- **تأیید پس از انتشار (اجرای واقعی):** clone ناشناس بدون احراز هویت موفق شد؛ اسکن اسرار روی نسخه عمومی صفر مورد نشان داد (چهار تطابق اولیه همه جای‌نگهدار/دیتابیس تست محلی بودند و بررسی شدند).
+- فرایند انتشار بدون ذخیره توکن انجام شد: توکن فقط در یک فایل موقت با مجوز `600`، با `credential.helper` غیرفعال، بدون نوشتن در `.git/config`؛ پس از push حذف شد.
+
 ### Repository
 - مخزن رسمی پروژه تعیین و بررسی شد: `https://github.com/faryadman/saadGallery.git` — نتیجه بررسی: عمومی، خالی (صفر ref) ⇒ تأیید Greenfield بودن پروژه. شاخه محلی به `main` تغییر نام یافت؛ آدرس ریموت در `README.md` و `AGENTS.md` ثبت شد (چون `.git/config` در snapshot محیط ایجنت ذخیره نمی‌شود).
 - `Q-REPO-1` در `OPEN_QUESTIONS.md` ثبت شد (تفاوت نام مخزن `saadGallery` با نام فنی `SadGallery`).
