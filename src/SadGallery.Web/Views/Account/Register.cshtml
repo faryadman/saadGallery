@@ -1,0 +1,49 @@
+@model SadGallery.Web.Models.Account.RegisterViewModel
+@{
+    ViewData["Title"] = "ثبت‌نام";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="sg-card">
+            <h1 class="h4 mb-3">ساخت حساب جدید</h1>
+
+            <form method="post" asp-controller="Account" asp-action="Register" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Identifier" class="form-label"></label>
+                    <input asp-for="Identifier" class="form-control" dir="ltr" autocomplete="username" />
+                    <span asp-validation-for="Identifier" class="text-danger small"></span>
+                    <div class="form-text">با شماره موبایل یا ایمیل می‌توانید ثبت‌نام کنید.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DisplayName" class="form-label"></label>
+                    <input asp-for="DisplayName" class="form-control" autocomplete="name" />
+                    <span asp-validation-for="DisplayName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" dir="ltr" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                    <div class="form-text">حداقل ۸ کاراکتر و شامل حداقل یک رقم.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" dir="ltr" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn sg-btn-gold w-100">ثبت‌نام</button>
+            </form>
+
+            <hr class="my-3" />
+            <p class="small text-muted mb-0">
+                حساب دارید؟ <a asp-controller="Account" asp-action="Login">وارد شوید</a>
+            </p>
+        </div>
+    </div>
+</div>

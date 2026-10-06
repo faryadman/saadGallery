@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    تست‌های واحد: سریع، بدون دیتابیس، بدون شبکه.
+    تمرکز: محاسبات مالی، عیار/وزن/واحد، منطق وضعیت‌ها.
+  -->
+  <PropertyGroup>
+    <RootNamespace>SadGallery.Tests.Unit</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- xunit v3 پروژه تست را به‌صورت اجرایی (Exe) می‌سازد و runner خودش را دارد -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SadGallery.Domain\SadGallery.Domain.csproj" />
+    <ProjectReference Include="..\..\src\SadGallery.Application\SadGallery.Application.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SadGallery.Infrastructure — پیاده‌سازی‌های فنی: EF Core، Identity Store، زمان، فایل، HTTP، رمزنگاری.
+    قاعده: منطق تجاری اینجا نیست؛ فقط «چگونه» انجام می‌شود، نه «چه».
+  -->
+  <PropertyGroup>
+    <RootNamespace>SadGallery.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SadGallery.Application\SadGallery.Application.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,26 @@
+# پایان‌خط‌ها — پروژه در دو محیط کار می‌شود (لینوکس: ایجنت/CI، ویندوز: Visual Studio مالک).
+# بدون این فایل، تفاوت CRLF/LF باعث «تغییرهای جعلی»، دیف‌های پرحجم و شکستن اسکریپت‌های .sh می‌شود.
+* text=auto
+
+# اسکریپت‌ها فقط LF باشند وگرنه در لینوکس/CI اجرا نمی‌شوند
+*.sh     text eol=lf
+# Visual Studio فایل Solution را با CRLF می‌نویسد
+*.sln    text eol=crlf
+*.cs     text eol=lf
+*.csproj text eol=lf
+*.props  text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+
+# فایل‌های دودویی — هرگز تبدیل نشوند
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.eot    binary
+*.bundle binary
+*.zip    binary

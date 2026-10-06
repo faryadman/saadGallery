@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "پنل مدیر";
+}
+
+<h1 class="h3 mb-3">پنل مدیر</h1>
+
+<div class="alert alert-info small">
+    این بخش با Policy سمت سرور محافظت می‌شود: فقط نقش <strong>Admin</strong> با حساب فعال.
+    محتوای عملیاتی (کاربران و نقش‌ها، منابع نرخ، تنظیمات، گزارش‌ها و رخدادهای امنیتی) در فاز ۶ افزوده می‌شود.
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="sg-card h-100">
+            <div class="sg-card__title">وضعیت زیرساخت</div>
+            <ul class="small text-muted mb-0">
+                <li>سلامت سرویس: <code>/health</code></li>
+                <li>آمادگی (شامل دیتابیس): <code>/health/ready</code></li>
+                <li>نقش‌های پایه: Customer، Operator، Admin (Seed ایدِمپوتنت)</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="sg-card h-100">
+            <div class="sg-card__title">یادآوری امنیتی</div>
+            <p class="small text-muted mb-0">
+                کلیدها و اسرار رمزنگاری هرگز در پنل نمایش داده نمی‌شوند؛ فقط وضعیت و نسخه کلید
+                (بدون مقدار) قابل مشاهده خواهد بود — فاز ۶.
+            </p>
+        </div>
+    </div>
+</div>

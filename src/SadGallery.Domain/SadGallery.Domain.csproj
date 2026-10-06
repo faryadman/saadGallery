@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SadGallery.Domain — قلب قواعد تجاری.
+    وابستگی: هیچ. (نه EF، نه ASP.NET، نه بسته بیرونی)
+    همه محاسبات مالی/وزن/عیار باید اینجا و با تست باشند.
+  -->
+  <PropertyGroup>
+    <RootNamespace>SadGallery.Domain</RootNamespace>
+  </PropertyGroup>
+
+</Project>

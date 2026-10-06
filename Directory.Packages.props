@@ -1,0 +1,36 @@
+<!--
+  Directory.Packages.props — Central Package Management
+  قاعده پروژه: هیچ نسخه‌ای در csprojها نوشته نمی‌شود؛ همه اینجا Pin می‌شوند.
+  هر افزودن/تغییر بسته باید: (۱) در docs/CHANGELOG.md ثبت شود،
+  (۲) با بررسی آسیب‌پذیری بسته‌ها (dotnet list package با گزینه vulnerable و include transitive) بررسی شود.
+  نکته: رشته دوخط‌تیره در کامنت XML مجاز نیست؛ به همین دلیل نام گزینه‌ها با حرف‌چین نوشته شد.
+
+  نسخه‌های زیر در 2026-10-05 از API رسمی NuGet بررسی و انتخاب شدند.
+-->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Runtime — هم‌نسخه با .NET 10 (10.0.12)">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <!-- Microsoft.NET.Test.Sdk و coverlet لازم نیستند: پروژه‌های xunit v3 روی
+         Microsoft.Testing.Platform اجرا می‌شوند (dotnet.config را ببینید).
+         ابزار پوشش کد در فاز ۸ (سخت‌سازی) ارزیابی و افزوده می‌شود. -->
+    <!-- xunit.v3 انتخاب شد چون xunit نسخه ۲ توسط خود پروژه xUnit «Legacy/منسوخ» اعلام شده است
+         (این واقعیت با بررسی بسته‌های منسوخ کشف شد). مطابق اصل پروژه، نسخه منسوخ استفاده نمی‌شود.
+         جزئیات تصمیم در ADR-0010 آمده است. توجه: در کامنت XML، رشته دوخط‌تیره مجاز نیست. -->
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+  </ItemGroup>
+</Project>

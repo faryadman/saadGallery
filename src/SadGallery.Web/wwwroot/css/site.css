@@ -1,0 +1,192 @@
+/* ==========================================================================
+   SadGallery — استایل پایه (RTL)
+   پالت برند: سرمه‌ای، طلایی، سفید گرم
+   فونت: Vazirmatn (self-host، مجوز SIL OFL 1.1 — wwwroot/fonts/OFL.txt)
+   ========================================================================== */
+
+@font-face {
+    font-family: "Vazirmatn";
+    src: url("/fonts/Vazirmatn-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Vazirmatn";
+    src: url("/fonts/Vazirmatn-Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Vazirmatn";
+    src: url("/fonts/Vazirmatn-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --sg-navy: #10233f;
+    --sg-navy-soft: #1b3457;
+    --sg-gold: #c9a227;
+    --sg-gold-dark: #a9861a;
+    --sg-cream: #fbf8f3;
+    --sg-ink: #1d2430;
+    --sg-muted: #6b7280;
+    --sg-border: #e7e2d8;
+}
+
+html {
+    font-size: 15px;
+}
+
+body {
+    font-family: "Vazirmatn", Tahoma, "Segoe UI", sans-serif;
+    background-color: var(--sg-cream);
+    color: var(--sg-ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+/* ---------- سربرگ ---------- */
+.sg-header {
+    background-color: var(--sg-navy);
+    border-bottom: 3px solid var(--sg-gold);
+}
+
+.sg-header .navbar-nav .nav-link {
+    color: #e9eef7;
+}
+
+.sg-header .navbar-nav .nav-link:hover,
+.sg-header .navbar-nav .nav-link:focus {
+    color: #fff;
+}
+
+.sg-navlink--soon {
+    opacity: 0.65;
+    cursor: default;
+}
+
+.sg-navlink--soon small {
+    font-size: 0.7rem;
+}
+
+.sg-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.sg-brand:hover {
+    color: var(--sg-gold);
+}
+
+.sg-brand__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--sg-gold);
+    color: var(--sg-navy);
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------- دکمه‌ها ---------- */
+.sg-btn-gold,
+.sg-btn-gold:visited {
+    background-color: var(--sg-gold);
+    border-color: var(--sg-gold);
+    color: var(--sg-navy);
+    font-weight: 500;
+}
+
+.sg-btn-gold:hover,
+.sg-btn-gold:focus {
+    background-color: var(--sg-gold-dark);
+    border-color: var(--sg-gold-dark);
+    color: #fff;
+}
+
+/* ---------- کارت‌ها ---------- */
+.sg-hero {
+    background: #fff;
+    border: 1px solid var(--sg-border);
+    border-right: 4px solid var(--sg-gold);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.sg-card {
+    background: #fff;
+    border: 1px solid var(--sg-border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 1px 2px rgba(16, 35, 63, 0.04);
+}
+
+.sg-card__title {
+    font-weight: 700;
+    color: var(--sg-navy);
+    margin-bottom: 0.75rem;
+}
+
+/* ---------- اعداد و کد ---------- */
+.sg-error-code {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--sg-navy);
+    line-height: 1;
+}
+
+code {
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--sg-navy-soft);
+}
+
+/* ---------- پانوشت ---------- */
+.sg-footer {
+    background: var(--sg-navy);
+    color: #cfd8e6;
+    margin-top: 2rem;
+    font-size: 0.85rem;
+}
+
+.sg-footer__note {
+    color: #9fb0c8;
+}
+
+/* ---------- دسترس‌پذیری ---------- */
+:focus-visible {
+    outline: 3px solid var(--sg-gold);
+    outline-offset: 2px;
+}
+
+@media (max-width: 576px) {
+    html {
+        font-size: 14px;
+    }
+
+    .sg-hero {
+        padding: 1rem;
+    }
+}

@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "خانه و بازار";
+}
+
+<section class="sg-hero">
+    <h1 class="h2 mb-2">ویترین آنلاین طلا و جواهر گالری صاد</h1>
+    <p class="mb-0 text-muted">
+        نرخ روز طلا، مسکوکات، ارز و رمزارز، تحلیل حباب و استعلام قیمت محصولات — همه در یک صفحه.
+    </p>
+</section>
+
+<div class="row g-3 mt-1">
+    <div class="col-12">
+        <div class="alert alert-warning d-flex gap-2 align-items-start" role="alert">
+            <strong>توجه:</strong>
+            <span>
+                کارت‌های نرخ در <strong>فاز ۲</strong> به منبع واقعی نرخ متصل می‌شوند.
+                طبق اصل پروژه، تا زمان اتصال به منبع معتبر، <strong>هیچ عدد یا نرخ ساختگی نمایش داده نمی‌شود</strong>.
+            </span>
+        </div>
+    </div>
+
+    @* کارت‌های نرخ واقعی در فاز ۲ اینجا ساخته می‌شوند (RateCard partial) *@
+    <div class="col-12">
+        <div class="sg-card">
+            <div class="sg-card__title">وضعیت سامانه</div>
+            <ul class="mb-0 small text-muted">
+                <li>زیرساخت، هویت کاربران و کنترل دسترسی (سه نقش) فعال است.</li>
+                <li>منبع نرخ: در انتظار مستندات و نمونه JSON واقعی API (سؤال <code>Q-API-1</code>).</li>
+                <li>ویترین محصولات: فاز ۴ • سامانه تیکت و استعلام قیمت: فاز ۵ • نصب روی موبایل (PWA): فاز ۷</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="sg-card h-100">
+            <div class="sg-card__title">برای اعضا</div>
+            <p class="small text-muted mb-3">
+                با ثبت‌نام، به ماشین‌حساب طلا، حباب‌سنج با جزئیات، تاریخچه گسترده‌تر نرخ‌ها و ثبت تیکت دسترسی پیدا می‌کنید.
+            </p>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="btn btn-sm sg-btn-gold" asp-controller="Member" asp-action="Index">ورود به ناحیه اعضا</a>
+            }
+            else
+            {
+                <a class="btn btn-sm sg-btn-gold" asp-controller="Account" asp-action="Register">ثبت‌نام</a>
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="Account" asp-action="Login">ورود</a>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="sg-card h-100">
+            <div class="sg-card__title">درباره گالری</div>
+            <p class="small text-muted mb-0">
+                اطلاعات تماس، نشانی، ساعات کاری و شبکه‌های اجتماعی رسمی در فاز ۳ و از تنظیمات فروشگاه
+                (<code>StoreSettings</code>) خوانده و نمایش داده می‌شود.
+            </p>
+        </div>
+    </div>
+</div>

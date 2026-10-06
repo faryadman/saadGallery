@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # scripts/test.sh — اجرای استاندارد تست‌های SadGallery
 #
-# • تست‌های Unit همیشه اجرا می‌شوند.
-# • تست‌های Integration وابسته به SQL Server فقط وقتی اجرا می‌شوند که متغیر محیطی
-#   SADGALLERY_TEST_SQL تنظیم شده باشد؛ در غیر این صورت Skip می‌شوند (نه «سبز کاذب»).
+# نکته مهم درباره ابزار:
+#   پروژه‌ها روی xunit v3 و Microsoft.Testing.Platform (MTP) اجرا می‌شوند.
+#   opt-in تجربه جدید «dotnet test» از طریق فایل global.json انجام شده است.
+#   بنابراین گزینه‌های مخصوص VSTest (مثل --logger "console;verbosity=...") اینجا استفاده نمی‌شوند.
+#
+# رفتار تست‌های دیتابیس:
+#   تست‌های نیازمند SQL Server با [RequiresSqlServerFact] علامت‌گذاری شده‌اند و در نبود
+#   متغیر محیطی SADGALLERY_TEST_SQL به‌صورت صریح Skip می‌شوند (نه «سبز کاذب»).
 #
 # استفاده:
 #   bash scripts/test.sh
@@ -14,41 +19,39 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${REPO_ROOT}"
 
-if [ -x /opt/dotnet/dotnet ] && ! command -v dotnet >/dev/null 2>&1; then
-    export PATH="/opt/dotnet:${PATH}"
-    export DOTNET_ROOT="/opt/dotnet"
-fi
-
+# ابزارها و کش بیرون $HOME (سندباکس/CI) — روی ماشین توسعه، dotnet در PATH سیستم است
+[ -x /opt/dotnet/dotnet ] && export PATH="/opt/dotnet:${PATH}" && export DOTNET_ROOT=/opt/dotnet
+[ -d /opt/nuget-packages ] && export NUGET_PACKAGES="${NUGET_PACKAGES:-/opt/nuget-packages}"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export DOTNET_NOLOGO=1
 
-# کش NuGet را بیرون از $HOME نگه دار (سندباکس) تا snapshot فضای کار پر نشود
-if [ -d /opt/nuget-packages ] || mkdir -p /opt/nuget-packages 2>/dev/null; then
-    export NUGET_PACKAGES="${NUGET_PACKAGES:-/opt/nuget-packages}"
-fi
-
 echo "== SadGallery tests =="
-dotnet --version
+echo "   SDK: $(dotnet --version)"
+echo "   SQL Server test DB: ${SADGALLERY_TEST_SQL:+تنظیم‌شده}${SADGALLERY_TEST_SQL:-تنظیم‌نشده ⇒ تست‌های دیتابیس Skip می‌شوند}"
 
 UNIT_PROJ="tests/SadGallery.Tests.Unit/SadGallery.Tests.Unit.csproj"
 INTEG_PROJ="tests/SadGallery.Tests.Integration/SadGallery.Tests.Integration.csproj"
 
 if [ ! -f "${UNIT_PROJ}" ]; then
-    echo "[warn] پروژه تست واحد وجود ندارد (فاز ۰). چیزی برای اجرا نیست."
+    echo "[warn] پروژه تست واحد وجود ندارد. چیزی برای اجرا نیست."
     exit 0
 fi
 
+echo
 echo "--- Unit tests ---"
-dotnet test "${UNIT_PROJ}" -c Debug --nologo --logger "console;verbosity=normal"
+dotnet test "${UNIT_PROJ}" -c Debug
 
 if [ -f "${INTEG_PROJ}" ]; then
-    if [ -n "${SADGALLERY_TEST_SQL:-}" ]; then
-        echo "--- Integration tests (SQL Server: تنظیم‌شده) ---"
-        dotnet test "${INTEG_PROJ}" -c Debug --nologo --logger "console;verbosity=normal"
-    else
-        echo "--- Integration tests: SKIPPED ---"
-        echo "    SADGALLERY_TEST_SQL تنظیم نشده است. تست‌های نیازمند SQL Server اجرا نشدند."
-        echo "    (این خروجی باید در گزارش فاز صادقانه ثبت شود.)"
+    echo
+    echo "--- Integration tests ---"
+    dotnet test "${INTEG_PROJ}" -c Debug
+
+    if [ -z "${SADGALLERY_TEST_SQL:-}" ]; then
+        echo
+        echo "یادآوری: تست‌های RequireSqlServer در این اجرا Skip شدند."
+        echo "برای اجرای واقعی آن‌ها (مهاجرت روی دیتابیس خالی، Seed نقش‌ها):"
+        echo "  export SADGALLERY_TEST_SQL=\"Server=localhost;Database=SadGallery_Test;Trusted_Connection=True;TrustServerCertificate=True\""
+        echo "و دوباره همین اسکریپت را اجرا کنید."
     fi
 else
     echo "[warn] پروژه تست یکپارچه وجود ندارد."

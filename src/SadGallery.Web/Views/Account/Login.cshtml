@@ -1,0 +1,42 @@
+@model SadGallery.Web.Models.Account.LoginViewModel
+@{
+    ViewData["Title"] = "ورود";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="sg-card">
+            <h1 class="h4 mb-3">ورود به حساب</h1>
+
+            <form method="post" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Identifier" class="form-label"></label>
+                    <input asp-for="Identifier" class="form-control" dir="ltr" autocomplete="username" />
+                    <span asp-validation-for="Identifier" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" dir="ltr" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label asp-for="RememberMe" class="form-check-label"></label>
+                </div>
+
+                <button type="submit" class="btn sg-btn-gold w-100">ورود</button>
+            </form>
+
+            <hr class="my-3" />
+            <p class="small text-muted mb-0">
+                حساب ندارید؟ <a asp-controller="Account" asp-action="Register">ثبت‌نام کنید</a>
+                <span class="d-block mt-1">ورود با رمز یک‌بارمصرف پیامکی در فاز ۶ افزوده می‌شود.</span>
+            </p>
+        </div>
+    </div>
+</div>

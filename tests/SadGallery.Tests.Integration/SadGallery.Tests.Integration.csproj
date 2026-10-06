@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    تست‌های یکپارچه: برنامه واقعی از طریق HTTP (WebApplicationFactory).
+    دو دسته:
+      ۱) بدون دیتابیس — همیشه اجرا می‌شوند (سلامت، صفحه خطا، سرآیندهای امنیتی، مجوزدهی).
+      ۲) نیازمند SQL Server — با [RequiresSqlServerFact] و متغیر محیطی SADGALLERY_TEST_SQL اجرا می‌شوند.
+         در نبود متغیر، این تست‌ها Skip می‌شوند (نه «سبز کاذب») — docs/TESTING.md
+  -->
+  <PropertyGroup>
+    <RootNamespace>SadGallery.Tests.Integration</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- xunit v3 پروژه تست را به‌صورت اجرایی (Exe) می‌سازد و runner خودش را دارد -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SadGallery.Web\SadGallery.Web.csproj" />
+  </ItemGroup>
+
+</Project>

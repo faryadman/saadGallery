@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "دسترسی مجاز نیست";
+}
+
+<div class="text-center py-5">
+    <div class="sg-error-code">@PersianText.ToPersianDigits("403")</div>
+    <h1 class="h3 mt-3">دسترسی مجاز نیست</h1>
+    <p class="text-muted mt-2 mb-4">
+        حساب شما برای مشاهده این بخش مجوز ندارد. اگر فکر می‌کنید اشتباهی رخ داده، با پشتیبانی تماس بگیرید.
+    </p>
+    <a class="btn sg-btn-gold" asp-controller="Home" asp-action="Index">بازگشت به صفحه اصلی</a>
+</div>

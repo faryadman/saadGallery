@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    SadGallery.Web — لایه نمایش (MVC + Areas)، نقطه شروع برنامه و ترکیب‌بندی وابستگی‌ها.
+    در این پروژه: Controllerها، Viewها، Policyها، Middleware امنیتی و پیکربندی Identity.
+    منطق تجاری در این پروژه نوشته نمی‌شود (به Domain/Application منتقل می‌شود).
+  -->
+  <PropertyGroup>
+    <RootNamespace>SadGallery.Web</RootNamespace>
+    <!-- فعال‌سازی User Secrets برای محیط توسعه؛ هیچ رازی در مخزن نیست -->
+    <UserSecretsId>sadgallery-web-dev</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- لازم برای دستورهای dotnet ef با این پروژه به‌عنوان Startup Project -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SadGallery.Application\SadGallery.Application.csproj" />
+    <ProjectReference Include="..\SadGallery.Infrastructure\SadGallery.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

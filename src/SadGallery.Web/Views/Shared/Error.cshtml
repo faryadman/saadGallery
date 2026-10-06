@@ -1,0 +1,11 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="text-center py-5">
+    <div class="sg-error-code">@PersianText.ToPersianDigits(Model.StatusCode.ToString())</div>
+    <h1 class="h3 mt-3">@Model.Title</h1>
+    <p class="text-muted mt-2 mb-4">@Model.Message</p>
+    <a class="btn sg-btn-gold" asp-controller="Home" asp-action="Index">بازگشت به صفحه اصلی</a>
+</div>
