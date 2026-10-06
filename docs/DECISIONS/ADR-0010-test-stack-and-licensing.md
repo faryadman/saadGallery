@@ -66,3 +66,16 @@ SDK 10 به‌طور پیش‌فرض `.slnx` (قالب XML جدید) می‌سا
 ## پیامدها
 - **مثبت:** پشته تست سبک، بدون ریسک مجوز، سازگار با ابزار فعلی، و دارایی‌های self-host که مسئله CDN و آفلاین را حل می‌کند.
 - **منفی:** استفاده از xUnit v2 به‌جای v3 (بدهی فنی کوتاه‌مدت، مستندشده) و نبود گزارش‌های assertion خوانا (قابل جبران با پیام‌های دستی در `Assert.Equal(..., message)`).
+
+---
+
+## پیوست (2026-10-06) — APIهای تأییدشده با آزمون واقعی
+
+این‌ها با کامپایل واقعی روی `xunit.v3 4.0.1` به‌دست آمده‌اند (نه از حافظه):
+
+| نیاز | API صحیح v3 | منسوخ/نامعتبر |
+| --- | --- | --- |
+| غیرفعال‌کردن موازی‌سازی | `[assembly: Parallelization(Mode = ParallelMode.None)]` (نام‌فضاهای `Xunit.Sdk` و `Xunit.v3`) | `CollectionBehavior(DisableTestParallelization = true)` ⇒ خطای CS0619 |
+| تست شرطی (Skip) | سازنده Attribute باید `sourceFilePath`/`sourceLineNumber` را بپذیرد | سازنده بدون اطلاعات مبدأ ⇒ خطای xUnit3003 |
+| انتقال لغو در تست‌ها | `TestContext.Current.CancellationToken` در همه فراخوانی‌های async | فراخوانی بدون CancellationToken ⇒ خطای xUnit1051 |
+| اجراکننده | Microsoft.Testing.Platform با opt-in در `global.json` | VSTest در .NET 10 برای MTP پشتیبانی نمی‌شود |

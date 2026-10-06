@@ -22,12 +22,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${REPO_ROOT}"
 
-# ابزارها بیرون $HOME (سندباکس/CI) — روی ماشین توسعه، dotnet/ef در PATH سیستم هستند
-[ -x /opt/dotnet/dotnet ] && export PATH="/opt/dotnet:${PATH}" && export DOTNET_ROOT=/opt/dotnet
-[ -x /opt/dotnet/tools/dotnet-ef ] && export PATH="/opt/dotnet/tools:${PATH}"
-export DOTNET_NOLOGO=1
-export DOTNET_CLI_TELEMETRY_OPTOUT=1
-[ -d /opt/nuget-packages ] && export NUGET_PACKAGES="${NUGET_PACKAGES:-/opt/nuget-packages}"
+# ابزارها بیرون $HOME (سندباکس/CI) — منطق مشترک در scripts/lib/env.sh
+# shellcheck source=lib/env.sh
+source "${SCRIPT_DIR}/lib/env.sh"
 
 if ! command -v dotnet-ef >/dev/null 2>&1; then
     echo "[ef] ابزار dotnet-ef یافت نشد." >&2

@@ -48,6 +48,8 @@
 - BUG-003: متن فارسی خروجی به Entity عددی تبدیل می‌شد ⇒ تنظیم `UnicodeRanges.All` در `WebEncoderOptions`.
 - BUG-004: شرط نصب در `dev-setup.sh` پوشه والد (`/opt`) را بررسی می‌کرد، نه خود پوشه نصب ⇒ رد نادرست نصب.
 - BUG-005: `NUGET_HTTP_CACHE_PATH` بیرون از پوشه قابل‌نوشتن ساخته می‌شد ⇒ شکست Restore با `NU1900`.
+- BUG-006: ناهماهنگی کش نوگت بین اسکریپت‌ها («وجود» در برابر «قابل‌نوشتن بودن») ⇒ ماژول مشترک `scripts/lib/env.sh`.
+- BUG-008: ابزار `dotnet-ef` در `/opt/tools` (غیرقابل‌نوشتن) نصب می‌شد ⇒ اصلاح به `${DOTNET_DIR}/tools`.
 
 ### Verified
 - `dotnet build SadGallery.sln -warnaserror` ⇒ **۰ خطا، ۰ هشدار**.
@@ -56,6 +58,7 @@
 - سرآیندهای پاسخ (curl بدون فیلتر): `X-Content-Type-Options: nosniff`، `X-Frame-Options: DENY`، `Referrer-Policy: strict-origin-when-cross-origin`، `Cross-Origin-Opener-Policy: same-origin`، `Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()` — و **هیچ سرآیند `Server` ارسال نمی‌شود** (تأییدشده؛ `Program.cs` خط ۲۰).
 
 ### Notes
+- **BUG-007 (باز — تحت پایش):** یک شکست ناپایدار تست یکپارچه در 2026-10-06 مشاهده شد که در ۹ اجرای بعدی بازتولید نشد؛ موازی‌سازی بین کلاس‌های تست غیرفعال شد تا این کلاس از ناپایداری حذف شود.
 - **اجرا نشده در سندباکس (نیازمند SQL Server):** مهاجرت روی دیتابیس واقعی، Seed نقش‌ها، ورود/ثبت‌نام و قفل حساب. دستورهای اجرا برای مالک در `README.md` و `docs/TESTING.md`.
 
 ### Published

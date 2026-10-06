@@ -155,7 +155,7 @@ dotnet test                        # یا: bash scripts/test.sh
 **وضعیت آزمون‌شده (2026-10-05، خروجی واقعی):**
 | امکان | وضعیت | جزئیات |
 | --- | --- | --- |
-| نصب SDK و dotnet-ef | ✅ ممکن (آزمون‌شده) | `bash scripts/dev-setup.sh` ⇒ نصب `.NET SDK 10.0.401` در `/opt/dotnet` + `dotnet-ef 10.0.12` در `/opt/dotnet/tools` |
+| نصب SDK و dotnet-ef | ✅ ممکن (آزمون‌شده) | `bash scripts/dev-setup.sh` ⇒ نصب `.NET SDK 10.0.401` در `/opt/dotnet` + `dotnet-ef 10.0.12` در `/opt/dotnet/tools` (اگر `/opt/nuget-packages` قابل نوشتن نبود، کش خودکار به `/tmp/nuget-packages` می‌رود — `scripts/lib/env.sh`) |
 | Build و Unit Test | ✅ ممکن | قالب `mvc` موجود؛ NuGet در دسترس (restore موفق EF Core 10.0.12 در 3.5s) |
 | Integration Test وابسته به SQL Server | ❌ ممکن نیست | SQL Server/Docker در دسترس نیست ⇒ با `[RequiresSqlServerFact]` علامت‌گذاری و با پیام روشن Skip می‌شوند |
 | پایداری نصب SDK بین جلسات | ❌ ندارد | `/opt/dotnet` بیرون `$HOME` است ⇒ در snapshot ذخیره نمی‌شود؛ هر جلسه نصب مجدد لازم است |

@@ -67,45 +67,15 @@ else
     fi
 fi
 
-export DOTNET_CLI_TELEMETRY_OPTOUT=1
-export DOTNET_NOLOGO=1
-export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
-
-# کش NuGet بیرون از $HOME نگه داشته می‌شود تا snapshot فضای کار (سندباکس) با صدها مگابایت
-# بسته پر نشود و پوشه‌های جانبی وارد Git نشوند. روی ماشین مالک، مقدار پیش‌فرض NuGet حفظ می‌شود.
-case "${DOTNET_DIR}" in
-  "${HOME}"/*) export NUGET_PACKAGES="${NUGET_PACKAGES:-${HOME}/.nuget/packages}" ;;
-  *)           export NUGET_PACKAGES="${NUGET_PACKAGES:-$(dirname "${DOTNET_DIR}")/nuget-packages}" ;;
-esac
-# کش HTTP باید «داخل» پوشه‌های قابل‌نوشتن باشد؛ نسخه قبلی «${NUGET_PACKAGES}.http» را
-# کنار /opt/nuget-packages می‌ساخت که چون /opt متعلق به root است، Restore را با
-# «Access to the path ... denied» شکست می‌داد (BUG-005).
-export NUGET_HTTP_CACHE_PATH="${NUGET_HTTP_CACHE_PATH:-${NUGET_PACKAGES}/.http-cache}"
-mkdir -p "${NUGET_HTTP_CACHE_PATH}" 2>/dev/null || true
-
-# اگر کش NuGet (به هر دلیل) قابل نوشتن نبود، به /tmp منتقل شو (بیرون snapshot ⇒ ماندگار نیست، اما کار می‌کند)
-if [ ! -w "${NUGET_PACKAGES}" ]; then
-    export NUGET_PACKAGES="/tmp/nuget-packages"
-    export NUGET_HTTP_CACHE_PATH="${NUGET_PACKAGES}/.http-cache"
-    mkdir -p "${NUGET_HTTP_CACHE_PATH}" 2>/dev/null || true
-    log "کش پیش‌فرض قابل نوشتن نبود ⇒ NUGET_PACKAGES=${NUGET_PACKAGES}"
-fi
-
-# پوشه کش باید موجود و قابل‌نوشتن باشد، وگرنه restore با «Access to the path ... denied» شکست می‌خورد
-if [ ! -d "${NUGET_PACKAGES}" ]; then
-    mkdir -p "${NUGET_PACKAGES}" 2>/dev/null \
-        || { sudo -n mkdir -p "${NUGET_PACKAGES}" >/dev/null 2>&1 \
-             && sudo -n chown "$(id -u):$(id -g)" "${NUGET_PACKAGES}" >/dev/null 2>&1; } \
-        || true
-fi
-if [ ! -w "${NUGET_PACKAGES}" ]; then
-    if sudo -n chown "$(id -u):$(id -g)" "${NUGET_PACKAGES}" >/dev/null 2>&1; then :; fi
-fi
-[ -w "${NUGET_PACKAGES}" ] || { fail "پوشه کش NuGet قابل نوشتن نیست: ${NUGET_PACKAGES}"; exit 3; }
+# ابزارها و کش بیرون $HOME — منطق مشترک در scripts/lib/env.sh (رفع ناهماهنگی BUG-006)
+# shellcheck source=lib/env.sh
+source "${SCRIPT_DIR}/lib/env.sh"
 log "NUGET_PACKAGES=${NUGET_PACKAGES} (قابل نوشتن ✓)"
 
 # ---------- 1.5) ابزار Entity Framework Core ----------
-EF_TOOL_DIR="$(dirname "${DOTNET_DIR}")/tools"
+# ابزار باید «داخل» پوشه نصب SDK باشد (/opt/dotnet/tools)، نه کنارِ آن (/opt/tools که
+# متعلق به root است و نصب را شکست می‌داد). scripts/lib/env.sh و scripts/ef.sh هم همین مسیر را می‌شناسند.
+EF_TOOL_DIR="${DOTNET_DIR}/tools"
 if [ ! -x "${EF_TOOL_DIR}/dotnet-ef" ]; then
     log "نصب ابزار dotnet-ef در ${EF_TOOL_DIR} (برای مهاجرت‌های دیتابیس)"
     mkdir -p "${EF_TOOL_DIR}" 2>/dev/null || true

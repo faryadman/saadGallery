@@ -19,11 +19,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${REPO_ROOT}"
 
-# ابزارها و کش بیرون $HOME (سندباکس/CI) — روی ماشین توسعه، dotnet در PATH سیستم است
-[ -x /opt/dotnet/dotnet ] && export PATH="/opt/dotnet:${PATH}" && export DOTNET_ROOT=/opt/dotnet
-[ -d /opt/nuget-packages ] && export NUGET_PACKAGES="${NUGET_PACKAGES:-/opt/nuget-packages}"
-export DOTNET_CLI_TELEMETRY_OPTOUT=1
-export DOTNET_NOLOGO=1
+# ابزارها و کش بیرون $HOME (سندباکس/CI) — منطق مشترک در scripts/lib/env.sh
+# shellcheck source=lib/env.sh
+source "${SCRIPT_DIR}/lib/env.sh"
 
 echo "== SadGallery tests =="
 echo "   SDK: $(dotnet --version)"

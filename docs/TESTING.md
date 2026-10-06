@@ -50,7 +50,12 @@ dotnet test
 | assertion | `Assert`های خود xUnit | **بدون FluentAssertions** (مجوز تجاری از v8) — ADR-0010 |
 | اسکایل شرطی | `RequiresSqlServerFactAttribute` (تست شرطی داخلی) | در نبود `SADGALLERY_TEST_SQL` پیام Skip روشن می‌دهد |
 
-**نتایج آخرین اجرا (2026-10-05، سندباکس بدون SQL Server):**
+**نکته پایداری:** در فایل `tests/SadGallery.Tests.Integration/AssemblyInfo.cs` موازی‌سازی بین کلاس‌های تست
+با `[assembly: Parallelization(Mode = ParallelMode.None)]` غیرفعال شده است؛ چون هر کلاس یک میزبان واقعی
+ASP.NET Core می‌سازد و اجرای هم‌زمان آن‌ها روی منابع مشترک رقابت می‌کند (BUG-007). این کار هیچ تستی را
+حذف نمی‌کند و فقط زمان اجرا را چند ثانیه بیشتر می‌کند.
+
+**نتایج آخرین اجرا (2026-10-06، سندباکس بدون SQL Server):**
 ```
 Unit:        total 34 | succeeded 34 | failed 0 | skipped 0
 Integration: total 17 | succeeded 16 | failed 0 | skipped 1  ← Skip: RequiresSqlServerFact (نیازمند SQL Server)
