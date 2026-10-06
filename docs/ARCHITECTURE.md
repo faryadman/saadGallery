@@ -72,7 +72,9 @@
 | نمودار | Chart.js `v4` (Self-host) | سبک، بدون وابستگی سنگین، سازگار با RTL |
 | لاگ | `Serilog.AspNetCore` + Sink فایل/کنسول (+Sink DB اختیاری در فاز ۸) | ساختاریافته + Redaction داده حساس |
 | Resilience | `Microsoft.Extensions.Http.Resilience` (Polly v8) | Retry/Timeout/CircuitBreaker استاندارد و نگهداری‌شده |
-| تست | `xUnit` + `FluentAssertions` + `Microsoft.AspNetCore.Mvc.Testing` + `Testcontainers` (اختیاری) / SQL Server تست | جزئیات: `TESTING.md` |
+| تست | `xunit.v3 4.0.1` + `xunit.runner.visualstudio 4.0.0` + `Microsoft.AspNetCore.Mvc.Testing 10.0.12` · اجرا روی **Microsoft.Testing.Platform** با opt-in در `global.json` | **بدون FluentAssertions** (مجوز تجاری از v8)؛ بدون `Microsoft.NET.Test.Sdk`/`coverlet` (مخصوص VSTest). xunit v2 منسوخ است — ADR-0010 |
+| قالب Solution | `SadGallery.sln` **کلاسیک** (SDK 10 پیش‌فرض `.slnx` می‌سازد) | سازگاری ابزارها؛ مهاجرت آینده یک‌دستوری — ADR-0010 |
+| Bootstrap / فونت | Bootstrap `5.3.8` (RTL) و Vazirmatn `33.0.3` — **self-host در مخزن** | بدون CDN: حریم خصوصی، آفلاین PWA، پایداری دسترسی — ADR-0010 |
 | PWA | manifest + Service Worker دست‌ساز | بدون Framework سنگین؛ کنترل کامل Cache (ADR-0008) |
 
 **قواعد وابستگی (الزامی پیش از افزودن هر بسته):**
@@ -171,7 +173,8 @@ public interface IRateProvider
 
 | موضوع | رویکرد |
 | --- | --- |
-| Log | Serilog ساختاریافته؛ `CorrelationId` در هر درخواست؛ Redaction اسرار (هدرها، کوئری‌های حساس) |
+| Log | `ILogger` ساختاریافته با Scoped/CorrelationId؛ Redaction اسرار. **Serilog فعلاً افزوده نشده** (وابستگی اضافه بدون سود فوری)؛ اگر در فاز ۸ نیاز به Sink فایل/DB شد، افزودن آن با ADR بررسی می‌شود |
+| رمزگذاری HTML | `WebEncoderOptions` با `UnicodeRanges.All` تا متن فارسی به‌صورت یونیکد نوشته شود (کاراکترهای خطرناک همچنان رمزگذاری می‌شوند) — BUG-003 |
 | خطا | `IExceptionHandler`/Middleware ⇒ `ProblemDetails` + پیام فارسی کاربرپسند + Log کامل سمت سرور بدون داده حساس |
 | CancellationToken | از `HttpContext.RequestAborted` تا EF/HTTP؛ طول عمر Job از `IHostApplicationLifetime.ApplicationStopping` |
 | زمان | `IClock` تزریق‌شده (تست‌پذیر)؛ ذخیره UTC؛ نمایش جلالی فقط در `Web` |

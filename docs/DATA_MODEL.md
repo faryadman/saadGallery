@@ -151,7 +151,7 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 
 | # | فاز | محتوا | راه بازگشت |
 | --- | --- | --- | --- |
-| `InitialIdentity` | ۱ | `AspNet*` + `ApplicationUser` + `UserProfile` + Seed نقش‌ها | `dotnet ef database update <قبلی>` (بدون داده تولیدی) |
+| `InitialIdentity` ✅ **ساخته‌شده (2026-10-05)** | ۱ | ۷ جدول `AspNet*` (`AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, `AspNetUserClaims`, `AspNetRoleClaims`, `AspNetUserLogins`, `AspNetUserTokens`) + جدول `__EFMigrationsHistory`؛ ۸ ایندکس از جمله `IX_AspNetUsers_IsActive`. (جدول `UserProfile` به فاز ۶ موکول شد تا داده بی‌استفاده ذخیره نشود.) | `Down()` شامل DropTableها؛ اسکریپت: `database/scripts/InitialIdentity.sql` |
 | `MarketSchema` | ۲ | `PriceProvider`, `AssetDefinition`, `MarketPrice`, `PriceHistory`, `PriceFetchRun` | Down migration؛ داده قابل بازسازی از منبع |
 | `CatalogSchema` | ۴ | `ProductCategory`, `Product`, `ProductImage` | Down + پاک‌سازی فایل‌های یتیم با اسکریپت مستند |
 | `TicketsSchema` | ۵ | `SupportTicket`, `TicketMessage`, `TicketInternalNote` (+`TicketAttachment`) | Down (فقط در محیط غیرتولیدی) |
@@ -159,7 +159,8 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 | `CoinAndBubble` | ۳ | `CoinDefinition`, `BubbleCalculation` | Down |
 
 **رویه هر Migration (الزامی):**
-1. اسکریپت SQL تولید و **بازبینی** شود: `dotnet ef migrations script <from> <to> --idempotent -o artifacts/migrations/<name>.sql`
+1. اسکریپت SQL تولید و **بازبینی** شود: `bash scripts/ef.sh migrations script --idempotent --output database/scripts/<name>.sql`
+   (پوشش `scripts/ef.sh` مسیر پروژه‌ها و ابزار را ثابت می‌کند؛ خروجی در `database/scripts/` نگهداری و کامیت می‌شود.)
 2. روی دیتابیس کپی از داده واقعی آزمایش شود (نه فقط دیتابیس خالی).
 3. زمان اجرا اندازه‌گیری و اگر روی جدول بزرگ بود، برنامه Migration آنلاین (Expand/Contract) نوشته شود.
 4. Backup پیش از اجرا روی محیط تولید الزامی است.

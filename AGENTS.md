@@ -1,7 +1,7 @@
 # AGENTS.md — دستورالعمل دائمی پروژه SadGallery
 
 > این فایل «قانون اساسی» پروژه است. هر ایجنت (یا توسعه‌دهنده) پیش از هر تغییری باید این فایل را کامل بخواند.
-> آخرین به‌روزرسانی: 2026-10-05 (پایان فاز صفر)
+> آخرین به‌روزرسانی: 2026-10-05 (پایان فاز ۱ — اسکلت Solution و پایه کیفیت)
 
 ---
 
@@ -14,7 +14,7 @@
 | نام فنی | `SadGallery` |
 | مالک | مالک پروژه (کاربر انسانی) — تصمیم‌گیر نهایی |
 | زبان UI | فارسی، RTL |
-| فاز جاری | **فاز صفر (بررسی) — تکمیل‌شده و در انتظار تأیید مالک** |
+| فاز جاری | **فاز ۱ (اسکلت Solution و پایه کیفیت) — پیاده‌سازی و آزمون انجام شد؛ در انتظار تأیید مالک** |
 | منبع حقیقت وضعیت | `docs/PROJECT_STATUS.md` + `docs/ROADMAP.md` |
 
 ---
@@ -42,10 +42,23 @@ ls docs/DECISIONS/ && cat docs/DECISIONS/<مرتبط>.md
 sed -n '1,80p' docs/SECURITY.md
 
 # 4) آماده‌سازی محیط و اجرای واقعی Build/Test (بدون آماده‌سازی، هیچ ادعایی نکن)
-bash scripts/dev-setup.sh          # نصب SDK در مسیر غیرماندگار (فقط سندباکس)
+bash scripts/dev-setup.sh          # نصب SDK + ابزار dotnet-ef در مسیرهای غیرماندگار (فقط سندباکس)
 dotnet restore && dotnet build -warnaserror
 dotnet test                        # یا: bash scripts/test.sh
+#    توجه: پروژه روی xunit v3 + Microsoft.Testing.Platform اجرا می‌شود و opt-in آن در global.json
+#    است. به همین دلیل این SDK دیگر VSTest را برای این پروژه‌ها پشتیبانی نمی‌کند و گزینه‌های
+#    مخصوص VSTest (مثل --logger) کار نمی‌کنند. دلایل کامل: docs/DECISIONS/ADR-0010.
+#    EF: به‌جای `dotnet ef ...` از `bash scripts/ef.sh ...` استفاده کن (مسیر ابزار را تنظیم می‌کند).
 ```
+
+### ⚠️ هشدار مهم محیط ایجنت (تجربه‌شده در 2026-10-06)
+در بازنشانی سندباکس بین پیام‌ها، **پوشه `.git` ممکن است به یک وضعیت قدیمی‌تر برگردد** در حالی که فایل‌های درخت کاری باقی می‌مانند.
+پیامد واقعی: کامیت‌های فاز ۱ در `git log` نبودند، اما همه فایل‌ها سالم بودند.
+**کارهای الزامی در شروع جلسه:**
+1. `git log --oneline -5` را با انتظارات مستندشده مقایسه کن.
+2. اگر کامیت فازی وجود نداشت ولی فایل‌ها موجود بودند ⇒ فایل‌ها را دوباره در همان کامیت‌های منطقی ثبت کن (هیچ فایلی گم نمی‌شود).
+3. در پایان هر فاز یک بسته پشتیبان بگیر: `git bundle create artifacts/sadgallery-phase<N>.bundle --all` (پوشه `artifacts/` در `.gitignore` است).
+4. یک **کپی** از بسته را در محیط امن خودت هم نگه دار (artifact سندباکس تضمین‌شده نیست).
 
 سپس وارد کار شو. **هرگز بر اساس حافظه گفتگو کار نکن؛ بر اساس فایل‌های پروژه کار کن.**
 
@@ -129,9 +142,9 @@ dotnet test                        # یا: bash scripts/test.sh
 | باگ‌های شناخته‌شده | `docs/BUGS.md` |
 | تاریخ تغییرات | `docs/CHANGELOG.md` |
 | محدودیت‌های صادقانه (سندباکس/PWA/…) | `docs/KNOWN_LIMITATIONS.md` |
-| تصمیم‌های معماری (ADR) | `docs/DECISIONS/` |
+| تصمیم‌های معماری (ADR) | `docs/DECISIONS/` (تا ADR-0010) |
 | سؤالات باز از مالک | `docs/OPEN_QUESTIONS.md` |
-| اسکریپت‌های محیط/تست | `scripts/` |
+| اسکریپت‌های محیط/تست | `scripts/` (از جمله `ef.sh` برای EF و `test.sh` برای تست) |
 
 ---
 
@@ -142,9 +155,9 @@ dotnet test                        # یا: bash scripts/test.sh
 **وضعیت آزمون‌شده (2026-10-05، خروجی واقعی):**
 | امکان | وضعیت | جزئیات |
 | --- | --- | --- |
-| نصب SDK | ✅ ممکن (آزمون‌شده) | `bash scripts/dev-setup.sh` ⇒ نصب `.NET SDK 10.0.401` (+host 10.0.12، ~۶۲۲MB) در `/opt/dotnet` |
+| نصب SDK و dotnet-ef | ✅ ممکن (آزمون‌شده) | `bash scripts/dev-setup.sh` ⇒ نصب `.NET SDK 10.0.401` در `/opt/dotnet` + `dotnet-ef 10.0.12` در `/opt/dotnet/tools` |
 | Build و Unit Test | ✅ ممکن | قالب `mvc` موجود؛ NuGet در دسترس (restore موفق EF Core 10.0.12 در 3.5s) |
-| Integration Test وابسته به SQL Server | ❌ ممکن نیست | SQL Server/Docker در دسترس نیست ⇒ با Trait `RequiresSqlServer` علامت‌گذاری و Skip می‌شوند |
+| Integration Test وابسته به SQL Server | ❌ ممکن نیست | SQL Server/Docker در دسترس نیست ⇒ با `[RequiresSqlServerFact]` علامت‌گذاری و با پیام روشن Skip می‌شوند |
 | پایداری نصب SDK بین جلسات | ❌ ندارد | `/opt/dotnet` بیرون `$HOME` است ⇒ در snapshot ذخیره نمی‌شود؛ هر جلسه نصب مجدد لازم است |
 
 **قواعد:**

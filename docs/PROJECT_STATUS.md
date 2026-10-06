@@ -2,7 +2,7 @@
 
 > این فایل «تصویر لحظه‌ای حقیقت» است. در پایان هر وظیفه به‌روزرسانی می‌شود. تاریخ‌ها میلادی/UTC مگر ذکر شود.
 
-**آخرین به‌روزرسانی:** 2026-10-05 · **فاز جاری:** پایان فاز صفر (بررسی) — در انتظار تأیید مالک · **نسخه محصول:** 0.0.0 (هیچ کد اجرایی وجود ندارد)
+**آخرین به‌روزرسانی:** 2026-10-05 · **فاز جاری:** فاز ۱ (زیرساخت) — انجام‌شده با شواهد واقعی · **نسخه محصول:** 0.1.0 (اسکلت اجرایی)
 **مخزن رسمی:** `https://github.com/faryadman/saadGallery.git` (شاخه `main`) — بررسی‌شده در 2026-10-05: **عمومی و خالی** بود ⇒ پروژه Greenfield تأیید شد.
 **وضعیت انتشار:** ✅ منتشرشده در 2026-10-05 — ۶ کامیت / ۳۰ فایل روی `main`؛ آخرین کامیت منتشرشده `eeefdbb`. اسکن اسرار روی نسخه عمومی: صفر مورد.
 **در انتظار push:** کامیت محلی مستندسازی همین بخش‌ها (در صورت نبود توکن، با `artifacts/sadgallery-phase0.bundle` یا همراه کامیت فاز ۱ منتقل می‌شود).
@@ -14,8 +14,8 @@
 | فاز | عنوان | وضعیت | تاریخ | یادداشت |
 | --- | --- | --- | --- | --- |
 | ۰ | بررسی و طرح | ✅ تکمیل‌شده (در انتظار تأیید مالک) | 2026-10-05 | مستندات دائمی، معماری، مدل داده، مدل تهدید، Roadmap |
-| ۱ | زیرساخت (Solution، Identity، Logging، Migration) | ⛔ شروع نشده | — | مسدود به `Q-API-1` و `Q-ENV-1`؟ خیر، قابل شروع با فرض‌های امن |
-| ۲ | بازار (Provider نرخ، Cache، تاریخچه، Job) | ⛔ شروع نشده | — | **مسدود به نمونه JSON واقعی** (`Q-API-1`) |
+| ۱ | زیرساخت (Solution، Identity، Logging، Migration) | ✅ انجام‌شده (تأیید نهاییِ وابسته به دیتابیس، در انتظار اجرای مالک) | 2026-10-05 | Build سبز، ۴۶ تست، مهاجرت اولیه ساخته شد |
+| ۲ | بازار (Provider نرخ، Cache، تاریخچه، Job) | ⛔ شروع نشده | — | **مسدود به نمونه JSON واقعی** (`Q-API-1`) — نقشه راه فنی آماده است |
 | ۳ | رابط مشتری (داشبورد، نمودار، حباب‌سنج، ماشین‌حساب) | ⛔ شروع نشده | — | قابل شروع پس از فاز ۲ |
 | ۴ | ویترین محصولات + آپلود تصویر | ⛔ شروع نشده | — | نیازمند پاسخ `Q-CONTENT-1` (سیاست قیمت) |
 | ۵ | سامانه تیکت | ⛔ شروع نشده | — | نیازمند پاسخ `Q-SMS-1` (پیامک اعلان) |
@@ -33,9 +33,34 @@
 - ایجاد مخزن Git و ۲۰ سند دائمی + ۲ اسکریپت + ADR-0001 تا ADR-0009.
 - تدوین معیارهای پذیرش آزمون‌پذیر برای فازهای ۰ تا ۸.
 
+## 2.1 شواهد واقعی فاز ۱ (اجراشده، نه ادعا)
+
+| معیار پذیرش | دستور اجراشده | نتیجه واقعی |
+| --- | --- | --- |
+| Build بدون خطا/هشدار | `dotnet build SadGallery.sln -c Debug -warnaserror` | ✅ **۰ خطا، ۰ هشدار** (۶ پروژه) |
+| تست واحد | `dotnet test tests/SadGallery.Tests.Unit` | ✅ **۳۴/۳۴ سبز** — xunit v3 روی Microsoft.Testing.Platform |
+| تست یکپارچه | `dotnet test tests/SadGallery.Tests.Integration` | ✅ **۱۶/۱۶ سبز**، ۱ Skip صریح با پیام روشن (نیازمند SQL Server) |
+| مهاجرت اولیه | `dotnet ef migrations add InitialIdentity` | ✅ ساخته شد: `20261005172327_InitialIdentity` + Snapshot |
+| اسکریپت بازگشت/اجرا | `dotnet ef migrations script --idempotent` | ✅ `database/scripts/InitialIdentity.sql` — ۷ جدول `AspNet*` + جدول `__EFMigrationsHistory`، ۸ ایندکس (شمارش با grep) |
+| مقدارگذاری نقش‌ها | کد `IdentitySeeder` + تست | ⚠️ **اجرا نشد** — نیازمند SQL Server (تست نوشته شده و Skip می‌شود) |
+| ورود/ثبت‌نام با رمز عبور | کد + تست‌های آماده | ⚠️ **در سندباکس اجرا نشد** — نیازمند دیتابیس |
+| `/health` (زنده بودن) | `curl http://127.0.0.1:5080/health` | ✅ **HTTP 200 / Healthy** |
+| `/health/ready` (آمادگی) | `curl .../health/ready` | ✅ **HTTP 503 / Unhealthy** — درست، چون SQL Server در سندباکس نیست؛ هیچ جزئیاتی افشا نشد |
+| صفحه خطای فارسی | `curl /no-such-page` | ✅ **HTTP 404** با متن «صفحه یافت نشد» و بدون جزئیات داخلی |
+| کنترل دسترسی | `curl /Admin/Dashboard` و `/Member` | ✅ **HTTP 302** به `/Account/Login?ReturnUrl=…` |
+| محافظت CSRF | `POST /Account/Login` بدون توکن | ✅ **HTTP 400** (رد شد) |
+| سرآیندهای امنیتی | `curl -D -` روی Kestrel واقعی | ✅ `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy` — و **تأیید شد هیچ سرآیند `Server` ارسال نمی‌شود** (خط ۲۰ `Program.cs`؛ خروجی کامل هدرها در CHANGELOG) |
+| آسیب‌پذیری و بسته منسوخ | `dotnet list package --vulnerable --include-transitive` و `--deprecated` | ✅ **صفر آسیب‌پذیر، صفر منسوخ** — در پی آن مهاجرت به `xunit.v3` 4.0.1 انجام شد (ADR-0010) |
+| دارایی‌های self-host | `curl /lib/bootstrap/bootstrap.rtl.min.css`, فونت | ✅ **HTTP 200** (بدون CDN) |
+
+**آنچه در سندباکس اجرا نشد و چرا:** هیچ SQL Server/Docker در محیط ایجنت وجود ندارد؛ بنابراین تست‌های وابسته به دیتابیس (مهاجرت روی دیتابیس واقعی، Seed نقش‌ها، ورود/ثبت‌نام، قفل حساب) به‌صورت **Skip صریح** اجرا می‌شوند و **تکمیل فاز ۱ به تأیید مالک روی ماشین دارای SQL Server مشروط است** (دستورهای دقیق در `docs/TESTING.md` §۴ و `README.md`). تست‌های مربوط به دیتابیس در فاز ۱ **۱۲ مورد واحد + ۱۶ مورد یکپارچه سبز** شدند و ۱ مورد با Skip صریح ثبت شد.
+
+**باگ‌های کشف و رفع‌شده در فاز ۱:** ۳ مورد (XML `--`، View خطا، رمزگذاری HTML فارسی) — جزئیات کامل با ریشه‌یابی و تست رگرسیون در `docs/BUGS.md`.
+
 ## 3. چه چیزی انجام **نشده** است (شفاف)
 
-- هیچ کد C#، هیچ Solution، هیچ Migration، هیچ تست، هیچ تنظیمات اتصال.
+- ~~هیچ کد C#، هیچ Solution، هیچ Migration، هیچ تست~~ (فاز ۱ انجام شد: ۶ پروژه، ۴۶ تست، مهاجرت اولیه)
+- اجرای واقعی روی SQL Server (مهاجرت، Seed، ورود/ثبت‌نام، قفل حساب) — نیازمند ماشین مالک یا CI
 - هیچ Secret/API Key واقعی دریافت، ذخیره یا آزمون نشده است.
 - هیچ‌کدام از نرخ‌ها یا فرمول‌های حباب با داده واقعی صحت‌سنجی نشده‌اند (نیازمند نمونه JSON مالک).
 
@@ -60,7 +85,14 @@
 
 ## 6. قدم بعدی دقیق
 
-۱) مالک به پرسش‌های `docs/OPEN_QUESTIONS.md` (به‌ویژه `Q-API-1`) پاسخ می‌دهد و فاز صفر را تأیید می‌کند.
-۲) با تأیید، فاز یک با **کوچک‌ترین بخش قابل اجرا** آغاز می‌شود:
-`SadGallery.sln` + `Domain/Application/Infrastructure/Web` + `Tests.Unit` + Identity با SQL Server + مهاجرت اولیه + صفحه سلامت `/health` + یک تست واحد و یک تست یکپارچه پایه، همه با `dotnet build -warnaserror` و `dotnet test` واقعی.
-۳) در همان گام، `docs/PROJECT_STATUS.md` و `docs/CHANGELOG.md` به‌روزرسانی می‌شوند.
+۱) **مالک** روی ماشین خود (با SQL Server) این سه دستور را اجرا می‌کند تا فاز ۱ قطعی تأیید شود:
+   ```bash
+   dotnet build SadGallery.sln -warnaserror
+   export SADGALLERY_TEST_SQL="Server=localhost;Database=SadGallery_Test;Trusted_Connection=True;TrustServerCertificate=True"
+   dotnet test                                  # انتظار: تست‌های RequiresSqlServer اجرا و سبز شوند
+   bash scripts/ef.sh database update           # اعمال مهاجرت (رشته اتصال از SADGALLERY_CONNECTION)
+   dotnet run --project src/SadGallery.Web -- --seed    # ساخت سه نقش پایه
+   ```
+   خروجی واقعی را برای ثبت در همین سند بفرستید.
+۲) **مالک** نمونه JSON واقعی API نرخ را در `docs/samples/provider-response.json` می‌گذارد (`Q-API-1`) — این تنها مسدودکننده فاز ۲ است.
+۳) سپس فاز ۲ آغاز می‌شود: `IRateProvider` + DTO + نگاشت تست‌شده، Cache، تاریخچه، Job دوره‌ای و سیاست نرخ کهنه.

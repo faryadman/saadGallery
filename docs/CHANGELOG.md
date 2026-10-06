@@ -21,6 +21,43 @@
 - `scripts/dev-setup.sh` (نصب SDK در سندباکس، غیرماندگار) و `scripts/test.sh`.
 - `.gitignore` و `.editorconfig` با قواعد سخت‌گیرانه سطح هشدار امنیتی.
 
+## [Unreleased] — فاز ۱: زیرساخت
+
+### Added
+- **Solution و ساختار پروژه:** `SadGallery.sln` (قالب کلاسیک — ADR-0010) با ۶ پروژه: Domain، Application، Infrastructure، Web، Tests.Unit، Tests.Integration — همه با `net10.0`، `Nullable=enable` و `TreatWarningsAsErrors=true`.
+- `global.json` (SDK 10.0.100 با `rollForward: latestFeature`) و `Directory.Build.props` و `Directory.Packages.props` (Central Package Management، نسخه‌های Pin‌شده).
+- **Domain:** نوع‌های ارزشی `Money` (با واحد صریح + تبدیل صریح)، `Purity` (عیار/ضریب خلوص)، `Weight` (واحد پایه گرم + مثقال)، enumهای `CurrencyUnit` و `RateQuality` و ثابت‌های `Measurements`.
+- **Application:** `IClock`، `IIdentitySeeder`، `PersianText` (نرمال‌سازی ارقام فارسی/عربی برای ورودی و نمایش) و `AddSadGalleryApplication`.
+- **Infrastructure:** `ApplicationUser`، `RoleNames`، `IdentitySeeder` (ایدِمپوتنت، بدون ساخت کاربر پیش‌فرض)، `SadGalleryDbContext`، `SadGalleryDbContextFactory` (زمان طراحی)، `SystemClock` و `AddSadGalleryInfrastructure` با Fail-Fast روی نبود رشته اتصال و `EnableRetryOnFailure`.
+- **Web:** `Program.cs` با Identity (سیاست رمز/قفل)، Policyهای `AdminOnly`/`OperatorArea`/`MemberFeatures` (شامل Claim «حساب فعال»)، Rate Limiting روی ورود/ثبت‌نام، نقطه‌های سلامت `/health` و `/health/ready`، صفحه خطای فارسی، Middleware سرآیندهای امنیتی، ضدجعل خودکار روی همه POSTها، OpenAPI فقط در محیط توسعه.
+- صفحات فارسی RTL: Layout برند، خانه، ورود، ثبت‌نام، AccessDenied، ناحیه اعضا، پنل‌های Admin و Operator (با Policy سمت سرور).
+- صفحه ورود/ثبت‌نام با ترجمه فارسی خطاهای Identity و پیام یکنواخت (بدون افشای وجود حساب).
+- دارایی‌های self-host: Bootstrap 5.3.8 (RTL + JS) و فونت Vazirmatn 33.0.3 با فایل مجوز (ADR-0010).
+- **مهاجرت `InitialIdentity`** (۷ جدول `AspNet*` + جدول `__EFMigrationsHistory`؛ ۸ ایندکس از جمله ایندکس روی `IsActive`) + اسکریپت ایدِمپوتنت `database/scripts/InitialIdentity.sql`.
+- تست‌ها: ۳۴ تست واحد (پول، عیار، وزن، متن فارسی) و ۱۷ تست یکپارچه (سلامت، صفحه اصلی RTL و نبود Entity، صفحه خطا ×۳، سرآیندها و نبود سرآیند `Server`، کوکی ناامن، مجوزدهی، CSRF ×۲ و مهاجرت/Seed با `RequiresSqlServerFact`).
+- اسکریپت‌ها: `scripts/ef.sh` (پوشش دستورهای EF)، نصب خودکار `dotnet-ef` در `scripts/dev-setup.sh`، و `scripts/git-commit.sh` (هویت Git پایدار در محیط ایجنت).
+
+### Changed
+- **مهاجرت پشته تست به `xunit.v3` 4.0.1**: بررسی `dotnet list package --deprecated` نشان داد `xunit 2.9.3` منسوخ (Legacy) است ⇒ مطابق اصل پروژه، مهاجرت انجام شد. در پی آن: اجرا روی Microsoft.Testing.Platform، حذف `Microsoft.NET.Test.Sdk` و `coverlet.collector`، و فعال‌سازی تجربه جدید `dotnet test` با `global.json` (`test.runner`).
+- دو قاعده تحلیلگر xunit v3 (`xUnit1051` انتقال CancellationToken در تست‌ها، `xUnit3003` سازنده Attribute تست شرطی) **اصلاح شدند، نه خاموش**.
+- `dotnet.config` که در این SDK اثری نداشت، حذف و راه‌حل درست (`global.json`) مستند شد (ADR-0010).
+
+### Fixed
+- BUG-001: کامنت XML حاوی `--` بارگذاری `Directory.Packages.props` را می‌شکست.
+- BUG-002: صفحه خطای فارسی محتوای خود را پیدا نمی‌کرد (`The view 'Index' was not found`) ⇒ درخواست ناموجود ۵۰۰ می‌داد.
+- BUG-003: متن فارسی خروجی به Entity عددی تبدیل می‌شد ⇒ تنظیم `UnicodeRanges.All` در `WebEncoderOptions`.
+- BUG-004: شرط نصب در `dev-setup.sh` پوشه والد (`/opt`) را بررسی می‌کرد، نه خود پوشه نصب ⇒ رد نادرست نصب.
+- BUG-005: `NUGET_HTTP_CACHE_PATH` بیرون از پوشه قابل‌نوشتن ساخته می‌شد ⇒ شکست Restore با `NU1900`.
+
+### Verified
+- `dotnet build SadGallery.sln -warnaserror` ⇒ **۰ خطا، ۰ هشدار**.
+- `dotnet test` ⇒ **۳۴/۳۴ واحد سبز** + **۱۶/۱۶ یکپارچه سبز** + ۱ Skip صریح (نیازمند SQL Server).
+- اجرای واقعی برنامه روی Kestrel: `/`=200 (۵۵۱۲ بایت، صفر Entity عددی)؛ `/no-such-page`=404 «صفحه یافت نشد»؛ `/health`=200 `Healthy`؛ `/health/ready`=503 (بدون DB، درست)؛ `/Admin|Operator|Member`=302 به ورود؛ POST بدون توکن=400؛ دارایی‌های self-host=200.
+- سرآیندهای پاسخ (curl بدون فیلتر): `X-Content-Type-Options: nosniff`، `X-Frame-Options: DENY`، `Referrer-Policy: strict-origin-when-cross-origin`، `Cross-Origin-Opener-Policy: same-origin`، `Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()` — و **هیچ سرآیند `Server` ارسال نمی‌شود** (تأییدشده؛ `Program.cs` خط ۲۰).
+
+### Notes
+- **اجرا نشده در سندباکس (نیازمند SQL Server):** مهاجرت روی دیتابیس واقعی، Seed نقش‌ها، ورود/ثبت‌نام و قفل حساب. دستورهای اجرا برای مالک در `README.md` و `docs/TESTING.md`.
+
 ### Published
 - **فاز صفر روی مخزن رسمی منتشر شد**: `https://github.com/faryadman/saadGallery.git` — شاخه `main`، ۶ کامیت، ۳۰ فایل.
 - آخرین کامیت منتشرشده: `eeefdbb` («تثبیت بیت اجرای git-commit.sh»).
