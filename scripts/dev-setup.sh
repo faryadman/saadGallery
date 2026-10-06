@@ -43,7 +43,9 @@ if command -v dotnet >/dev/null 2>&1; then
     fi
     ok "SDK سازگار است."
 else
-    if [ -w "$(dirname "${DOTNET_DIR}")" ] || [ "$(id -u)" = "0" ] || [ "${ALLOW_LOCAL_DOTNET_INSTALL:-0}" = "1" ]; then
+    # قابل‌نوشتن بودن «خودِ پوشه نصب» کافی است؛ بررسی فقط پوشه والد، در محیط‌هایی که
+    # /opt/dotnet از قبل با مالکیت کاربر ساخته شده ولی /opt متعلق به root است، اشتباهاً رد می‌شد (BUG-004).
+    if [ -w "${DOTNET_DIR}" ] || [ -w "$(dirname "${DOTNET_DIR}")" ] || [ "$(id -u)" = "0" ] || [ "${ALLOW_LOCAL_DOTNET_INSTALL:-0}" = "1" ]; then
         log "dotnet یافت نشد ⇒ نصب SDK ${SDK_CHANNEL} در ${DOTNET_DIR} (غیرماندگار)"
         if [ ! -x "${DOTNET_DIR}/dotnet" ]; then
             TMP="$(mktemp -d)"
@@ -75,8 +77,44 @@ case "${DOTNET_DIR}" in
   "${HOME}"/*) export NUGET_PACKAGES="${NUGET_PACKAGES:-${HOME}/.nuget/packages}" ;;
   *)           export NUGET_PACKAGES="${NUGET_PACKAGES:-$(dirname "${DOTNET_DIR}")/nuget-packages}" ;;
 esac
-export NUGET_HTTP_CACHE_PATH="${NUGET_HTTP_CACHE_PATH:-${NUGET_PACKAGES}.http}"
-log "NUGET_PACKAGES=${NUGET_PACKAGES}"
+# کش HTTP باید «داخل» پوشه‌های قابل‌نوشتن باشد؛ نسخه قبلی «${NUGET_PACKAGES}.http» را
+# کنار /opt/nuget-packages می‌ساخت که چون /opt متعلق به root است، Restore را با
+# «Access to the path ... denied» شکست می‌داد (BUG-005).
+export NUGET_HTTP_CACHE_PATH="${NUGET_HTTP_CACHE_PATH:-${NUGET_PACKAGES}/.http-cache}"
+mkdir -p "${NUGET_HTTP_CACHE_PATH}" 2>/dev/null || true
+
+# اگر کش NuGet (به هر دلیل) قابل نوشتن نبود، به /tmp منتقل شو (بیرون snapshot ⇒ ماندگار نیست، اما کار می‌کند)
+if [ ! -w "${NUGET_PACKAGES}" ]; then
+    export NUGET_PACKAGES="/tmp/nuget-packages"
+    export NUGET_HTTP_CACHE_PATH="${NUGET_PACKAGES}/.http-cache"
+    mkdir -p "${NUGET_HTTP_CACHE_PATH}" 2>/dev/null || true
+    log "کش پیش‌فرض قابل نوشتن نبود ⇒ NUGET_PACKAGES=${NUGET_PACKAGES}"
+fi
+
+# پوشه کش باید موجود و قابل‌نوشتن باشد، وگرنه restore با «Access to the path ... denied» شکست می‌خورد
+if [ ! -d "${NUGET_PACKAGES}" ]; then
+    mkdir -p "${NUGET_PACKAGES}" 2>/dev/null \
+        || { sudo -n mkdir -p "${NUGET_PACKAGES}" >/dev/null 2>&1 \
+             && sudo -n chown "$(id -u):$(id -g)" "${NUGET_PACKAGES}" >/dev/null 2>&1; } \
+        || true
+fi
+if [ ! -w "${NUGET_PACKAGES}" ]; then
+    if sudo -n chown "$(id -u):$(id -g)" "${NUGET_PACKAGES}" >/dev/null 2>&1; then :; fi
+fi
+[ -w "${NUGET_PACKAGES}" ] || { fail "پوشه کش NuGet قابل نوشتن نیست: ${NUGET_PACKAGES}"; exit 3; }
+log "NUGET_PACKAGES=${NUGET_PACKAGES} (قابل نوشتن ✓)"
+
+# ---------- 1.5) ابزار Entity Framework Core ----------
+EF_TOOL_DIR="$(dirname "${DOTNET_DIR}")/tools"
+if [ ! -x "${EF_TOOL_DIR}/dotnet-ef" ]; then
+    log "نصب ابزار dotnet-ef در ${EF_TOOL_DIR} (برای مهاجرت‌های دیتابیس)"
+    mkdir -p "${EF_TOOL_DIR}" 2>/dev/null || true
+    dotnet tool install --tool-path "${EF_TOOL_DIR}" dotnet-ef --version "${REQUIRED_MAJOR}.*" >/dev/null \
+        && ok "dotnet-ef نصب شد." \
+        || log "نصب dotnet-ef ناموفق بود (بی‌اثر بر Build و تست‌های واحد؛ فقط مهاجرت‌ها نیازمند آن‌اند)."
+else
+    ok "dotnet-ef از قبل نصب است: ${EF_TOOL_DIR}"
+fi
 
 # ---------- 2) بررسی SQL Server (فقط اطلاع‌رسانی) ----------
 if command -v sqlcmd >/dev/null 2>&1; then
