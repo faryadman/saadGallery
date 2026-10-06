@@ -94,5 +94,11 @@
    dotnet run --project src/SadGallery.Web -- --seed    # ساخت سه نقش پایه
    ```
    خروجی واقعی را برای ثبت در همین سند بفرستید.
-۲) **مالک** نمونه JSON واقعی API نرخ را در `docs/samples/provider-response.json` می‌گذارد (`Q-API-1`) — این تنها مسدودکننده فاز ۲ است.
+۲) **انتقال کد به GitHub:** فاز ۱ هنوز push نشده است (آخرین کامیت روی GitHub = `eeefdbb` از فاز ۰؛ `.sln` در آن نیست).
+   دو مسیر: (الف) مالک توکن را می‌دهد ⇒ ایجنت `git push` می‌کند؛ (ب) مالک بسته `artifacts/sadgallery-phase1.bundle` را می‌گیرد و خودش push می‌کند:
+   ```bash
+   git fetch /path/to/sadgallery-phase1.bundle main:phase1
+   git push origin phase1:main          # یا merge و push
+   ```
+۳) **مالک** نمونه JSON واقعی API نرخ را در `docs/samples/provider-response.json` می‌گذارد (`Q-API-1`) — این تنها مسدودکننده فاز ۲ است.
 ۳) سپس فاز ۲ آغاز می‌شود: `IRateProvider` + DTO + نگاشت تست‌شده، Cache، تاریخچه، Job دوره‌ای و سیاست نرخ کهنه.
