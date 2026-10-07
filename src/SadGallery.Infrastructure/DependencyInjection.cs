@@ -1,7 +1,9 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SadGallery.Application.Abstractions;
+using SadGallery.Application.Data;
 using SadGallery.Infrastructure.Identity;
 using SadGallery.Infrastructure.Persistence;
 using SadGallery.Infrastructure.Time;
@@ -24,13 +26,28 @@ public static class DependencyInjection
 
         var connectionString = configuration.GetConnectionString("SadGallery");
 
-        if (string.IsNullOrWhiteSpace(connectionString))
+        // لایه ۱ — بررسی «شکل» رشته: خالی، جای‌نگهدار، کوتیشن‌دار، بدون کلید Server/Database …
+        // تا به‌جای پیام مبهم SqlClient («starting at index 0») راهنمای عملی بدهیم (BUG-009).
+        var guardError = ConnectionStringGuard.Validate(connectionString);
+
+        if (guardError is not null)
+        {
+            throw new InvalidOperationException(guardError);
+        }
+
+        // لایه ۲ — بررسی نهایی با پارسر خود SqlClient (خطاهای عمیق‌تر مانند نقل‌قول بسته‌نشده)
+        try
+        {
+            _ = new SqlConnectionStringBuilder(connectionString);
+        }
+        catch (ArgumentException exception)
         {
             throw new InvalidOperationException(
-                "Connection string 'SadGallery' is not configured. " +
-                "In development use User Secrets (dotnet user-secrets). " +
-                "In production use environment variables or a secret store. " +
-                "See docs/DEPLOYMENT.md.");
+                "رشته اتصال «" + ConnectionStringGuard.ConfigurationKey +
+                "» با پارسر SQL Server سازگار نیست (نوع خطا: " + exception.GetType().Name + "). " +
+                "نمونهٔ صحیح: Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True " +
+                "— راهنما: docs/DEPLOYMENT.md §۴.۵ (مقدار رشته اتصال به‌عمد چاپ نمی‌شود).",
+                exception);
         }
 
         services.AddDbContext<SadGalleryDbContext>(options =>

@@ -76,7 +76,11 @@ dotnet test
 #      cd src/SadGallery.Web
 #      dotnet user-secrets set "ConnectionStrings:SadGallery" "<connection-string>"
 #      cd ../..
-# ۳) Seed: نقش‌ها + کاربران اولیه (رمز را خودتان در شل تعیین می‌کنید؛ در مخزن ذخیره نمی‌شود)
+# ساده‌ترین راه روی ویندوز (همه مراحل ۲ و ۳ به‌صورت خودکار):
+#   .\scripts\windows-setup.ps1 -Run
+#   (رشته اتصال پیش‌فرض = LocalDB؛ برای SQL Express/SQLEXPRESS با -ConnectionString بدهید)
+
+# ۳) یا دستی — Seed: نقش‌ها + کاربران اولیه (رمز را خودتان در شل تعیین می‌کنید؛ در مخزن ذخیره نمی‌شود)
 #    PowerShell:  $env:SADGALLERY_SEED_PASSWORD = "<رمز قوی با حداقل ۸ نویسه و یک رقم>"
 #    bash:        export SADGALLERY_SEED_PASSWORD="<رمز قوی>"
 dotnet run --project src/SadGallery.Web -- --seed

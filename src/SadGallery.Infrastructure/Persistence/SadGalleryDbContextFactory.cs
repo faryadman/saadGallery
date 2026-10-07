@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using SadGallery.Application.Data;
 
 namespace SadGallery.Infrastructure.Persistence;
 
@@ -10,6 +11,10 @@ namespace SadGallery.Infrastructure.Persistence;
 /// برای دستورهایی که واقعاً به دیتابیس وصل می‌شوند (مثل <c>database update</c>)،
 /// مقدار را از متغیر محیطی <c>SADGALLERY_CONNECTION</c> یا User Secrets بدهید.
 /// </summary>
+/// <remarks>
+/// اگر متغیر تنظیم شده باشد اما شکلش نامعتبر باشد، با پیام فارسی و راهنما متوقف می‌شود
+/// (پیش‌تر پیام مبهم SqlClient ظاهر می‌شد — BUG-009).
+/// </remarks>
 public sealed class SadGalleryDbContextFactory : IDesignTimeDbContextFactory<SadGalleryDbContext>
 {
     private const string DesignTimeFallbackConnectionString =
@@ -22,6 +27,17 @@ public sealed class SadGalleryDbContextFactory : IDesignTimeDbContextFactory<Sad
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             connectionString = DesignTimeFallbackConnectionString;
+        }
+        else
+        {
+            var guardError = ConnectionStringGuard.Validate(connectionString);
+
+            if (guardError is not null)
+            {
+                throw new InvalidOperationException(
+                    guardError + Environment.NewLine +
+                    "  (این پیام از مسیر «طرح‌زمان» dotnet ef می‌آید؛ متغیر SADGALLERY_CONNECTION را اصلاح کنید.)");
+            }
         }
 
         var options = new DbContextOptionsBuilder<SadGalleryDbContext>()

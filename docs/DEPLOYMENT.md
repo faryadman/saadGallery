@@ -240,6 +240,48 @@ DELETE ur FROM AspNetUserRoles ur JOIN AspNetUsers u ON u.Id = ur.UserId WHERE u
 DELETE FROM AspNetUsers WHERE UserName LIKE '%@sadgallery.local';
 ```
 
+## ۴.۷ عیب‌یابی راه‌اندازی اولیه (خطاهای واقعی دیده‌شده)
+
+### خطا: `Format of the initialization string does not conform to specification starting at index 0`
+**معنا:** مقدار رشته اتصال از نظر شکل نامعتبر است (این پیام از SqlClient می‌آید، نه از کد ما).
+
+| علت رایج | نمونه | راه‌حل |
+| --- | --- | --- |
+| متن جای‌نگهدار به‌جای مقدار واقعی | `$env:ConnectionStrings__SadGallery = "<connection-string>"` | رشته اتصال واقعی خود را بگذارید |
+| کوتیشن اضافه (کپی از نمونهٔ JSON) | `'"Server=...;Database=...;'` یا `""Server=...""` | کوتیشن‌های داخلی را حذف کنید؛ فقط کوتیشن خود شل بماند |
+| نبود `کلید=مقدار` | `HOST_FROM_ENV` | از الگوی زیر استفاده کنید |
+| کلید Server یا Database جا افتاده | `Server=localhost;` | هر دو کلید لازم است |
+
+**مقدار درست (اپلیکیشن):**
+```powershell
+$env:ConnectionStrings__SadGallery = "Server=(localdb)\MSSQLLocalDB;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+```
+**مقدار درست (ابزار مهاجرت — نام متغیر متفاوت است!):**
+```powershell
+$env:SADGALLERY_CONNECTION = "Server=(localdb)\MSSQLLocalDB;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+```
+> از نسخهٔ اخیر، برنامه **پیش از** اتصال، شکل رشته را بررسی می‌کند و پیام فارسی با راه‌حل می‌دهد
+> (`ConnectionStringGuard` + `scripts/windows-setup.ps1`) — دیگر این خطای مبهم را نمی‌بینید.
+
+### خطا: `LocalDB is not supported on this platform`
+روی لینوکس رخ می‌دهد؛ یعنی رشته اتصال به LocalDB اشاره می‌کند. روی لینوکس از SQL Server واقعی/Docker استفاده کنید.
+
+### خطا: `Login failed for user 'sa'` یا `Cannot open database "SadGallery"`
+- اگر دیتابیس وجود ندارد: `dotnet ef database update` خودش می‌سازد.
+- اگر رمز اشتباه است: مقدار `sa` را از Secret Store بدهید، نه از فایل.
+
+### خطا: `A network-related or instance-specific error ... error: 40`
+سرور پیدا نشد. بررسی کنید: سرویس SQL Server روشن است، نام نمونه درست است (`localhost\SQLEXPRESS` برای Express)،
+و در SQL Server Configuration Manager پروتکل TCP/IP فعال است.
+
+### خطای Seed: `رمز عبور تعیین نشده است`
+متغیر `SADGALLERY_SEED_PASSWORD` را در همان پنجره تنظیم کنید (فقط نشستی، نه در فایل).
+
+### بررسی سریع همه‌چیز
+```powershell
+.\scripts\windows-setup.ps1 -Run     # اعتبارسنجی + مهاجرت + Seed + اجرا، همه در یک مرحله
+```
+
 ## ۵. مدیریت Secret و عبارت محرمانه
 
 | راز | محل نگهداری | چرخش |
