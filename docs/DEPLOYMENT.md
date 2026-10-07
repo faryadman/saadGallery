@@ -56,6 +56,19 @@
 - `appsettings.json` **هیچ** راز، کلید یا رشته اتصالی ندارد. فقط جای‌نگهدار و پیش‌فرض‌های بی‌خطر.
 - در Dev: `dotnet user-secrets`؛ در Prod: Environment Variables یا Secret Store پلتفرم.
 - `ValidateOnStart` برای همه Options ⇒ برنامه با تنظیمات نامعتبر بالا نمی‌آید (Fail Fast).
+
+> ⚠️ **دربارهٔ مقدار `HOST_FROM_ENV` (تله‌ای که واقعاً رخ داد — BUG-009):**
+> این مقدار **عمداً** یک رشتهٔ نامعتبر است تا برنامه بدون تنظیم واقعی بالا نیاید. اگر آن را با متغیر محیطی بازنویسی نکنید،
+> پیام فارسی و راهنما می‌گیرید (نه خطای مبهم). **تقدم پیکربندی در .NET:** `appsettings.json` →
+> `appsettings.{Environment}.json` → User Secrets → **متغیرهای محیطی** → آرگومان خط فرمان.
+> پس کافی است متغیر محیطی را تنظیم کنید و **لازم نیست** فایل را تغییر دهید:
+> ```powershell
+> $env:ConnectionStrings__SadGallery = "Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+> ```
+
+> 🪟 **روی ویندوز:** `StorageOptions.UploadsRoot` در نمونه به‌صورت مسیر لینوکسی (`/var/sadgallery/uploads`) آمده است.
+> اگر روی ویندوز استقرار می‌دهید، مقدار را به مسیری مثل `C:\\SadGallery\\uploads` تغییر دهید
+> (پیکربندی این مقدار در فاز ۴ — گالری — نهایی و آزمون می‌شود).
 - کلیدهای اضافه/غایب در Prod باعث خطای صریح و لاگ بدون افشای مقدار می‌شوند.
 
 ## ۴. راه‌اندازی گام‌به‌گام (Production) — Runbook
@@ -247,7 +260,7 @@ DELETE FROM AspNetUsers WHERE UserName LIKE '%@sadgallery.local';
 
 | علت رایج | نمونه | راه‌حل |
 | --- | --- | --- |
-| متن جای‌نگهدار به‌جای مقدار واقعی | `$env:ConnectionStrings__SadGallery = "<connection-string>"` | رشته اتصال واقعی خود را بگذارید |
+| متن جای‌نگهدار به‌جای مقدار واقعی | `<connection-string>` یا **`HOST_FROM_ENV`** (مقدار پیش‌فرض `appsettings.json`) | رشته اتصال واقعی را در **متغیر محیطی** بگذارید (نیازی به تغییر فایل نیست) |
 | کوتیشن اضافه (کپی از نمونهٔ JSON) | `'"Server=...;Database=...;'` یا `""Server=...""` | کوتیشن‌های داخلی را حذف کنید؛ فقط کوتیشن خود شل بماند |
 | نبود `کلید=مقدار` | `HOST_FROM_ENV` | از الگوی زیر استفاده کنید |
 | کلید Server یا Database جا افتاده | `Server=localhost;` | هر دو کلید لازم است |

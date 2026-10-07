@@ -63,6 +63,12 @@
 - اجرای واقعی برنامه روی Kestrel: `/`=200 (۵۵۱۲ بایت، صفر Entity عددی)؛ `/no-such-page`=404 «صفحه یافت نشد»؛ `/health`=200 `Healthy`؛ `/health/ready`=503 (بدون DB، درست)؛ `/Admin|Operator|Member`=302 به ورود؛ POST بدون توکن=400؛ دارایی‌های self-host=200.
 - سرآیندهای پاسخ (curl بدون فیلتر): `X-Content-Type-Options: nosniff`، `X-Frame-Options: DENY`، `Referrer-Policy: strict-origin-when-cross-origin`، `Cross-Origin-Opener-Policy: same-origin`، `Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()` — و **هیچ سرآیند `Server` ارسال نمی‌شود** (تأییدشده؛ `Program.cs` خط ۲۰).
 
+### Added by owner (2026-10-07)
+- **`appsettings.json` (کامیت مالک `8a225ad`):** بخش‌های پیکربندی `RateOptions`، `SecurityOptions` (OTP، قفل حساب، محدودیت نرخ)،
+  `StorageOptions` (ریشهٔ آپلود بیرون `wwwroot`، اندازه/قالب مجاز) و `Serilog` افزوده شد؛ `ConnectionStrings.SadGallery`
+  به مقدار عمدیِ `HOST_FROM_ENV` تنظیم شد تا راز در مخزن نرود. (نگاشت این کلیدها به کلاس‌های Options در فازهای ۲/۴/۶/۸ انجام می‌شود.)
+- همگرایی مخزن: با این تغییر، **مخزن دو نویسنده دارد** (مالک + ایجنت)؛ رویهٔ الزامی «اول `git fetch` بعد تغییر و push» در AGENTS.md ثبت شد.
+
 ### Notes
 - **BUG-007 (باز — تحت پایش):** یک شکست ناپایدار تست یکپارچه در 2026-10-06 مشاهده شد که در ۹ اجرای بعدی بازتولید نشد؛ موازی‌سازی بین کلاس‌های تست غیرفعال شد تا این کلاس از ناپایداری حذف شود.
 - **اجرا نشده در سندباکس (نیازمند SQL Server):** مهاجرت روی دیتابیس واقعی، Seed نقش‌ها، ورود/ثبت‌نام و قفل حساب. دستورهای اجرا برای مالک در `README.md` و `docs/TESTING.md`.
