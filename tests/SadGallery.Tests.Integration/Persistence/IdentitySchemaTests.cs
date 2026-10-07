@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using SadGallery.Infrastructure.Identity;
+using SadGallery.Infrastructure.Time;
 using SadGallery.Infrastructure.Persistence;
 using SadGallery.Tests.Integration.Infrastructure;
 using Xunit;
@@ -65,7 +66,12 @@ public sealed class IdentitySchemaTests
             {
                 using var scope = provider.CreateScope();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
-                var seeder = new IdentitySeeder(roleManager, NullLogger<IdentitySeeder>.Instance);
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var seeder = new IdentitySeeder(
+                    roleManager,
+                    userManager,
+                    new SystemClock(),
+                    NullLogger<IdentitySeeder>.Instance);
 
                 await seeder.SeedAsync(cancellationToken);
             }
@@ -76,6 +82,9 @@ public sealed class IdentitySchemaTests
                 var roleNames = await dbContext.Roles.Select(role => role.Name).ToListAsync(cancellationToken);
 
                 Assert.Equal(RoleNames.All.Count, roleNames.Count);
+
+                // طبق ADR-0011: بدون تعریف SeedUsers، هیچ کاربری ساخته نمی‌شود (نه رمز پیش‌فرض، نه کاربر ناخواسته)
+                Assert.Equal(0, await dbContext.Users.CountAsync(cancellationToken));
                 Assert.Contains(RoleNames.Customer, roleNames);
                 Assert.Contains(RoleNames.Operator, roleNames);
                 Assert.Contains(RoleNames.Admin, roleNames);

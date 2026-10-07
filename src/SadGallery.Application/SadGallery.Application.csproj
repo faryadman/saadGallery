@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <!-- انتزاع تنظیمات برای خواندن فهرست کاربران اولیه (ADR-0011)؛ پیاده‌سازی/فایل تنظیمات در لایه Web است -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>

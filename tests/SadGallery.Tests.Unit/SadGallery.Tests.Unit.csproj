@@ -13,6 +13,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- تست‌های واحد خواندن تنظیمات (Seed کاربران) — فقط InMemory provider لازم است -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>

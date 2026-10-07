@@ -38,11 +38,12 @@
 | معیار پذیرش | دستور اجراشده | نتیجه واقعی |
 | --- | --- | --- |
 | Build بدون خطا/هشدار | `dotnet build SadGallery.sln -c Debug -warnaserror` | ✅ **۰ خطا، ۰ هشدار** (۶ پروژه) |
-| تست واحد | `dotnet test tests/SadGallery.Tests.Unit` | ✅ **۳۴/۳۴ سبز** — xunit v3 روی Microsoft.Testing.Platform |
-| تست یکپارچه | `dotnet test tests/SadGallery.Tests.Integration` | ✅ **۱۶/۱۶ سبز**، ۱ Skip صریح با پیام روشن (نیازمند SQL Server) |
+| تست واحد | `dotnet test tests/SadGallery.Tests.Unit` | ✅ **۵۴/۵۴ سبز** — xunit v3 روی Microsoft.Testing.Platform (۳۴ پایه + ۲۰ تست Seed کاربران) |
+| تست یکپارچه | `dotnet test tests/SadGallery.Tests.Integration` | ✅ **۱۷/۱۷ سبز**، ۳ Skip صریح (مهاجرت + ۲ تست Seed — نیازمند SQL Server) |
 | مهاجرت اولیه | `dotnet ef migrations add InitialIdentity` | ✅ ساخته شد: `20261005172327_InitialIdentity` + Snapshot |
 | اسکریپت بازگشت/اجرا | `dotnet ef migrations script --idempotent` | ✅ `database/scripts/InitialIdentity.sql` — ۷ جدول `AspNet*` + جدول `__EFMigrationsHistory`، ۸ ایندکس (شمارش با grep) |
 | مقدارگذاری نقش‌ها | کد `IdentitySeeder` + تست | ⚠️ **اجرا نشد** — نیازمند SQL Server (تست نوشته شده و Skip می‌شود) |
+| Seed کاربران اولیه | اجرای واقعی `--seed` در سندباکس (۳ سناریو) | ✅ **fail-closed تأیید شد**: بدون رمز ⇒ ۳ خطای فارسی + کد خروج `2` بدون لمس دیتابیس؛ نقش نامعتبر ⇒ رد با پیام روشن؛ با رمز ⇒ عبور از اعتبارسنجی. ساخت واقعی کاربران نیازمند SQL Server است |
 | ورود/ثبت‌نام با رمز عبور | کد + تست‌های آماده | ⚠️ **در سندباکس اجرا نشد** — نیازمند دیتابیس |
 | `/health` (زنده بودن) | `curl http://127.0.0.1:5080/health` | ✅ **HTTP 200 / Healthy** |
 | `/health/ready` (آمادگی) | `curl .../health/ready` | ✅ **HTTP 503 / Unhealthy** — درست، چون SQL Server در سندباکس نیست؛ هیچ جزئیاتی افشا نشد |
@@ -91,7 +92,8 @@
    export SADGALLERY_TEST_SQL="Server=localhost;Database=SadGallery_Test;Trusted_Connection=True;TrustServerCertificate=True"
    dotnet test                                  # انتظار: تست‌های RequiresSqlServer اجرا و سبز شوند
    bash scripts/ef.sh database update           # اعمال مهاجرت (رشته اتصال از SADGALLERY_CONNECTION)
-   dotnet run --project src/SadGallery.Web -- --seed    # ساخت سه نقش پایه
+   #   PowerShell: $env:SADGALLERY_SEED_PASSWORD="<رمز قوی با رقم>"
+   dotnet run --project src/SadGallery.Web -- --seed    # سه نقش + سه کاربر نمونهٔ توسعه (ADR-0011)
    ```
    خروجی واقعی را برای ثبت در همین سند بفرستید.
 ۲) **انتقال کد به GitHub:** فاز ۱ هنوز push نشده است (آخرین کامیت روی GitHub = `eeefdbb` از فاز ۰؛ `.sln` در آن نیست).

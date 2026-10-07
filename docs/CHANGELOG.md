@@ -36,6 +36,9 @@
 - **مهاجرت `InitialIdentity`** (۷ جدول `AspNet*` + جدول `__EFMigrationsHistory`؛ ۸ ایندکس از جمله ایندکس روی `IsActive`) + اسکریپت ایدِمپوتنت `database/scripts/InitialIdentity.sql`.
 - تست‌ها: ۳۴ تست واحد (پول، عیار، وزن، متن فارسی) و ۱۷ تست یکپارچه (سلامت، صفحه اصلی RTL و نبود Entity، صفحه خطا ×۳، سرآیندها و نبود سرآیند `Server`، کوکی ناامن، مجوزدهی، CSRF ×۲ و مهاجرت/Seed با `RequiresSqlServerFact`).
 - اسکریپت‌ها: `scripts/ef.sh` (پوشش دستورهای EF)، نصب خودکار `dotnet-ef` در `scripts/dev-setup.sh`، و `scripts/git-commit.sh` (هویت Git پایدار در محیط ایجنت).
+- **Seed کاربران اولیه (ADR-0011):** بخش تنظیمات `SeedUsers` + رمز از `SADGALLERY_SEED_PASSWORD`/`SeedUsers:n:Password`؛ اعتبارسنجی fail-closed پیش از هر دسترسی به دیتابیس (کد خروج ۲)، ایدِمپوتنس امن (کاربر موجود بازنویسی/تغییررمز نمی‌شود)، افزودن نقش جاافتاده، و ممنوعیت چاپ/لاگ رمز. نمونه‌های توسعه در `appsettings.Development.json` (بدون رمز).
+- سه کاربر نمونهٔ توسعه: `admin@sadgallery.local` (Admin)، `operator@sadgallery.local` (Operator)، `customer@sadgallery.local` (Customer) — رمز توسط خود اپراتور تعیین می‌شود.
+- مستندات: `ADR-0011`، اصلاح `ADR-0004`، بخش §۴.۶ در `docs/DEPLOYMENT.md` («ساخت اولین مدیر»)، گام Seed در `README.md`.
 - راهنمای «راه‌اندازی اولین‌بار دیتابیس» در `docs/DEPLOYMENT.md` §۴.۵ (پاسخ به «دیتابیس ساخته نشده، کجا مهاجرت بزنم؟») + `scripts/ef.sh` که در نبود `SADGALLERY_CONNECTION` از `ConnectionStrings__SadGallery` استفاده می‌کند.
 
 ### Changed
@@ -54,7 +57,8 @@
 
 ### Verified
 - `dotnet build SadGallery.sln -warnaserror` ⇒ **۰ خطا، ۰ هشدار**.
-- `dotnet test` ⇒ **۳۴/۳۴ واحد سبز** + **۱۶/۱۶ یکپارچه سبز** + ۱ Skip صریح (نیازمند SQL Server).
+- `dotnet test` ⇒ **۵۴/۵۴ واحد سبز** (۳۴ قبلی + ۲۰ تست Seed کاربران) + **۱۷/۱۷ یکپارچه سبز** + ۳ Skip صریح (نیازمند SQL Server: ۱ مهاجرت + ۲ Seed).
+- اجرای واقعی `--seed` در سندباکس (سه سناریو): بدون رمز ⇒ ۳ خطای فارسی و کد خروج `2` بدون لمس دیتابیس؛ با رمز ⇒ عبور از اعتبارسنجی و رسیدن به مرحلهٔ دیتابیس (در سندباکس: خطای اتصال، مورد انتظار)؛ نقش نامعتبر ⇒ «نقش Wizard شناخته‌شده نیست؛ نقش‌های مجاز: Customer, Operator, Admin». هیچ رمزی در هیچ خروجی ظاهر نشد.
 - اجرای واقعی برنامه روی Kestrel: `/`=200 (۵۵۱۲ بایت، صفر Entity عددی)؛ `/no-such-page`=404 «صفحه یافت نشد»؛ `/health`=200 `Healthy`؛ `/health/ready`=503 (بدون DB، درست)؛ `/Admin|Operator|Member`=302 به ورود؛ POST بدون توکن=400؛ دارایی‌های self-host=200.
 - سرآیندهای پاسخ (curl بدون فیلتر): `X-Content-Type-Options: nosniff`، `X-Frame-Options: DENY`، `Referrer-Policy: strict-origin-when-cross-origin`، `Cross-Origin-Opener-Policy: same-origin`، `Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()` — و **هیچ سرآیند `Server` ارسال نمی‌شود** (تأییدشده؛ `Program.cs` خط ۲۰).
 

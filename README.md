@@ -76,8 +76,14 @@ dotnet test
 #      cd src/SadGallery.Web
 #      dotnet user-secrets set "ConnectionStrings:SadGallery" "<connection-string>"
 #      cd ../..
-dotnet run --project src/SadGallery.Web -- --seed    # ساخت سه نقش (ایدِمپوتنت)
-dotnet run --project src/SadGallery.Web              # اجرا
+# ۳) Seed: نقش‌ها + کاربران اولیه (رمز را خودتان در شل تعیین می‌کنید؛ در مخزن ذخیره نمی‌شود)
+#    PowerShell:  $env:SADGALLERY_SEED_PASSWORD = "<رمز قوی با حداقل ۸ نویسه و یک رقم>"
+#    bash:        export SADGALLERY_SEED_PASSWORD="<رمز قوی>"
+dotnet run --project src/SadGallery.Web -- --seed
+dotnet run --project src/SadGallery.Web              # اجرا (ورود: /Account/Login)
+
+# کاربران نمونهٔ توسعه (قابل تغییر در appsettings.Development.json — بدون رمز در فایل):
+#   admin@sadgallery.local (Admin) · operator@sadgallery.local (Operator) · customer@sadgallery.local (Customer)
 ```
 
 > در سندباکس ایجنت، SDK و SQL Server در دسترس نیستند؛ برای جزئیات و روش کار به `AGENTS.md` بخش ۶ و `docs/TESTING.md` مراجعه کنید.

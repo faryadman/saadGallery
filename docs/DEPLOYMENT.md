@@ -174,6 +174,72 @@ sqlcmd -S localhost -d SadGallery -i database/scripts/InitialIdentity.sql
 (دستورهای بالا). تست خودکار `IdentitySchemaTests` همین مسیر را روی دیتابیس موقت می‌آزماید و با تنظیم
 `SADGALLERY_TEST_SQL` اجرا می‌شود (docs/TESTING.md §۴).
 
+## ۴.۶ ساخت کاربران اولیه (Seed) — «چطور اولین مدیر را بسازم؟»
+
+**خلاصه:** کاربران اولیه از بخش تنظیمات `SeedUsers` خوانده می‌شوند و رمزشان **فقط** از متغیر محیطی
+`SADGALLERY_SEED_PASSWORD` (یا `SeedUsers:n:Password`) می‌آید. هیچ رمز پیش‌فرضی در مخزن نیست (ADR-0011).
+
+### الف) ویندوز — PowerShell
+```powershell
+# ۱) رمز دلخواه خودتان را فقط در همین پنجره شل تعیین کنید (در فایل مخزن نگذارید)
+$env:SADGALLERY_SEED_PASSWORD = "<یک-رمز-قوی-حداقل-۸-نویسه-با-رقم>"
+
+# ۲) اجرای Seed (نقش‌ها + کاربران تعریف‌شده در appsettings.Development.json)
+dotnet run --project src/SadGallery.Web -- --seed
+```
+خروجی موفق چنین است («ساخته شد» در اجرای اول، «از قبل بود» در اجرای بعدی):
+```
+نقش‌های پایه بررسی/ایجاد شدند: Customer, Operator, Admin
+  • admin@sadgallery.local — ساخته شد؛ نقش Admin اضافه شد
+  • operator@sadgallery.local — ساخته شد؛ نقش Operator اضافه شد
+  • customer@sadgallery.local — ساخته شد؛ نقش Customer اضافه شد
+پایان Seed. (رمزهای عبور هرگز چاپ یا لاگ نمی‌شوند)
+```
+
+### ب) لینوکس / Git Bash
+```bash
+export SADGALLERY_SEED_PASSWORD="<رمز قوی>"
+dotnet run --project src/SadGallery.Web -- --seed
+```
+
+### ج) اگر رزهای خودتان می‌خواهید (Production/Staging)
+`SeedUsers` را در تنظیمات محیط خود تعریف کنید (مثلاً با ENV) و رمز را بدهید:
+```bash
+export SeedUsers__0__UserName="owner@example.com"
+export SeedUsers__0__Email="owner@example.com"
+export SeedUsers__0__DisplayName="مالک"
+export SeedUsers__0__Role="Admin"
+export SeedUsers__0__Password="<رمز-قوی-از-Secret-Store>"
+export SeedUsers__1__UserName="operator@example.com"
+export SeedUsers__1__Role="Operator"
+export SADGALLERY_SEED_PASSWORD="<رمز دوم>"          # برای ورودی‌هایی که رمز اختصاصی ندارند
+dotnet run --project src/SadGallery.Web -- --seed
+```
+> در محیط غیر Development هشدار صریح چاپ می‌شود تا اجرای سهوی مشخص باشد.
+
+### د) قواعد امنیتی این مسیر (ADR-0011)
+| قاعده | چرا |
+| --- | --- |
+| تعریف ناقص ⇒ شکست **پیش از هر تغییر** در دیتابیس (کد خروج `۲`) | جلوگیری از نیمه‌ساخته‌شدن داده |
+| کاربر موجود بازنویسی نمی‌شود و **رمز تغییر نمی‌کند** | ایدِمپوتنسی امن؛ اجرای دوباره بی‌خطر است |
+| نقش جاافتاده اضافه می‌شود | می‌توان نقش را بعداً ارتقا داد |
+| رمز هرگز چاپ/لاگ نمی‌شود | جلوگیری از ماندن راز در لاگ/تاریخچه Shell |
+| `PasswordHash` فقط از `UserManager` (هش استاندارد Identity) | ممنوعیت رمزنگاری دست‌ساز |
+
+### ه) تأیید
+```bash
+sqlcmd -S localhost -d SadGallery -Q "SELECT UserName, IsActive FROM AspNetUsers"
+sqlcmd -S localhost -d SadGallery -Q "SELECT u.UserName, r.Name FROM AspNetUserRoles ur JOIN AspNetUsers u ON u.Id=ur.UserId JOIN AspNetRoles r ON r.Id=ur.RoleId"
+```
+سپس با همین کاربران در `/Account/Login` وارد شوید (شناسه = نام کاربری یا ایمیل).
+
+### و) پاک‌کردن کاربران نمونه در پایان کار (اختیاری)
+```sql
+-- فقط اگر مطمئنید که داده وابسته‌ای ندارند
+DELETE ur FROM AspNetUserRoles ur JOIN AspNetUsers u ON u.Id = ur.UserId WHERE u.UserName LIKE '%@sadgallery.local';
+DELETE FROM AspNetUsers WHERE UserName LIKE '%@sadgallery.local';
+```
+
 ## ۵. مدیریت Secret و عبارت محرمانه
 
 | راز | محل نگهداری | چرخش |

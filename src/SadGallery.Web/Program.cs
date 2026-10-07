@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.WebEncoders;
 using SadGallery.Application;
 using SadGallery.Application.Abstractions;
+using SadGallery.Application.Identity;
 using SadGallery.Infrastructure;
 using SadGallery.Infrastructure.Identity;
 using SadGallery.Infrastructure.Persistence;
@@ -116,12 +117,63 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // دستور عملیاتی: dotnet run --project src/SadGallery.Web -- --seed
-// نقش‌های پایه را به‌صورت ایدِمپوتنت می‌سازد و خارج می‌شود (هیچ کاربری با رمز پیش‌فرض ساخته نمی‌شود).
+//  ۱) نقش‌های پایه را ایدِمپوتنت می‌سازد.
+//  ۲) کاربران اولیه را فقط اگر در تنظیمات (SeedUsers) تعریف شده باشند و رمزشان از
+//     Secret/ENV آمده باشد می‌سازد. هیچ رمز پیش‌فرضی در مخزن نیست (ADR-0011).
 if (args.Contains("--seed", StringComparer.Ordinal))
 {
+    // ترتیب مهم است: نخست تنظیمات اعتبارسنجی می‌شود (بدون هیچ دسترسی به دیتابیس)،
+    // سپس نقش‌ها و در آخر کاربران ساخته می‌شوند. پس تعریف ناقص ⇒ شکست سریع و بدون اثر جانبی.
+    var seedUsers = SeedUsersConfiguration.Read(app.Configuration);
+
+    if (seedUsers.Count > 0)
+    {
+        var validationErrors = SeedUsersConfiguration.Validate(seedUsers, RoleNames.All);
+
+        if (validationErrors.Count > 0)
+        {
+            Console.Error.WriteLine("Seed کاربران انجام نشد؛ ابتدا این موارد را اصلاح کنید:");
+            foreach (var error in validationErrors)
+            {
+                Console.Error.WriteLine($"  - {error}");
+            }
+
+            Environment.ExitCode = 2; // تا اسکریپت‌های اتوماسیون متوجه شکست شوند
+            return;
+        }
+    }
+
     using var seedScope = app.Services.CreateScope();
     var seeder = seedScope.ServiceProvider.GetRequiredService<IIdentitySeeder>();
+
     await seeder.SeedAsync();
+    Console.WriteLine($"نقش‌های پایه بررسی/ایجاد شدند: {string.Join(", ", RoleNames.All)}");
+
+    if (seedUsers.Count == 0)
+    {
+        Console.WriteLine("هیچ کاربر اولیه‌ای تعریف نشده است (بخش SeedUsers خالی است).");
+        Console.WriteLine(
+            $"برای ساخت کاربر، SeedUsers را تعریف کنید و رمز را با متغیر محیطی " +
+            $"{SeedUsersConfiguration.SharedPasswordEnvironmentVariable} بدهید.");
+        return;
+    }
+
+    if (!app.Environment.IsDevelopment())
+    {
+        Console.WriteLine(
+            $"هشدار: Seed کاربران در محیط «{app.Environment.EnvironmentName}» اجرا می‌شود — مطمئن شوید عمدی است.");
+    }
+
+    var outcomes = await seeder.SeedUsersAsync(seedUsers);
+
+    foreach (var outcome in outcomes)
+    {
+        var userState = outcome.UserCreated ? "ساخته شد" : "از قبل موجود بود (رمز تغییر نکرد)";
+        var roleState = outcome.RoleAssigned ? $"نقش {outcome.Role} اضافه شد" : $"نقش {outcome.Role} از قبل بود";
+        Console.WriteLine($"  • {outcome.UserName} — {userState}؛ {roleState}");
+    }
+
+    Console.WriteLine("پایان Seed. (رمزهای عبور هرگز چاپ یا لاگ نمی‌شوند)");
     return;
 }
 

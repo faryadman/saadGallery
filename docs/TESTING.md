@@ -50,6 +50,17 @@ dotnet test
 | assertion | `Assert`های خود xUnit | **بدون FluentAssertions** (مجوز تجاری از v8) — ADR-0010 |
 | اسکایل شرطی | `RequiresSqlServerFactAttribute` (تست شرطی داخلی) | در نبود `SADGALLERY_TEST_SQL` پیام Skip روشن می‌دهد |
 
+### تست‌های Seed کاربران (ADR-0011)
+```bash
+# واحد (بدون دیتابیس): اعتبارسنجی تعریف‌ها، رمز از ENV، عدم بازتاب رمز در پیام خطا
+dotnet test tests/SadGallery.Tests.Unit --filter "FullyQualifiedName~SeedUser"
+# یکپارچه (نیازمند SQL Server): ساخت با نقش، هش‌شده بودن رمز، ایدِمپوتنسی، افزودن نقش جاافتاده، عدم افشا در لاگ
+export SADGALLERY_TEST_SQL="Server=localhost;Database=master;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet test tests/SadGallery.Tests.Integration --filter "FullyQualifiedName~SeedUsers"
+```
+> تست `SeedUsers_WithoutPassword_IsRejectedBeforeAnyDatabaseAccess` عمداً بدون دیتابیس است: باید ثابت کند
+> اعتبارسنجی **پیش از** هر دسترسی به دیتابیس اجرا می‌شود (fail-closed).
+
 **نکته پایداری:** در فایل `tests/SadGallery.Tests.Integration/AssemblyInfo.cs` موازی‌سازی بین کلاس‌های تست
 با `[assembly: Parallelization(Mode = ParallelMode.None)]` غیرفعال شده است؛ چون هر کلاس یک میزبان واقعی
 ASP.NET Core می‌سازد و اجرای هم‌زمان آن‌ها روی منابع مشترک رقابت می‌کند (BUG-007). این کار هیچ تستی را

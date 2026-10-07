@@ -15,6 +15,7 @@
   <ItemGroup Label="Runtime — هم‌نسخه با .NET 10 (10.0.12)">
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
