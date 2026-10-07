@@ -52,16 +52,32 @@ git@github.com / https://github.com/faryadman/saadGallery.git   (شاخه اصل
 
 ## شروع کار (پس از فاز یک)
 
+**پیش‌نیاز روی ماشین خودتان:** .NET SDK 10.0.1xx و یک SQL Server (Express / LocalDB / Developer).
+اگر دیتابیس هنوز ساخته نشده، هیچ نگران نباشید: دستور `database update` **خودش دیتابیس را می‌سازد**.
+راهنمای کامل و گام‌به‌گام: `docs/DEPLOYMENT.md` §۴.۵.
+
 ```bash
-# پیش‌نیاز روی ماشین خودتان: .NET SDK 10.0.1xx و SQL Server (Express/LocalDB/Developer)
+# ۱) ساخت و تست (بدون نیاز به دیتابیس)
 dotnet restore
 dotnet build -warnaserror
 dotnet test
 
-# اجرا در محیط توسعه (Connection String از User Secrets خوانده می‌شود، نه از مخزن)
-cd src/SadGallery.Web
-dotnet user-secrets set "ConnectionStrings:SadGallery" "<connection-string>"
-dotnet run
+# ۲) ساخت دیتابیس + اعمال مهاجرت (فقط یک‌بار)
+#    ویندوز PowerShell:
+#      dotnet tool install --global dotnet-ef --version 10.*
+#      $env:SADGALLERY_CONNECTION = "Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+#      dotnet ef database update --project src/SadGallery.Infrastructure --startup-project src/SadGallery.Web
+#    لینوکس/macOS/Git Bash:
+#      SADGALLERY_CONNECTION="Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True" bash scripts/ef.sh database update
+
+# ۳) اجرا — توجه: خودِ برنامه نام متغیر دیگری می‌خواهد (تله رایج!)
+#    PowerShell:  $env:ConnectionStrings__SadGallery = "Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+#    یا با User Secrets:
+#      cd src/SadGallery.Web
+#      dotnet user-secrets set "ConnectionStrings:SadGallery" "<connection-string>"
+#      cd ../..
+dotnet run --project src/SadGallery.Web -- --seed    # ساخت سه نقش (ایدِمپوتنت)
+dotnet run --project src/SadGallery.Web              # اجرا
 ```
 
 > در سندباکس ایجنت، SDK و SQL Server در دسترس نیستند؛ برای جزئیات و روش کار به `AGENTS.md` بخش ۶ و `docs/TESTING.md` مراجعه کنید.

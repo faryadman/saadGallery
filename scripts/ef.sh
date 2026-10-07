@@ -13,9 +13,14 @@
 #
 # نکته‌ها:
 #   • دستورهای add/script/remove به دیتابیس وصل نمی‌شوند.
-#   • دستور database update واقعاً وصل می‌شود؛ رشته اتصال را از متغیر محیطی بدهید:
+#   • دستور database update واقعاً وصل می‌شود و اگر دیتابیس وجود نداشته باشد
+#     **خودش آن را می‌سازد** (CREATE DATABASE) و سپس مهاجرت‌ها را اعمال می‌کند.
+#   • رشته اتصال را از متغیر محیطی بدهید (هرگز در فایل مخزن):
 #       export SADGALLERY_CONNECTION="Server=...;Database=SadGallery;..."
-#     و هرگز آن را در فایل مخزن نگذارید.
+#     نکته: ابزار EF از SADGALLERY_CONNECTION می‌خواند و خودِ برنامه از
+#     ConnectionStrings__SadGallery. برای راحتی، اگر اولی تنظیم نشده باشد این
+#     اسکریپت دومی را (که مقدارش در محیط توسعه معمولاً همان است) جایگزین می‌کند.
+#   • اگر هیچ‌کدام تنظیم نشود، کارخانه زمان طراحی به LocalDB روی ویندوز برمی‌گردد.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,6 +41,21 @@ fi
 if [ $# -eq 0 ]; then
     echo "استفاده: bash scripts/ef.sh <migrations|database> <زیر‌دستور> [گزینه‌ها]" >&2
     exit 2
+fi
+
+# پل زدن بین دو نام متغیر: ابزار EF از SADGALLERY_CONNECTION می‌خواند، برنامه از
+# ConnectionStrings__SadGallery. اگر اولی نبود و دومی بود، همان را استفاده کن تا کاربر
+# مجبور نباشد یک رشته را دو بار با دو نام وارد کند (تله‌ای که در آزمون واقعی دیده شد).
+if [ -z "${SADGALLERY_CONNECTION:-}" ] && [ -n "${ConnectionStrings__SadGallery:-}" ]; then
+    export SADGALLERY_CONNECTION="${ConnectionStrings__SadGallery}"
+    echo "[ef] استفاده از ConnectionStrings__SadGallery به‌عنوان رشته اتصال." >&2
+fi
+
+if [ -n "${SADGALLERY_CONNECTION:-}" ]; then
+    echo "[ef] رشته اتصال تنظیم شده است (مقدار آن چاپ نمی‌شود)." >&2
+elif [ "$1" = "database" ]; then
+    echo "[ef] هشدار: SADGALLERY_CONNECTION تنظیم نشده؛ کارخانه زمان طراحی به LocalDB برمی‌گردد." >&2
+    echo "     روی ویندوز با Visual Studio معمولاً کار می‌کند؛ روی لینوکس/سرور، متغیر را تنظیم کنید." >&2
 fi
 
 exec dotnet-ef "$@" \

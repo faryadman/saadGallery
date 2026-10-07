@@ -36,6 +36,7 @@
 - **مهاجرت `InitialIdentity`** (۷ جدول `AspNet*` + جدول `__EFMigrationsHistory`؛ ۸ ایندکس از جمله ایندکس روی `IsActive`) + اسکریپت ایدِمپوتنت `database/scripts/InitialIdentity.sql`.
 - تست‌ها: ۳۴ تست واحد (پول، عیار، وزن، متن فارسی) و ۱۷ تست یکپارچه (سلامت، صفحه اصلی RTL و نبود Entity، صفحه خطا ×۳، سرآیندها و نبود سرآیند `Server`، کوکی ناامن، مجوزدهی، CSRF ×۲ و مهاجرت/Seed با `RequiresSqlServerFact`).
 - اسکریپت‌ها: `scripts/ef.sh` (پوشش دستورهای EF)، نصب خودکار `dotnet-ef` در `scripts/dev-setup.sh`، و `scripts/git-commit.sh` (هویت Git پایدار در محیط ایجنت).
+- راهنمای «راه‌اندازی اولین‌بار دیتابیس» در `docs/DEPLOYMENT.md` §۴.۵ (پاسخ به «دیتابیس ساخته نشده، کجا مهاجرت بزنم؟») + `scripts/ef.sh` که در نبود `SADGALLERY_CONNECTION` از `ConnectionStrings__SadGallery` استفاده می‌کند.
 
 ### Changed
 - **مهاجرت پشته تست به `xunit.v3` 4.0.1**: بررسی `dotnet list package --deprecated` نشان داد `xunit 2.9.3` منسوخ (Legacy) است ⇒ مطابق اصل پروژه، مهاجرت انجام شد. در پی آن: اجرا روی Microsoft.Testing.Platform، حذف `Microsoft.NET.Test.Sdk` و `coverlet.collector`، و فعال‌سازی تجربه جدید `dotnet test` با `global.json` (`test.runner`).
@@ -62,8 +63,10 @@
 - **اجرا نشده در سندباکس (نیازمند SQL Server):** مهاجرت روی دیتابیس واقعی، Seed نقش‌ها، ورود/ثبت‌نام و قفل حساب. دستورهای اجرا برای مالک در `README.md` و `docs/TESTING.md`.
 
 ### Published
-- **فاز صفر روی مخزن رسمی منتشر شد**: `https://github.com/faryadman/saadGallery.git` — شاخه `main`، ۶ کامیت، ۳۰ فایل.
-- آخرین کامیت منتشرشده: `eeefdbb` («تثبیت بیت اجرای git-commit.sh»).
+- **فاز صفر روی مخزن رسمی منتشر شد**: `https://github.com/faryadman/saadGallery.git` — شاخه `main`، ۶ کامیت، ۳۰ فایل (کامیت `eeefdbb`).
+- **فاز ۱ منتشر شد (2026-10-06):** `git push` از `eeefdbb` به `64a1ff7` (فست‌فوروارد، بدون بازنویسی تاریخچه) — ۱۴ کامیت، ۱۲۴ فایل، شامل `SadGallery.sln`.
+  - **تأیید پس از انتشار (اجرای واقعی):** `ls-remote` ناشناس بدون احراز هویت SHA ریموت را برابر `64a1ff7` نشان داد؛ **کلون تازهٔ ناشناس از GitHub** با `dotnet build -warnaserror` ⇒ `Build succeeded, 0 Warning(s), 0 Error(s)`؛ اسکن اسرار روی نسخهٔ منتشرشده ⇒ صفر تطابق.
+  - فرایند انتشار بدون ذخیرهٔ توکن: توکن فقط به‌صورت گذرا در فایل موقت با مجوز `600` بیرون از مخزن، با `credential.helper` فقط برای همان یک دستور؛ پس از push با بازنویسی تصادفی پاک شد. `.git/config` و `.git-credentials` دست‌نخورده و پاک ماندند (بررسی شد).
 - **تأیید پس از انتشار (اجرای واقعی):** clone ناشناس بدون احراز هویت موفق شد؛ اسکن اسرار روی نسخه عمومی صفر مورد نشان داد (چهار تطابق اولیه همه جای‌نگهدار/دیتابیس تست محلی بودند و بررسی شدند).
 - فرایند انتشار بدون ذخیره توکن انجام شد: توکن فقط در یک فایل موقت با مجوز `600`، با `credential.helper` غیرفعال، بدون نوشتن در `.git/config`؛ پس از push حذف شد.
 

@@ -84,6 +84,96 @@ ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS=http://127.0.0.1:5000 dotnet /
 curl -fsS http://127.0.0.1:5000/health/ready
 ```
 
+## ۴.۵ راه‌اندازی اولین‌بار دیتابیس — «دیتابیس ساخته نشده، کجا مهاجرت بزنم؟»
+
+**پاسخ کوتاه: دستی دیتابیس نسازید. دستور `database update` خودش دیتابیس را می‌سازد.**
+مهاجرت‌های EF Core هنگام اجرا، اگر دیتابیس وجود نداشته باشد `CREATE DATABASE` را صادر می‌کنند و بعد جدول‌ها را می‌سازند.
+
+### الف) کجا اجرا کنم؟
+روی **همان ماشینی که SQL Server دارد**، در **ریشهٔ مخزن** (جایی که `SadGallery.sln` هست). فقط یک‌بار لازم است.
+
+### ب) ویندوز — PowerShell (رایج‌ترین حالت)
+
+```powershell
+cd C:\path\to\saadGallery
+
+# ۱) ابزار EF را یک‌بار نصب کنید (نسخه ۱۰)
+dotnet tool install --global dotnet-ef --version 10.*
+
+# ۲) رشته اتصال را فقط در همین پنجرهٔ شل تعیین کنید (نه در فایل مخزن)
+$env:SADGALLERY_CONNECTION = "Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+
+# ۳) اعمال مهاجرت‌ها (دیتابیس در همین لحظه ساخته می‌شود)
+dotnet ef database update --project src/SadGallery.Infrastructure --startup-project src/SadGallery.Web
+```
+
+- اگر **SQL Server Express** دارید: `Server=localhost\SQLEXPRESS;...`
+- اگر **LocalDB** دارید (همراه Visual Studio نصب می‌شود): می‌توانید مرحلهٔ ۲ را کامل حذف کنید؛ کارخانهٔ زمان طراحی خودش به `(localdb)\MSSQLLocalDB` برمی‌گردد. یا صریح بنویسید: `Server=(localdb)\MSSQLLocalDB;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True`
+- اگر از **Git Bash** روی ویندوز استفاده می‌کنید:
+  ```bash
+  SADGALLERY_CONNECTION="Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True" bash scripts/ef.sh database update
+  ```
+
+### ج) لینوکس / سرور
+
+```bash
+export SADGALLERY_CONNECTION="Server=localhost;Database=SadGallery;User Id=sa;Password=<رمز-از-Secret-Store>;TrustServerCertificate=True"
+bash scripts/ef.sh database update
+```
+
+### د) ⚠️ تله‌ای که باید بدانید: دو نام متغیر برای یک رشته اتصال
+| مصرف‌کننده | متغیر | چرا |
+| --- | --- | --- |
+| ابزار `dotnet ef` (مهاجرت) | `SADGALLERY_CONNECTION` | کارخانهٔ زمان طراحی `SadGalleryDbContextFactory` همین را می‌خواند |
+| خودِ برنامه (`dotnet run`) | `ConnectionStrings__SadGallery` | این نگارش، معادل `ConnectionStrings:SadGallery` در `appsettings.json` است |
+
+برای اجرای برنامه، جدا از دستور مهاجرت:
+```powershell
+$env:ConnectionStrings__SadGallery = "Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet run --project src/SadGallery.Web -- --seed    # ساخت سه نقش (ایدِمپوتنت، بی‌خطر برای تکرار)
+dotnet run --project src/SadGallery.Web             # اجرای واقعی
+```
+`scripts/ef.sh` اگر `SADGALLERY_CONNECTION` نبود، مقدار `ConnectionStrings__SadGallery` را به‌کار می‌برد؛ اما **برنامه** این پل را ندارد — پس برای اجرای اپ همان نام `ConnectionStrings__SadGallery` لازم است.
+
+### ه) بررسی موفقیت (اجباری، بدون حدس)
+```bash
+# ۱) جدول‌ها باید ۸ مورد باشند: ۷ جدول AspNet* + __EFMigrationsHistory
+sqlcmd -S localhost -d SadGallery -Q "SELECT name FROM sys.tables ORDER BY name"
+
+# ۲) مهاجرت ثبت‌شده
+sqlcmd -S localhost -d SadGallery -Q "SELECT MigrationId FROM __EFMigrationsHistory"
+#    انتظار: 20261005172327_InitialIdentity
+
+# ۳) نقش‌ها پس از --seed
+sqlcmd -S localhost -d SadGallery -Q "SELECT Name FROM AspNetRoles"
+#    انتظار: Admin, Customer, Operator
+
+# ۴) آمادگی سرویس (پس از اجرای برنامه)
+curl http://localhost:5000/health/ready     # انتظار: 200 Healthy
+```
+
+### و) مسیر جایگزین: اجرای مستقیم اسکریپت SQL
+اگر نمی‌خواهید از ابزار EF استفاده کنید، `database/scripts/InitialIdentity.sql` (ایدِمپوتنت، ۱۶ محافظ) آماده است.
+**اما توجه: این اسکریپت دیتابیس را نمی‌سازد** — اول دیتابیس را بسازید:
+```bash
+sqlcmd -S localhost -Q "IF DB_ID('SadGallery') IS NULL CREATE DATABASE SadGallery"
+sqlcmd -S localhost -d SadGallery -i database/scripts/InitialIdentity.sql
+```
+(در Production همین مسیر با بازبینی و پشتیبان‌گیری انجام می‌شود — بخش ۴.)
+
+### ز) اگر SQL Server ندارید
+یکی را نصب کنید (فاز ۱ فقط به یکی از این‌ها نیاز دارد):
+| گزینه | مناسب برای | یادداشت |
+| --- | --- | --- |
+| SQL Server Express | توسعه + پیش‌تولید | رایگان، همان موتور واقعی؛ برای Production هم کافی است اگر محدودیت‌هایش پذیرفتنی باشد |
+| LocalDB | فقط توسعهٔ محلی ویندوز | همراه Visual Studio می‌آید؛ برای Production به‌کار نمی‌رود |
+| Docker (mssql) | توسعه روی لینوکس/مک | در سندباکس ایجنت موجود نیست؛ روی ماشین خودتان ممکن است |
+
+### ح) چیزی که در سندباکس ایجنت اجرا نشد
+سندباکس SQL Server/Docker ندارد، بنابراین **اجرای واقعی مهاجرت روی دیتابیس فقط روی ماشین مالک/CI انجام می‌شود**
+(دستورهای بالا). تست خودکار `IdentitySchemaTests` همین مسیر را روی دیتابیس موقت می‌آزماید و با تنظیم
+`SADGALLERY_TEST_SQL` اجرا می‌شود (docs/TESTING.md §۴).
+
 ## ۵. مدیریت Secret و عبارت محرمانه
 
 | راز | محل نگهداری | چرخش |
