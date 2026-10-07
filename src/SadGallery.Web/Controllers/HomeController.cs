@@ -1,13 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
+using SadGallery.Application.Market;
 
 namespace SadGallery.Web.Controllers;
 
 /// <summary>
 /// صفحه اصلی (عمومی، بدون نیاز به ورود).
-/// در فاز ۳ این صفحه کارت‌های نرخ واقعی، نمودار و آخرین محصولات را نمایش می‌دهد؛
-/// تا آن زمان فقط ساختار و وضعیت سامانه نشان داده می‌شود (بدون هیچ نرخ ساختگی).
+/// نرخ‌های بازار از کش درون‌فرایندی خوانده می‌شوند (بدون کوئری دیتابیس در مسیر گرم)؛
+/// اگر هیچ نرخ معتبری موجود نباشد، به‌جای عدد ساختگی، پیام صریح نمایش داده می‌شود.
 /// </summary>
 public sealed class HomeController : Controller
 {
-    public IActionResult Index() => View();
+    private readonly RateDisplayService _rates;
+
+    /// <summary>ساخت کنترلر.</summary>
+    public HomeController(RateDisplayService rates)
+    {
+        ArgumentNullException.ThrowIfNull(rates);
+        _rates = rates;
+    }
+
+    /// <summary>نمایش صفحه اصلی همراه وضعیت نرخ‌ها.</summary>
+    public async Task<IActionResult> Index(CancellationToken cancellationToken) =>
+        View(await _rates.GetAsync(cancellationToken));
 }

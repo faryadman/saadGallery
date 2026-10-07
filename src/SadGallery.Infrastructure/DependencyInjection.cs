@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -5,8 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using SadGallery.Application.Abstractions;
 using SadGallery.Application.Data;
 using SadGallery.Infrastructure.Identity;
+using SadGallery.Application.Market;
+using SadGallery.Infrastructure.Market;
 using SadGallery.Infrastructure.Persistence;
 using SadGallery.Infrastructure.Time;
+using Microsoft.Extensions.Logging;
 
 namespace SadGallery.Infrastructure;
 
@@ -61,5 +65,69 @@ public static class DependencyInjection
         services.AddScoped<IIdentitySeeder, IdentitySeeder>();
 
         return services;
+    }
+
+    /// <summary>
+    /// ثبت زنجیره نرخ بازار (فاز ۲): تنظیمات، سیاست‌ها، کش، مخزن، منبع، هماهنگ‌کننده و Job.
+    /// انتخاب منبع با <c>RateOptions:Provider</c> انجام می‌شود؛ در حالت غیرفعال/تنظیم‌نشده،
+    /// هیچ درخواست خروجی ارسال نمی‌شود (fail-closed).
+    /// </summary>
+    public static IServiceCollection AddSadGalleryMarket(this IServiceCollection services, RateOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(options);
+
+        services.AddSingleton(options);
+        services.AddSingleton(RateFreshnessPolicy.FromOptions(options));
+        services.AddSingleton(new RateAnomalyDetector(options.AnomalyChangeThresholdPercent));
+        services.AddSingleton<RateSnapshotCache>();
+        services.AddSingleton<RateNormalizer>();
+        services.AddScoped<IRateStore, RateStore>();
+        services.AddSingleton<RateFetchOrchestrator>();
+
+        if (options.IsFixtureProvider)
+        {
+            // فقط در توسعه/تست (فعال‌سازی در محیط غیرتوسعه در لایه Web رد می‌شود).
+            services.AddSingleton<IRateProvider>(provider =>
+                new FixtureRateProvider(provider.GetRequiredService<IClock>(), options));
+        }
+        else
+        {
+            services.AddSingleton(CreateRateHttpClient(options));
+            services.AddSingleton<IRateProvider>(provider => new TgnRateProvider(
+                provider.GetRequiredService<HttpClient>(),
+                options,
+                provider.GetRequiredService<IClock>(),
+                provider.GetRequiredService<ILogger<TgnRateProvider>>()));
+        }
+
+        services.AddHostedService<RateFetchBackgroundService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// ساخت HttpClient اختصاصی منبع نرخ.
+    /// نکته امنیتی: از IHttpClientFactory استفاده نمی‌شود تا هیچ لاگ خودکاری از «آدرس درخواست»
+    /// (که اعتبارنامه در مسیر آن است) تولید نشود؛ مهلت هم با CancellationToken در Provider اعمال می‌شود.
+    /// </summary>
+    private static HttpClient CreateRateHttpClient(RateOptions options)
+    {
+        var handler = new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.All,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            ConnectTimeout = TimeSpan.FromSeconds(Math.Min(options.HttpTimeoutSeconds, 10)),
+        };
+
+        var client = new HttpClient(handler)
+        {
+            // مهلت واقعی در Provider با CTS اعمال می‌شود؛ اینجا بی‌نهایت تا تداخل نداشته باشد.
+            Timeout = Timeout.InfiniteTimeSpan,
+        };
+
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("SadGallery/1.0 (+internal-rate-fetch)");
+
+        return client;
     }
 }

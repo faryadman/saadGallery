@@ -17,6 +17,8 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
+    <!-- BackgroundService و IHostedService برای Job دوره‌ای نرخ (فاز ۲) در پروژه کتابخانه‌ای Infrastructure -->
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
     <!-- ابزار خط فرمان EF برای Package Manager Console در Visual Studio

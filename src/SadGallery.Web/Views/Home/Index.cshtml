@@ -1,5 +1,15 @@
+@model SadGallery.Application.Market.RateDisplayModel
+@using SadGallery.Domain.Enums
 @{
     ViewData["Title"] = "خانه و بازار";
+
+    static string QualityBadge(RateQuality quality) => quality switch
+    {
+        RateQuality.Live => "text-bg-success",
+        RateQuality.Delayed => "text-bg-warning",
+        RateQuality.Stale => "text-bg-secondary",
+        _ => "text-bg-danger",
+    };
 }
 
 <section class="sg-hero">
@@ -11,22 +21,64 @@
 
 <div class="row g-3 mt-1">
     <div class="col-12">
-        <div class="alert alert-warning d-flex gap-2 align-items-start" role="alert">
-            <strong>توجه:</strong>
-            <span>
-                کارت‌های نرخ در <strong>فاز ۲</strong> به منبع واقعی نرخ متصل می‌شوند.
-                طبق اصل پروژه، تا زمان اتصال به منبع معتبر، <strong>هیچ عدد یا نرخ ساختگی نمایش داده نمی‌شود</strong>.
-            </span>
+        <div class="sg-card">
+            <div class="sg-card__title d-flex justify-content-between align-items-center">
+                <span>نرخ‌های بازار</span>
+                @if (Model.LastFetchedUtc is { } fetchedAt)
+                {
+                    <span class="small text-muted">آخرین دریافت: @SadGallery.Application.Text.PersianDate.ToJalaliDateTimeText(fetchedAt)</span>
+                }
+            </div>
+
+            @if (Model.Notice is { } notice)
+            {
+                <div class="alert @(Model.Items.Count == 0 ? "alert-warning" : "alert-light border") small mb-3" role="alert">
+                    @notice
+                </div>
+            }
+
+            @if (Model.Items.Count == 0)
+            {
+                <p class="small text-muted mb-0">
+                    طبق اصل پروژه، تا دریافت نرخ معتبر از منبع رسمی، <strong>هیچ عدد یا نرخ ساختگی نمایش داده نمی‌شود</strong>.
+                </p>
+            }
+            else
+            {
+                <div class="row g-2">
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="border rounded p-2 h-100">
+                                <div class="small text-muted">@item.Title</div>
+                                <div class="fw-bold">
+                                    @item.AmountText
+                                    <span class="small fw-normal">@item.UnitText</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <span class="badge @QualityBadge(item.Quality)">@item.QualityLabel</span>
+                                    <span class="small text-muted">@item.QuotedAtText</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (Model.IsSampleData)
+            {
+                <p class="small text-danger mt-3 mb-0">
+                    هشدار: این بخش با منبع «نمونهٔ آزمایشی» کار می‌کند (فقط محیط توسعه) و نرخ روز بازار نیست.
+                </p>
+            }
         </div>
     </div>
-
-    @* کارت‌های نرخ واقعی در فاز ۲ اینجا ساخته می‌شوند (RateCard partial) *@
     <div class="col-12">
         <div class="sg-card">
             <div class="sg-card__title">وضعیت سامانه</div>
             <ul class="mb-0 small text-muted">
                 <li>زیرساخت، هویت کاربران و کنترل دسترسی (سه نقش) فعال است.</li>
-                <li>منبع نرخ: در انتظار مستندات و نمونه JSON واقعی API (سؤال <code>Q-API-1</code>).</li>
+                <li>منبع نرخ: زنجیره دریافت/Cache/تاریخچه پیاده‌سازی شده است؛ فعال‌سازی نهایی با تنظیم اعتبارنامه منبع (فاز ۲).</li>
                 <li>ویترین محصولات: فاز ۴ • سامانه تیکت و استعلام قیمت: فاز ۵ • نصب روی موبایل (PWA): فاز ۷</li>
             </ul>
         </div>

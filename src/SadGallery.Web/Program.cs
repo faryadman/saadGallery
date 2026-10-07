@@ -5,8 +5,11 @@ using Microsoft.Extensions.WebEncoders;
 using SadGallery.Application;
 using SadGallery.Application.Abstractions;
 using SadGallery.Application.Identity;
+using SadGallery.Application.Market;
+using SadGallery.Application.Text;
 using SadGallery.Infrastructure;
 using SadGallery.Infrastructure.Identity;
+using SadGallery.Infrastructure.Market;
 using SadGallery.Infrastructure.Persistence;
 using SadGallery.Web.HealthChecks;
 using SadGallery.Web.Middleware;
@@ -23,6 +26,21 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 // ---- لایه‌های پروژه ----
 builder.Services.AddSadGalleryApplication();
 builder.Services.AddSadGalleryInfrastructure(builder.Configuration);
+
+// ---- بازار: زنجیره نرخ (فاز ۲) ----
+// تنظیمات از بخش RateOptions خوانده می‌شود؛ اعتبارنامه فقط از ENV/User Secrets.
+var rateOptions = new RateOptions();
+builder.Configuration.GetSection("RateOptions").Bind(rateOptions);
+
+if (rateOptions.IsFixtureProvider && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "منبع نرخ Fixture فقط در محیط Development مجاز است. " +
+        "در محیط عملیاتی مقدار RateOptions:Provider را روی Tgn یا Disabled بگذارید.");
+}
+
+builder.Services.AddSadGalleryMarket(rateOptions);
+builder.Services.AddScoped<RateDisplayService>();
 
 // ---- Identity (ADR-0004) ----
 builder.Services
@@ -109,12 +127,20 @@ builder.Services.AddRateLimiter(options =>
 
 // ---- سلامت سرویس ----
 builder.Services.AddHealthChecks()
-    .AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
+    .AddCheck<DatabaseHealthCheck>("database", tags: ["ready"])
+    .AddCheck<RateFeedHealthCheck>("rate-feed", tags: ["rates"]);
 
 // ---- OpenAPI (فقط محیط توسعه منتشر می‌شود؛ در Prod سطح حمله کم می‌شود) ----
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// اعتبارسنجی تنظیمات بازار (بدون متوقف کردن سایت: سایت باید صفحه «نرخ در دسترس نیست» را نشان دهد،
+// نه اینکه کاملاً از کار بیفتد؛ اما مشکل صریح لاگ می‌شود).
+foreach (var rateConfigurationError in rateOptions.Validate())
+{
+    app.Logger.LogWarning("تنظیمات نرخ (RateOptions): {Error}", rateConfigurationError);
+}
 
 // دستور عملیاتی: dotnet run --project src/SadGallery.Web -- --seed
 //  ۱) نقش‌های پایه را ایدِمپوتنت می‌سازد.
@@ -177,6 +203,57 @@ if (args.Contains("--seed", StringComparer.Ordinal))
     return;
 }
 
+// دستور عملیاتی: dotnet run --project src/SadGallery.Web -- --fetch-rates-once
+//   یک اجرای کامل دریافت نرخ (قفل‌ها، دریافت، اعتبارسنجی، کش، ثبت تاریخچه).
+//   هیچ اعتبارنامه‌ای چاپ نمی‌شود؛ فقط نتیجه و فهرست نرخ‌های دریافت‌شده.
+if (args.Contains("--fetch-rates-once", StringComparer.Ordinal))
+{
+    var orchestrator = app.Services.GetRequiredService<RateFetchOrchestrator>();
+    var report = await orchestrator.RunOnceAsync(RunTriggers.Manual);
+
+    Console.WriteLine($"منبع نرخ: {report.ProviderId} · وضعیت: {report.Status}");
+
+    if (report.QuotedAtUtc is { } quotedAt)
+    {
+        Console.WriteLine($"زمان اعلام نرخ (وقت ایران): {PersianDate.ToJalaliDateTimeText(quotedAt)}");
+    }
+
+    Console.WriteLine(
+        $"نرخ معتبر: {report.AcceptedCount} · علامت‌دار (فقط ثبت): {report.FlaggedCount} · " +
+        $"ردشده: {report.RejectedCount} · کلید ناشناخته: {report.UnknownKeyCount} · " +
+        $"کلید غایب: {report.MissingKeyCount} · " +
+        $"ثبت در دیتابیس: {(report.Persisted ? "بله" : "خیر")} · مدت: {report.DurationMs}ms");
+
+    if (!string.IsNullOrWhiteSpace(report.Message))
+    {
+        Console.WriteLine($"خلاصه: {report.Message}");
+    }
+
+    var snapshot = app.Services.GetRequiredService<RateSnapshotCache>().Get();
+
+    if (snapshot is { Publishable.Count: > 0 })
+    {
+        if (string.Equals(snapshot.ProviderId, FixtureRateProvider.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("توجه: این اعداد از منبع «نمونهٔ آزمایشی» (Fixture) است و نرخ روز بازار نیست.");
+        }
+
+        Console.WriteLine("نرخ‌های دریافت‌شده:");
+        foreach (var rate in snapshot.Publishable)
+        {
+            Console.WriteLine($"  • {rate.Title}: {RateFormat.Amount(rate.Amount)} {RateFormat.Unit(rate.QuoteUnit)} ({RateFormat.QualityLabel(rate.Quality)})");
+        }
+    }
+
+    if (!report.Persisted && report.Status == RateFetchStatus.Success)
+    {
+        Console.Error.WriteLine("هشدار: نرخ‌ها دریافت شدند اما در دیتابیس ثبت نشدند (اتصال/مهاجرت دیتابیس را بررسی کنید).");
+    }
+
+    Environment.ExitCode = report.Status == RateFetchStatus.Success && report.Persisted ? 0 : 2;
+    return;
+}
+
 app.UseSecurityHeaders();
 
 if (app.Environment.IsDevelopment())
@@ -201,6 +278,8 @@ app.UseAuthorization();
 // /health = زنده بودن خود سرویس (بدون وابستگی) · /health/ready = آمادگی، شامل دیتابیس
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
+app.MapHealthChecks("/health/rates", new HealthCheckOptions { Predicate = check => check.Tags.Contains("rates") });
+
 
 app.MapControllerRoute(name: "areas", pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");

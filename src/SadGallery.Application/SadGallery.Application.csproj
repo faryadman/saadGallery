@@ -19,4 +19,10 @@
     <ProjectReference Include="..\SadGallery.Domain\SadGallery.Domain.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- نمونهٔ واقعی پاسخ سرویس نرخ (ارائه‌شده توسط مالک) برای منبع Fixture در توسعه/تست.
+         این فایل داده بازار جاری نیست؛ برچسب «نمونهٔ آزمایشی» در نمایش الزامی است. -->
+    <EmbeddedResource Include="Market\Fixture\tgn-sample.json" />
+  </ItemGroup>
 </Project>

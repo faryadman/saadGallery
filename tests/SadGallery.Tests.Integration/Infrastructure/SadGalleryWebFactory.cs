@@ -21,5 +21,10 @@ public sealed class SadGalleryWebFactory : WebApplicationFactory<Program>
 
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:SadGallery", PlaceholderConnectionString);
+
+        // تست‌ها «هرمتیک» هستند: منبع نرخ واقعی/Fixture در تست‌های HTTP فعال نمی‌شود تا
+        // هیچ درخواست خروجی و هیچ نوشتن خودکار در دیتابیس رخ ندهد. تست‌های مربوط به نمایش نرخ،
+        // کش را مستقیم پر می‌کنند.
+        builder.UseSetting("RateOptions:Provider", "Disabled");
     }
 }
