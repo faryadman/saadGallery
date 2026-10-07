@@ -98,13 +98,33 @@ Seed را دو بار اجرا می‌کند (اثبات ایدِمپوتنت) �
 - Migrationها با تست صریح آزمون می‌شوند: `Migrate()` روی دیتابیس خالی + بررسی وجود جداول/Indexهای کلیدی + `Down` تا حد ممکن در محیط تست.
 - در سندباکس ایجنت SQL Server وجود ندارد ⇒ این تست‌ها Skip می‌شوند و **در گزارش فاز باید صریحاً «اجرا نشده در سندباکس» قید شود**.
 
-## ۶. تست Provider نرخ (بدون شبکه واقعی)
+## ۶. تست Provider نرخ و زنجیره بازار (فاز ۲ — اجراشده)
 
-- یک `StubHttpMessageHandler` (یا `HttpMessageHandler` سفارشی) پاسخ Fixture را برمی‌گرداند؛ آزمون‌ها هرگز به اینترنت واقعی وابسته نیستند.
-- Fixtureها در `tests/SadGallery.Tests.Integration/Fixtures/RateProviders/<provider>/` نگهداری می‌شوند و **بدون Secret** هستند.
-- موارد الزامی هر Provider: پاسخ موفق، واحد تومان، تاریخ Unix، عدد به‌صورت رشته فارسی/انگلیسی، کلید ناشناس، فیلد گم‌شده، JSON ناقص، خطای 500، Timeout، پاسخ 429.
-- **SSRF:** تلاش برای `http://localhost`, `http://127.0.0.1`, `http://169.254.169.254`, دامنه غیرمجاز ⇒ باید رد شود (تست واقعی).
-- «نرخ ساختگی» در تست: فقط در Fixture برای آزمون منطق؛ **هرگز در داده Production یا Fallback**.
+سه لایه، هیچ‌کدام نیازمند اینترنت:
+
+| لایه | فایل | چه چیزی قفل می‌شود |
+| --- | --- | --- |
+| تجزیه (پارسر) | `tests/.../Unit/Market/TgnResponseParserTests.cs` | نگاشت نمونه واقعی مالک (۱۵ دارایی)، JSON ناقص، `null`، «7,600,000»، ارقام فارسی/جداکننده فارسی، جداکننده اعشاری اروپایی (رد)، کلید غایب (اطلاعی)، `TimeRead` غایب/نامعتبر (شکست بنیادی)، پاسخ رشته‌ای حاوی JSON، کلید ناشناخته، پاسخ `Error` |
+| نرمال‌سازی و سیاست‌ها | `RateNormalizerTests`, `RateFreshnessPolicyTests`, `RateAnomalyDetectorTests`, `RateBackoffPolicyTests`, `AssetCatalogTests`, `RateOptionsTests`, `TgnEndpointTemplateTests` | مقیاس سکه ×۱۰۰۰ و نقره ×۰٫۰۰۱ (یک بار)، خطای ریال/تومان، بازه معقول، تازگی (Live/Delayed/Stale/Invalid)، جهش ۵۰٪، عقب‌نشینی نمایی، پوشاندن اعتبارنامه، نبود خطا با رمز در پیام‌ها |
+| کش، نمایش و هماهنگی | `RateSnapshotCacheTests`, `RateDisplayServiceTests`, `RateFetchOrchestratorTests`, `TgnRateProviderTests`, `HomeRatesTests`, `RateHealthTests` | مسیر گرم = صفر کوئری، fallback دیتابیس، پیام‌های فارسی حالت‌های نبود داده، برچسب کهنگی، حذف نرخ نامعتبر/مشکوک، قفل درون‌فرایندی، حداقل فاصله، مقاومت در برابر خرابی دیتابیس، ۴۲۹/۵۰۰/Timeout/پاسخ غول‌آسا، «هیچ اعتبارنامه‌ای در لاگ» |
+
+**آمار اجراشده (2026-10-08):**
+
+```
+Unit:        232/232 سبز
+Integration:  55/55 سبز + 9 Skip
+```
+۹ مورد Skip = تست‌های نیازمند SQL Server واقعی (۶ مورد بازار + ۳ مورد قبلی). اجرای آن‌ها:
+```powershell
+$env:SADGALLERY_TEST_SQL = "Server=localhost;Database=SadGallery_Test;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet test
+```
+آن‌ها شامل: درج و خواندن «آخرین نرخ هر دارایی»، تاریخچه، ثبت رکورد اجرا، انحصار و انقضای قفل چند-نمونه‌ای، و رد نرخ ناقص توسط دیتابیس.
+
+**اجرای دستی زنجیره (بدون تست، روی محیط واقعی):**
+```powershell
+dotnet run --project src/SadGallery.Web --no-launch-profile -- --fetch-rates-once
+```
 
 ## ۷. تست‌های امنیتی الزامی (هرکدام یک تست اجراشدنی)
 

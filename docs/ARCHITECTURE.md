@@ -143,6 +143,33 @@ wwwroot/            # css/fonts/js/img، manifest.webmanifest، service-worker.j
 - درصد تغییر فقط نسبت به یک **دوره مرجع مشخص** (مثلاً «آخرین نرخ روز کاری قبل») محاسبه می‌شود، نه «آخرین رکورد در جدول».
 - هیچ نرخ ساختگی برای «قشنگ شدن» نمودار ساخته نمی‌شود.
 
+### ۴.۱ وضعیت پیاده‌شدهٔ جریان نرخ (فاز ۲ — اجراشده)
+
+```
+[BackgroundService: RateFetchBackgroundService]
+        │  بازه از config · CancellationToken · عقب‌نشینی نمایی (سقف MaxBackoffMinutes)
+        ▼
+[RateFetchOrchestrator]  ← Singleton (IServiceScopeFactory برای مخزن اسکوپ‌شده)
+        │ ۱) قفل درون‌فرایندی (SemaphoreSlim، رد اجرای هم‌زمان)
+        │ ۲) قفل چند-نمونه‌ای: UPDATE شرطی روی MarketFetchLease (اجارهٔ منقضی‌شونده)
+        │ ۳) ثبت شروع اجرا (MarketRateFetchRuns)
+        ▼
+[IRateProvider]  ── TgnRateProvider (HTTP واقعی) | FixtureRateProvider (توسعه/تست)
+        │  سقف بایت · مهلت · فقط https و دامنه مجاز · آدرس هرگز لاگ نمی‌شود
+        ▼
+[TgnResponseParser]  (Application) نگاشت نام‌محور؛ کلید غایب = اطلاع، نه خطا
+        ▼
+[RateNormalizer]  مقیاس منبع (یک بار) · بازه معقول · تازگی · جهش غیرعادی
+        ├─ Accepted   ⇒ کش (RateSnapshotCache) + MarketRates
+        └─ Flagged    ⇒ فقط MarketRates (IsAnomalySuspected / Quality=Invalid)
+        ▼
+[RateDisplayService] ← HomeController  (مسیر گرم: صفر کوئری دیتابیس، ۳–۸ms اندازه‌گیری‌شده)
+        ▼
+صفحه عمومی (کارت‌ها + برچسب لحظه‌ای/تأخیری/آخرین نرخ ثبت‌شده) · /health/rates
+```
+
+خرابی منبع ⇒ آخرین مجموعه معتبر از کش با برچسب کهنگی نمایش داده می‌شود. خرابی دیتابیس ⇒ کش باز هم به‌روز می‌شود (با هشدار) تا نمایش قطع نشود. جزئیات تصمیم‌ها: ADR-0012.
+
 ## ۵. Provider/Adapter نرخ
 
 ```csharp

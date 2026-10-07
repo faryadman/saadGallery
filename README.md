@@ -109,6 +109,22 @@ dotnet run --project src/SadGallery.Web              # اجرا (ورود: /Acco
 - آپلود تصویر با اعتبارسنجی واقعی محتوا، نام تصادفی، جداسازی مسیر عمومی/خصوصی.
 - هیچ Secret در Git نیست: `docs/SECURITY.md` و `docs/DECISIONS/ADR-0006`.
 
+## نرخ‌های بازار (فاز ۲)
+
+```powershell
+# یک اجرای کامل دریافت نرخ (بدون اجرای وب) — برای آزمون اعتبارنامه و مهاجرت
+dotnet run --project src/SadGallery.Web --no-launch-profile -- --fetch-rates-once
+
+# تنظیم اعتبارنامه (هرگز در فایل نوشته نمی‌شود)
+setx RateOptions__Username "نام کاربری سرویس"
+setx RateOptions__Password "رمز سرویس"
+```
+
+* نمایش عمومی نرخ‌ها در صفحه اصلی است و از کش درون‌فرایندی پاسخ می‌گیرد (بدون کوئری دیتابیس در مسیر گرم).
+* پایش سلامت منبع: `/health/rates` · تاریخچه اجراها در جدول `MarketRateFetchRuns`.
+* در محیط توسعه، اگر اعتبارنامه واقعی ندارید، منبع «نمونهٔ آزمایشی» (`RateOptions:Provider = Fixture`) زنجیره را با **داده نمونهٔ برچسب‌دار** نشان می‌دهد؛ این حالت در Production مسدود است.
+* راهنمای کامل: `docs/DEPLOYMENT.md` §۴.۸ · تصمیم فنی: `docs/DECISIONS/ADR-0012-market-rate-pipeline.md`.
+
 ## مستندات کلیدی برای شروع مطالعه
 
 1. `docs/PHASE0_REPORT.md` — چه بررسی شد، چه تصمیمی گرفته شد، چه چیزی از مالک لازم است.

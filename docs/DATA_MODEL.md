@@ -80,6 +80,17 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 **PriceFetchRun** (Observability Job)
 - `Id long PK` · `PriceProviderId` · `StartedAtUtc`/`FinishedAtUtc` · `Success bit` · `HttpStatus int?` · `ItemsCount int` · `DurationMs int` · `ErrorMessageSafe nvarchar(500)?` (بدون Secret) · `CorrelationId`.
 
+### ۳.۲.۱ جدول‌های پیاده‌شدهٔ فاز ۲ (مهاجرت `AddMarketRates`)
+
+| جدول | هدف | نکات کلیدی |
+| --- | --- | --- |
+| `MarketRates` | تاریخچه افزودنی نرخ‌ها | `AssetCode`, `Amount decimal(18,4)`, `QuoteUnit`, `ProviderId`, `QuotedAtUtc`, `FetchedAtUtc`, `Quality`, `ProviderRawValue`, `ScaleApplied`, `IsAnomalySuspected`, `FetchRunId`. همه ستون‌های هویتی **اجباری** (معیار پذیرش فاز ۲). ایندکس‌ها: `(AssetCode, Id)` و `FetchedAtUtc`. |
+| `MarketRateFetchRuns` | رکورد هر اجرای دریافت | `ProviderId`, `Trigger`, `StartedAtUtc`, `FinishedAtUtc`, `DurationMs`, `Outcome`, `HttpStatusCode`, `AcceptedCount`, `FlaggedCount`, `RejectedCount`, `ErrorCode`, `Notes`. هیچ داده حساسی ذخیره نمی‌شود. |
+| `MarketFetchLease` | قفل چند-نمونه‌ای | یک ردیف (`Id = 1`) با `OwnerId`, `AcquiredAtUtc`, `ExpiresAtUtc`. تصاحب اتمیک با UPDATE شرطی؛ کرش ⇒ انقضای خودکار. |
+
+**قاعده معنا:** «آخرین نرخ هر دارایی» = **بزرگ‌ترین شناسه** در آن دارایی، و رکوردهای `IsAnomalySuspected` از انتشار عمومی حذف می‌شوند. بازنویسی/حذف رکورد تاریخچه ممنوع است.
+**اسکریپت آماده:** `database/scripts/AddMarketRates.sql` (idempotent) و اسکریپت کامل `artifacts/migrations/SadGallery-Full.sql`.
+
 ### ۳.۳ مسکوکات و حباب
 **CoinDefinition**
 - `Id int PK` · `AssetDefinitionId int FK UNIQUE` · `StandardWeightGram decimal(9,4)` (مثل 8.1330 برای امامی) · `Purity decimal(5,2)` (0.900) · `FormulasVersion nvarchar(20)` (`v1`) · `Notes nvarchar(500)?`.

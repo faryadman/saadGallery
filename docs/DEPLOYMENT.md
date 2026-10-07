@@ -360,6 +360,51 @@ dotnet ef migrations add <نام-تغییر> --project src/SadGallery.Infrastruc
 **مهاجرت فعلی پروژه:** `20261005172327_InitialIdentity` (۷ جدول `AspNet*` + `__EFMigrationsHistory` + ۸ ایندکس).
 اسکریپت SQL ایدِمپوتنت آن در `database/scripts/InitialIdentity.sql` است (بدون نیاز به ابزار EF قابل اجراست).
 
+### ح) زنجیره نرخ بازار (فاز ۲) — راه‌اندازی گام‌به‌گام
+
+**۱) اجرای مهاجرت جدول‌ها** (سه جدول بازار؛ idempotent و قابل بازگشت):
+```powershell
+dotnet ef database update --project src/SadGallery.Infrastructure --startup-project src/SadGallery.Web
+# یا فقط اسکریپت SQL آماده برای اجرای دستی:
+#   database/scripts/AddMarketRates.sql
+```
+
+**۲) اعتبارنامه سرویس نرخ** (اعتبارنامه در مسیر آدرس است؛ فایل تنظیمات «خالی» می‌ماند):
+```powershell
+# گزینه الف) متغیر محیطی سطح سیستم (سرور عملیاتی)
+setx RateOptions__Username "نام کاربری سرویس"
+setx RateOptions__Password "رمز سرویس"
+# گزینه ب) User Secrets فقط برای توسعه
+dotnet user-secrets set "RateOptions:Username" "..." --project src/SadGallery.Web
+dotnet user-secrets set "RateOptions:Password" "..." --project src/SadGallery.Web
+```
+> اگر اعتبارنامه تنظیم نشود، سامانه **هیچ درخواست خروجی ارسال نمی‌کند** و در صفحه عمومی پیام «در دسترس نیست» نشان می‌دهد (fail-closed). هشدار متنی در لاگ، نام متغیرهای محیطی را می‌گوید و مقدار را هرگز چاپ نمی‌کند.
+
+**۳) آزمون یک‌باره بدون اجرای وب** (توصیه‌شده پیش از فعال‌سازی دوره‌ای):
+```powershell
+dotnet run --project src/SadGallery.Web --no-launch-profile -- --fetch-rates-once
+```
+خروجی مطلوب: `منبع نرخ: Tgn · وضعیت: Success`، «نرخ معتبر: N»، «ثبت در دیتابیس: بله» و فهرست نرخ‌های روز.
+کد خروج `0` = موفق و ثبت‌شده · `2` = شکست/تنظیم‌نشده/ثبت‌نشده (مناسب اسکریپت پایش).
+
+**۴) تنظیم‌های کلیدی `RateOptions`** (کلیدها در `appsettings.json`):
+
+| کلید | پیش‌فرض | معنا |
+| --- | --- | --- |
+| `Provider` | `Tgn` | `Tgn` منبع واقعی · `Fixture` فقط Development · `Disabled` هیچ درخواستی |
+| `FetchIntervalSeconds` | `60` | بازه Job و هم‌زمان حداقل فاصله بین دو درخواست خروجی |
+| `StaleThresholdMinutes` | `15` | فراتر از آن ⇒ برچسب «آخرین نرخ ثبت‌شده» |
+| `MaxStaleHours` | `24` | فراتر از آن ⇒ هیچ عددی نمایش داده نمی‌شود |
+| `AllowedProviderDomains` | `webservice.tgnsrv.ir` | فهرست مجاز ضد SSRF (خالی = هیچ درخواستی) |
+| `AnomalyChangeThresholdPercent` / `AnomalyPolicy` | `50` / `ManualReview` | نگهبان جهش؛ در حالت ManualReview نرخ مشکوک منتشر نمی‌شود |
+| `MaxBackoffMinutes` | `30` | سقف عقب‌نشینی نمایی پس از خطا/۴۲۹ |
+| `StartupDelaySeconds` | `5` | تأخیر نخستین اجرا پس از بالا آمدن برنامه |
+| `LeaseTtlSeconds` | `0` | محل قفل چند-نمونه‌ای؛ `0` = خودکار (مهلت HTTP + ۳۰ ثانیه) |
+
+**۵) پایش:** `/health/rates` — `Healthy` (تازه) · `Degraded` (تأخیری/کهنه/هنوز دریافت نشده) · `Unhealthy` (فراتر از حد مجاز). همچنین هر اجرا در `MarketRateFetchRuns` ثبت می‌شود.
+
+**۶) نکته مهم شبکه:** دسترسی به سرویس نرخ به **IP مجاز** محدود است. IP سرور عملیاتی (و در صورت چند سرور، همه آن‌ها) باید نزد سرویس‌دهنده ثبت شود؛ در غیر این صورت پاسخ `{"Error":"Unauthorized"}` می‌آید.
+
 ## ۵. مدیریت Secret و عبارت محرمانه
 
 | راز | محل نگهداری | چرخش |
