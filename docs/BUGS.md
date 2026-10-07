@@ -15,6 +15,7 @@
 | BUG-006 | ناهماهنگی کش نوگت بین اسکریپت‌ها («وجود» در برابر «قابل‌نوشتن بودن») | متوسط | رفع‌شده (2026-10-06) | ۱ |
 | BUG-007 | شکست ناپایدار (flaky) یک تست یکپارچه — یک بار مشاهده، ۹ بار بازتولید نشد | متوسط | **تحت پایش** (کاهش ریسک اعمال شد) | ۱ |
 | BUG-008 | ابزار `dotnet-ef` در مسیر اشتباه `/opt/tools` نصب می‌شد ⇒ `ef.sh` ابزار را پیدا نمی‌کرد | متوسط | رفع‌شده (2026-10-06) | ۱ |
+| BUG-009 | رشته اتصال نامعتبر (جای‌نگهدار/کوتیشن‌دار) ⇒ خطای مبهم `Format of the initialization string ... index 0` در `--seed` | بالا (کاربر را متوقف می‌کند) | رفع‌شده (2026-10-07) | ۱ |
 
 ---
 
@@ -120,6 +121,29 @@
 - **رفع:** `EF_TOOL_DIR="${DOTNET_DIR}/tools"` + نصب واقعی ابزار در `/opt/dotnet/tools`.
 - **تست رگرسیون:** `bash scripts/ef.sh migrations list` ⇒ نمایش `20261005172327_InitialIdentity` (هشدار LocalDB در سندباکس مورد انتظار است).
 - **ریسک باقی‌مانده:** ندارد.
+
+### BUG-009 — پیام مبهم SqlClient برای رشته اتصال نامعتبر در مسیر Seed
+- **شدت:** بالا (مانع راه‌اندازی؛ تشخیص علت بدون راهنما سخت بود)
+- **وضعیت:** رفع‌شده (2026-10-07)
+- **کشف در:** اجرای واقعی مالک روی ویندوز — `dotnet run --project src/SadGallery.Web -- --seed`
+- **پیام مشاهده‌شده:**
+  `System.ArgumentException: Format of the initialization string does not conform to specification starting at index 0.`
+  با stack در `SqlServerConnection.get_IsMultipleActiveResultSetsEnabled` و `IdentitySeeder.SeedAsync`.
+- **ریشه‌یابی:** بررسی «نبود/خالی بودن» رشته اتصال انجام می‌شد، اما **شکل** آن بررسی نمی‌شد.
+  اگر مقدار تنظیم‌شده متن جای‌نگهدار (مثل `<connection-string>` یا `HOST_FROM_ENV`) یا دارای کوتیشن اضافه
+  (کپی از نمونهٔ JSON) بود، از لایهٔ بررسی رد می‌شد و در عمق SqlClient با پیام مبهم `index 0` می‌شکست.
+- **رفع:**
+  1. `SadGallery.Application/Data/ConnectionStringGuard.cs` — اعتبارسنجی شکل با پیام فارسی و راهنما:
+     خالی/جای‌نگهدار/کوتیشن‌دار/بدون `کلید=مقدار`/بدون `Server`/بدون `Database`. **مقدار رشته هرگز چاپ نمی‌شود.**
+  2. `AddSadGalleryInfrastructure` — نگهبان + بررسی نهایی با `SqlConnectionStringBuilder`
+     (خطاهای عمیق‌تر با پیام روشن، نه پیام خام SqlClient).
+  3. `SadGalleryDbContextFactory` (مسیر `dotnet ef`) — همان نگهبان، چون مالک از همین مسیر هم رد می‌شود.
+  4. `scripts/windows-setup.ps1` — اسکریپت یک‌مرحله‌ای ویندوز: اعتبارسنجی + مهاجرت + Seed + اجرا،
+     با رمز ورودی امن (`Read-Host -AsSecureString`) — کلاس خطای کپی/پیست را حذف می‌کند.
+- **تست رگرسیون:** `tests/SadGallery.Tests.Unit/Data/ConnectionStringGuardTests.cs` — ۱۴ مورد (شامل بازتولید دقیق خطای مالک). نتیجهٔ اجرا: ۶۹/۶۹ تست واحد سبز.
+- **بازتولید واقعی پس از رفع (خروجی واقعی سندباکس):** مقدار `<connection-string>` ⇒ پیام
+  «رشته اتصال «ConnectionStrings:SadGallery» نامعتبر است: به‌نظر می‌رسد متن جای‌نگهدار است…» + دستور نمونهٔ PowerShell.
+- **ریسک باقی‌مانده:** ندارد. اسکریپت PowerShell در سندباکس لینوکس **اجرا نشد** (PowerShell موجود نیست) — فقط بازبینی نحوی دستی شد؛ اولین اجرا روی ویندوز باید گزارش شود.
 
 ## الگوی ثبت (کپی کنید)
 

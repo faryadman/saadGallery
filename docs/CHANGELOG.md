@@ -54,10 +54,11 @@
 - BUG-005: `NUGET_HTTP_CACHE_PATH` بیرون از پوشه قابل‌نوشتن ساخته می‌شد ⇒ شکست Restore با `NU1900`.
 - BUG-006: ناهماهنگی کش نوگت بین اسکریپت‌ها («وجود» در برابر «قابل‌نوشتن بودن») ⇒ ماژول مشترک `scripts/lib/env.sh`.
 - BUG-008: ابزار `dotnet-ef` در `/opt/tools` (غیرقابل‌نوشتن) نصب می‌شد ⇒ اصلاح به `${DOTNET_DIR}/tools`.
+- BUG-009: رشته اتصال نامعتبر (جای‌نگهدار/کوتیشن‌دار) ⇒ پیام مبهم `Format of the initialization string … index 0`. رفع با `ConnectionStringGuard` (پیام فارسی + راه‌حل، بدون چاپ مقدار)، بررسی نهایی با `SqlConnectionStringBuilder` در مسیر برنامه و `dotnet ef`، و افزودن `scripts/windows-setup.ps1`.
 
 ### Verified
 - `dotnet build SadGallery.sln -warnaserror` ⇒ **۰ خطا، ۰ هشدار**.
-- `dotnet test` ⇒ **۵۴/۵۴ واحد سبز** (۳۴ قبلی + ۲۰ تست Seed کاربران) + **۱۷/۱۷ یکپارچه سبز** + ۳ Skip صریح (نیازمند SQL Server: ۱ مهاجرت + ۲ Seed).
+- `dotnet test` ⇒ **۶۹/۶۹ واحد سبز** (۳۴ پایه + ۲۰ تست Seed + ۱۴ تست نگهبان رشته اتصال + ۱ الحاقی) + **۱۷/۱۷ یکپارچه سبز** + ۳ Skip صریح (نیازمند SQL Server: ۱ مهاجرت + ۲ Seed).
 - اجرای واقعی `--seed` در سندباکس (سه سناریو): بدون رمز ⇒ ۳ خطای فارسی و کد خروج `2` بدون لمس دیتابیس؛ با رمز ⇒ عبور از اعتبارسنجی و رسیدن به مرحلهٔ دیتابیس (در سندباکس: خطای اتصال، مورد انتظار)؛ نقش نامعتبر ⇒ «نقش Wizard شناخته‌شده نیست؛ نقش‌های مجاز: Customer, Operator, Admin». هیچ رمزی در هیچ خروجی ظاهر نشد.
 - اجرای واقعی برنامه روی Kestrel: `/`=200 (۵۵۱۲ بایت، صفر Entity عددی)؛ `/no-such-page`=404 «صفحه یافت نشد»؛ `/health`=200 `Healthy`؛ `/health/ready`=503 (بدون DB، درست)؛ `/Admin|Operator|Member`=302 به ورود؛ POST بدون توکن=400؛ دارایی‌های self-host=200.
 - سرآیندهای پاسخ (curl بدون فیلتر): `X-Content-Type-Options: nosniff`، `X-Frame-Options: DENY`، `Referrer-Policy: strict-origin-when-cross-origin`، `Cross-Origin-Opener-Policy: same-origin`، `Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()` — و **هیچ سرآیند `Server` ارسال نمی‌شود** (تأییدشده؛ `Program.cs` خط ۲۰).
