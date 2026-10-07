@@ -63,6 +63,12 @@
 - اجرای واقعی برنامه روی Kestrel: `/`=200 (۵۵۱۲ بایت، صفر Entity عددی)؛ `/no-such-page`=404 «صفحه یافت نشد»؛ `/health`=200 `Healthy`؛ `/health/ready`=503 (بدون DB، درست)؛ `/Admin|Operator|Member`=302 به ورود؛ POST بدون توکن=400؛ دارایی‌های self-host=200.
 - سرآیندهای پاسخ (curl بدون فیلتر): `X-Content-Type-Options: nosniff`، `X-Frame-Options: DENY`، `Referrer-Policy: strict-origin-when-cross-origin`، `Cross-Origin-Opener-Policy: same-origin`، `Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()` — و **هیچ سرآیند `Server` ارسال نمی‌شود** (تأییدشده؛ `Program.cs` خط ۲۰).
 
+### Added (2026-10-07)
+- **ابزارها و بسته‌های دیتابیس تکمیل شد:** `Microsoft.EntityFrameworkCore.Tools` 10.0.12 در `Directory.Packages.props` و `SadGallery.Web` (برای Package Manager Console در Visual Studio: `Add-Migration`/`Update-Database`/`Script-Migration`).
+- **مانیفست ابزار محلی** `.config/dotnet-tools.json` با `dotnet-ef` 10.0.12 ⇒ روی هر ماشین با `dotnet tool restore` آماده می‌شود (بدون نصب گلوبال). آزمون واقعی: `dotnet tool restore` و `dotnet ef --version` → 10.0.12.
+- **اسکریپت‌های Seed:** `scripts/seed.ps1` (ویندوز) و `scripts/seed.sh` (لینوکس/macOS/Git Bash) — رمز را مخفیانه می‌پرسند، رشته اتصال را اعتبارسنجی می‌کنند، Seed را اجرا و رمز را از محیط پاک می‌کنند. رشته اتصال هرگز کامل چاپ نمی‌شود (فقط سرور/نام دیتابیس).
+- **مستندات:** بازنویسی `docs/DEPLOYMENT.md` §۴.۶ («افزودن داده به دیتابیس») شامل جدول سطوح داده (نقش‌ها/کاربران/محصول/نرخ) و بخش «ز) کار با مهاجرت در Visual Studio (PMC)»؛ به‌روزرسانی `README.md` و `AGENTS.md` (`dotnet tool restore` در آیین شروع جلسه).
+
 ### Added by owner (2026-10-07)
 - **`appsettings.json` (کامیت مالک `8a225ad`):** بخش‌های پیکربندی `RateOptions`، `SecurityOptions` (OTP، قفل حساب، محدودیت نرخ)،
   `StorageOptions` (ریشهٔ آپلود بیرون `wwwroot`، اندازه/قالب مجاز) و `Serilog` افزوده شد؛ `ConnectionStrings.SadGallery`

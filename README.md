@@ -78,7 +78,15 @@ dotnet test
 #      cd ../..
 # ساده‌ترین راه روی ویندوز (همه مراحل ۲ و ۳ به‌صورت خودکار):
 #   .\scripts\windows-setup.ps1 -Run
-#   (رشته اتصال پیش‌فرض = LocalDB؛ برای SQL Express/SQLEXPRESS با -ConnectionString بدهید)
+#   (رشته اتصال پیش‌فرض = LocalDB؛ برای SQL Express/سرور با -ConnectionString بدهید)
+#
+# افزودن دادهٔ پایه (Seed) به دیتابیس — یک‌دستوری:
+#   ویندوز:      .\scripts\seed.ps1
+#   لینوکس/بش:   ConnectionStrings__SadGallery="<رشته اتصال>" bash scripts/seed.sh
+#   نتیجه: نقش‌ها (Customer/Operator/Admin) + کاربران نمونه؛ اجرای دوباره بی‌خطر است (ایدِمپوتنت)
+#
+# ابزار مهاجرت (dotnet-ef) روی هر ماشینی با یک دستور آماده می‌شود:
+#   dotnet tool restore        # از .config/dotnet-tools.json
 
 # ۳) یا دستی — Seed: نقش‌ها + کاربران اولیه (رمز را خودتان در شل تعیین می‌کنید؛ در مخزن ذخیره نمی‌شود)
 #    PowerShell:  $env:SADGALLERY_SEED_PASSWORD = "<رمز قوی با حداقل ۸ نویسه و یک رقم>"

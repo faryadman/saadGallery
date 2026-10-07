@@ -187,10 +187,36 @@ sqlcmd -S localhost -d SadGallery -i database/scripts/InitialIdentity.sql
 (دستورهای بالا). تست خودکار `IdentitySchemaTests` همین مسیر را روی دیتابیس موقت می‌آزماید و با تنظیم
 `SADGALLERY_TEST_SQL` اجرا می‌شود (docs/TESTING.md §۴).
 
-## ۴.۶ ساخت کاربران اولیه (Seed) — «چطور اولین مدیر را بسازم؟»
+## ۴.۶ افزودن داده به دیتابیس (Seed) — «چطور داده اولیه را وارد کنم؟»
 
-**خلاصه:** کاربران اولیه از بخش تنظیمات `SeedUsers` خوانده می‌شوند و رمزشان **فقط** از متغیر محیطی
-`SADGALLERY_SEED_PASSWORD` (یا `SeedUsers:n:Password`) می‌آید. هیچ رمز پیش‌فرضی در مخزن نیست (ADR-0011).
+**خلاصه:** دادهٔ پایه = **نقش‌ها** (Customer/Operator/Admin) + **کاربران اولیه** از بخش تنظیمات `SeedUsers`.
+رمز فقط از متغیر محیطی `SADGALLERY_SEED_PASSWORD` (یا `SeedUsers:n:Password`) می‌آید. هیچ رمز پیش‌فرضی در مخزن نیست (ADR-0011).
+
+### ۰) ساده‌ترین راه — اسکریپت آماده (توصیه‌شده)
+```powershell
+# ویندوز (رمز را امن می‌پرسد و مخفیانه وارد می‌کند)
+.\scripts\seed.ps1
+# یا با رشته اتصال صریح:
+.\scripts\seed.ps1 -ConnectionString "Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+```
+```bash
+# لینوکس / macOS / Git Bash
+ConnectionStrings__SadGallery="Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True" bash scripts/seed.sh
+```
+این اسکریپت‌ها: رشته اتصال را اعتبارسنجی می‌کنند، رمز را **بدون نمایش در صفحه/تاریخچه** می‌پرسند،
+Seed را اجرا می‌کنند و بلافاصله رمز را از محیط پاک می‌کنند.
+
+### چه سطوحی از داده وجود دارد و کدام‌یک کجا افزوده می‌شود؟
+| سطح | نمونه | روش افزودن | وضعیت |
+| --- | --- | --- | --- |
+| نقش‌ها | Customer، Operator، Admin | `--seed` (ایدِمپوتنت) | ✅ آماده |
+| کاربران اولیه | مدیر/اپراتور/مشتری | بخش `SeedUsers` + `--seed` | ✅ آماده |
+| دادهٔ ثابتِ کد-محور (Lookup) | enumها، ثابت‌های `Measurements` | در کد (بدون جدول) | ✅ آماده |
+| دادهٔ محصول/گالری | عنوان، توضیح، تصاویر | در فازهای ۳/۴ از پنل ادمین (یا اسکریپت دادهٔ نمونهٔ صریح) | ⏳ نیامده |
+| نرخ‌های بازار | طلا/ارز | **فقط** از Provider واقعی — هرگز داده ساختگی (قاعده پروژه) | ⏳ فاز ۲ |
+
+> ⚠️ **ممنوعیت‌های پروژه:** «نرخ ساختگی» و «قیمت جعلی محصول» وارد دیتابیس نمی‌شود. دادهٔ نمایشی فقط با برچسب صریح
+> «نمونه/دمو» و در محیط Development مجاز است (فازهای ۳ به بعد).
 
 ### الف) ویندوز — PowerShell
 ```powershell
@@ -294,6 +320,45 @@ $env:SADGALLERY_CONNECTION = "Server=(localdb)\MSSQLLocalDB;Database=SadGallery;
 ```powershell
 .\scripts\windows-setup.ps1 -Run     # اعتبارسنجی + مهاجرت + Seed + اجرا، همه در یک مرحله
 ```
+
+### ز) کار با مهاجرت در Visual Studio (Package Manager Console) — معادل گرافیکی
+
+هر دو مسیر (PMC و CLI) روی **یک** فایل مهاجرت کار می‌کنند؛ هرکدام راحت‌ترید استفاده کنید.
+
+**یک‌بار:** ابزارها را آماده کنید
+```powershell
+# در ریشه مخزن (ابزار در .config/dotnet-tools.json تعریف شده ⇒ روی هر ماشینی کار می‌کند)
+dotnet tool restore
+```
+
+**الف) با PMC (منوی Tools → NuGet Package Manager → Package Manager Console):**
+```powershell
+# Default project را روی SadGallery.Infrastructure بگذارید، سپس:
+Update-Database -StartupProject SadGallery.Web          # ساخت دیتابیس + اعمال مهاجرت‌ها
+Add-Migration <نام-تغییر> -StartupProject SadGallery.Web # ساخت مهاجرت جدید پس از تغییر مدل
+Remove-Migration -StartupProject SadGallery.Web          # حذف آخرین مهاجرت (فقط اگر اعمال نشده)
+Script-Migration -Idempotent -StartupProject SadGallery.Web  # ساخت اسکریپت SQL
+```
+> نکته: پکیج `Microsoft.EntityFrameworkCore.Tools` (که در `SadGallery.Web` مرجع شده) همین دستورها را ممکن می‌کند.
+> رشته اتصال PMC از کجا می‌آید؟ از `appsettings.json`/User Secrets/ENV همان پروژهٔ راه‌انداز
+> (اگر `HOST_FROM_ENV` بماند، پیام راهنمای ما را می‌بینید — نه خطای مبهم).
+
+**ب) با CLI (ویندوز/لینوکس/CI — همان چیزی که در CI اجرا می‌شود):**
+```bash
+dotnet tool restore                                        # یک‌بار
+dotnet ef database update --project src/SadGallery.Infrastructure --startup-project src/SadGallery.Web
+dotnet ef migrations add <نام-تغییر> --project src/SadGallery.Infrastructure --startup-project src/SadGallery.Web --output-dir Persistence/Migrations
+```
+یا کوتاه‌تر با اسکریپت پروژه: `bash scripts/ef.sh database update` و `bash scripts/ef.sh migrations add <نام>`
+
+**ج) و Seed همیشه از خط فرمان اجرا می‌شود** (چون به آرگومان `--seed` نیاز دارد):
+```powershell
+.\scripts\seed.ps1        # ویندوز
+```
+> در PMC امکان پاس‌دادن آرگومان سفارشی به برنامه وجود ندارد؛ برای همین Seed یک اسکریپت جداگانه دارد.
+
+**مهاجرت فعلی پروژه:** `20261005172327_InitialIdentity` (۷ جدول `AspNet*` + `__EFMigrationsHistory` + ۸ ایندکس).
+اسکریپت SQL ایدِمپوتنت آن در `database/scripts/InitialIdentity.sql` است (بدون نیاز به ابزار EF قابل اجراست).
 
 ## ۵. مدیریت Secret و عبارت محرمانه
 

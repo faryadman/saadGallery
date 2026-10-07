@@ -43,6 +43,7 @@ sed -n '1,80p' docs/SECURITY.md
 
 # 4) آماده‌سازی محیط و اجرای واقعی Build/Test (بدون آماده‌سازی، هیچ ادعایی نکن)
 bash scripts/dev-setup.sh          # نصب SDK + ابزار dotnet-ef در مسیرهای غیرماندگار (فقط سندباکس)
+dotnet tool restore                # ابزارهای محلی مخزن (dotnet-ef) از .config/dotnet-tools.json
 dotnet restore && dotnet build -warnaserror
 dotnet test                        # یا: bash scripts/test.sh
 #    توجه: پروژه روی xunit v3 + Microsoft.Testing.Platform اجرا می‌شود و opt-in آن در global.json
