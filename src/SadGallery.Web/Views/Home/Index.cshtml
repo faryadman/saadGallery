@@ -1,4 +1,5 @@
 @model SadGallery.Application.Market.RateDisplayModel
+@using SadGallery.Application.Market
 @using SadGallery.Domain.Enums
 @{
     ViewData["Title"] = "خانه و بازار";
@@ -10,6 +11,8 @@
         RateQuality.Stale => "text-bg-secondary",
         _ => "text-bg-danger",
     };
+
+    var sections = RateSections.Build(Model.Items);
 }
 
 <section class="sg-hero">
@@ -19,96 +22,125 @@
     </p>
 </section>
 
-<div class="row g-3 mt-1">
-    <div class="col-12">
-        <div class="sg-card">
-            <div class="sg-card__title d-flex justify-content-between align-items-center">
-                <span>نرخ‌های بازار</span>
+@if (Model.Notice is { } notice)
+{
+    <div class="alert @(Model.Items.Count == 0 ? "alert-warning" : "alert-light border") small" role="alert">
+        @notice
+    </div>
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="sg-card mb-3">
+        <div class="sg-card__title d-flex justify-content-between align-items-center">
+            <span>نرخ‌های بازار</span>
+            @if (Model.LastFetchedUtc is { } emptyFetchedAt)
+            {
+                <span class="small text-muted">آخرین دریافت: @PersianDate.ToJalaliDateTimeText(emptyFetchedAt)</span>
+            }
+        </div>
+        <p class="small text-muted mb-0">
+            طبق اصل پروژه، تا دریافت نرخ معتبر از منبع رسمی، <strong>هیچ عدد یا نرخ ساختگی نمایش داده نمی‌شود</strong>.
+        </p>
+    </div>
+}
+else
+{
+    <div class="sg-card mb-3">
+        <div class="sg-card__title d-flex justify-content-between align-items-center">
+            <span>نرخ‌های بازار</span>
+            <span class="small text-muted d-flex align-items-center gap-2">
                 @if (Model.LastFetchedUtc is { } fetchedAt)
                 {
-                    <span class="small text-muted">آخرین دریافت: @SadGallery.Application.Text.PersianDate.ToJalaliDateTimeText(fetchedAt)</span>
+                    <span>آخرین به‌روزرسانی: @PersianDate.ToJalaliDateTimeText(fetchedAt)</span>
+                }
+                @if (Model.OverallQuality is { } overall)
+                {
+                    <span class="badge @QualityBadge(overall) sg-quality" data-sg-quality="@(overall == RateQuality.Live ? "live" : "other")">@RateFormat.QualityLabel(overall)</span>
+                }
+            </span>
+        </div>
+
+        @foreach (var group in sections)
+        {
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h6 mb-0">@group.Title</h2>
+                    <span class="small text-muted">@group.Hint</span>
+                </div>
+
+                @if (group.Items.Count == 0)
+                {
+                    <p class="small text-muted mb-0">@group.Hint</p>
+                }
+                else
+                {
+                    <div class="row g-2">
+                        @foreach (var item in group.Items)
+                        {
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <a class="border rounded p-2 h-100 d-block text-decoration-none text-reset"
+                                   asp-controller="Market" asp-action="Details" asp-route-code="@item.AssetCode">
+                                    <div class="small text-muted">@item.Title</div>
+                                    <div class="fw-bold">
+                                        @item.AmountText
+                                        <span class="small fw-normal">@item.UnitText</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <span class="badge @QualityBadge(item.Quality) sg-quality" data-sg-quality="@(item.Quality == RateQuality.Live ? "live" : "other")">@item.QualityLabel</span>
+                                        <span class="small text-muted">@item.QuotedAtText</span>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
                 }
             </div>
+        }
 
-            @if (Model.Notice is { } notice)
-            {
-                <div class="alert @(Model.Items.Count == 0 ? "alert-warning" : "alert-light border") small mb-3" role="alert">
-                    @notice
-                </div>
-            }
+        @if (Model.IsSampleData)
+        {
+            <p class="small text-danger mt-2 mb-0">
+                هشدار: این بخش با منبع «نمونهٔ آزمایشی» کار می‌کند (فقط محیط توسعه) و نرخ روز بازار نیست.
+            </p>
+        }
 
-            @if (Model.Items.Count == 0)
-            {
-                <p class="small text-muted mb-0">
-                    طبق اصل پروژه، تا دریافت نرخ معتبر از منبع رسمی، <strong>هیچ عدد یا نرخ ساختگی نمایش داده نمی‌شود</strong>.
-                </p>
-            }
-            else
-            {
-                <div class="row g-2">
-                    @foreach (var item in Model.Items)
-                    {
-                        <div class="col-6 col-md-4 col-lg-3">
-                            <div class="border rounded p-2 h-100">
-                                <div class="small text-muted">@item.Title</div>
-                                <div class="fw-bold">
-                                    @item.AmountText
-                                    <span class="small fw-normal">@item.UnitText</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <span class="badge @QualityBadge(item.Quality)">@item.QualityLabel</span>
-                                    <span class="small text-muted">@item.QuotedAtText</span>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-
-            @if (Model.IsSampleData)
-            {
-                <p class="small text-danger mt-3 mb-0">
-                    هشدار: این بخش با منبع «نمونهٔ آزمایشی» کار می‌کند (فقط محیط توسعه) و نرخ روز بازار نیست.
-                </p>
-            }
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a class="btn btn-sm sg-btn-gold sg-touch" asp-controller="Market" asp-action="Bubble">حباب‌سنج</a>
+            <a class="btn btn-sm btn-outline-secondary sg-touch" asp-controller="Market" asp-action="Gold">ماشین‌حساب طلا</a>
+            <a class="btn btn-sm btn-outline-secondary sg-touch" asp-controller="Market" asp-action="Index">نمای کامل بازار</a>
         </div>
     </div>
-    <div class="col-12">
-        <div class="sg-card">
-            <div class="sg-card__title">وضعیت سامانه</div>
-            <ul class="mb-0 small text-muted">
-                <li>زیرساخت، هویت کاربران و کنترل دسترسی (سه نقش) فعال است.</li>
-                <li>منبع نرخ: زنجیره دریافت/Cache/تاریخچه پیاده‌سازی شده است؛ فعال‌سازی نهایی با تنظیم اعتبارنامه منبع (فاز ۲).</li>
-                <li>ویترین محصولات: فاز ۴ • سامانه تیکت و استعلام قیمت: فاز ۵ • نصب روی موبایل (PWA): فاز ۷</li>
-            </ul>
-        </div>
-    </div>
+}
 
+<div class="row g-3">
     <div class="col-md-6">
         <div class="sg-card h-100">
             <div class="sg-card__title">برای اعضا</div>
             <p class="small text-muted mb-3">
-                با ثبت‌نام، به ماشین‌حساب طلا، حباب‌سنج با جزئیات، تاریخچه گسترده‌تر نرخ‌ها و ثبت تیکت دسترسی پیدا می‌کنید.
+                با ثبت‌نام، به ماشین‌حساب طلا، حباب‌سنج پیشرفته، تاریخچه گسترده نرخ‌ها و ثبت تیکت دسترسی پیدا می‌کنید.
             </p>
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <a class="btn btn-sm sg-btn-gold" asp-controller="Member" asp-action="Index">ورود به ناحیه اعضا</a>
+                <a class="btn btn-sm sg-btn-gold sg-touch" asp-controller="Member" asp-action="Index">ورود به ناحیه اعضا</a>
+                <a class="btn btn-sm btn-outline-secondary sg-touch" asp-controller="Market" asp-action="History">تاریخچه نرخ‌ها</a>
             }
             else
             {
-                <a class="btn btn-sm sg-btn-gold" asp-controller="Account" asp-action="Register">ثبت‌نام</a>
-                <a class="btn btn-sm btn-outline-secondary" asp-controller="Account" asp-action="Login">ورود</a>
+                <a class="btn btn-sm sg-btn-gold sg-touch" asp-controller="Account" asp-action="Register">ثبت‌نام</a>
+                <a class="btn btn-sm btn-outline-secondary sg-touch" asp-controller="Account" asp-action="Login">ورود</a>
             }
         </div>
     </div>
 
     <div class="col-md-6">
         <div class="sg-card h-100">
-            <div class="sg-card__title">درباره گالری</div>
-            <p class="small text-muted mb-0">
-                اطلاعات تماس، نشانی، ساعات کاری و شبکه‌های اجتماعی رسمی در فاز ۳ و از تنظیمات فروشگاه
-                (<code>StoreSettings</code>) خوانده و نمایش داده می‌شود.
-            </p>
+            <div class="sg-card__title">وضعیت سامانه</div>
+            <ul class="mb-0 small text-muted">
+                <li>زیرساخت، هویت کاربران و کنترل دسترسی (سه نقش) فعال است.</li>
+                <li>زنجیره نرخ بازار (دریافت/Cache/تاریخچه) و ابزارهای محاسبه (فاز ۳) فعال‌اند.</li>
+                <li>ویترین محصولات: فاز ۴ • سامانه تیکت و استعلام قیمت: فاز ۵ • نصب روی موبایل (PWA): فاز ۷</li>
+            </ul>
         </div>
     </div>
 </div>

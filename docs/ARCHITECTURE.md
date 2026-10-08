@@ -170,6 +170,23 @@ wwwroot/            # css/fonts/js/img، manifest.webmanifest، service-worker.j
 
 خرابی منبع ⇒ آخرین مجموعه معتبر از کش با برچسب کهنگی نمایش داده می‌شود. خرابی دیتابیس ⇒ کش باز هم به‌روز می‌شود (با هشدار) تا نمایش قطع نشود. جزئیات تصمیم‌ها: ADR-0012.
 
+### ۴.۲ لایه رابط مشتری فاز ۳ (اجراشده)
+
+```
+MarketController (Web)
+├── /market, /market/rate/{code}  → RateDisplayService (کش، بدون کوئری در مسیر گرم)
+├── /market/bubble  → IBubbleCalculator (Application؛ ورودی صریح) ← پیش‌پر از کش + CoinStandards
+├── /market/gold    → IGoldCalculator   (Application؛ گرم/مثقال/سوت، عیار ۰–۲۴)
+├── /market/history (Policy) → RateHistoryService → IRateStore.GetHistoryAsync → MarketChart (SVG درون‌خطی)
+├── /market/advanced-bubble (Policy) → مقایسه همه CoinStandards با نرخ‌های لحظه‌ای
+└── /api/rates/{code}/history (Policy) → JSON
+```
+
+- `CoinStandards` (Domain): وزن/عیار رسمی مسکوکات با منبع مستند و تأیید در انتظار مالک (`Q-COIN-1`).
+- `PersianNumber` (Application/Text): خواندن ورودی عددی فارسی فرم‌ها؛ سخت‌گیر اما فارسی‌پسند.
+- `MarketChart` (Application/Market): نمودار SVG درون‌خطی بدون کتابخانه خارجی (ADR-0013 §۷).
+- تصمیم‌های کامل: ADR-0013.
+
 ## ۵. Provider/Adapter نرخ
 
 ```csharp

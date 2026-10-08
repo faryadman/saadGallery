@@ -41,6 +41,11 @@ if (rateOptions.IsFixtureProvider && !builder.Environment.IsDevelopment())
 
 builder.Services.AddSadGalleryMarket(rateOptions);
 builder.Services.AddScoped<RateDisplayService>();
+builder.Services.AddScoped<RateHistoryService>();
+
+// ---- فاز ۳: ابزارهای محاسبه (حباب/طلا) — منطق در Application، ورودی صریح ----
+builder.Services.AddSingleton<IBubbleCalculator, BubbleCalculator>();
+builder.Services.AddSingleton<IGoldCalculator, GoldCalculator>();
 
 // ---- Identity (ADR-0004) ----
 builder.Services

@@ -1,0 +1,92 @@
+@model SadGallery.Web.Models.Market.AdvancedBubblePageModel
+@using SadGallery.Application.Market
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = "حباب‌سنج پیشرفته";
+}
+
+<section class="sg-hero">
+    <h1 class="h4 mb-2">حباب‌سنج پیشرفته (ویژه اعضا)</h1>
+    <p class="mb-1 text-muted small">
+        مقایسه حباب همه مسکوکات رسمی با وزن و عیار استاندارد و نرخ مرجع گرم ۱۸ عیار.
+        نسخه فرمول: <code>@BubbleFormula.Version</code>
+    </p>
+    @if (Model.ReferenceRateIrt is { } reference)
+    {
+        <p class="mb-0 small">نرخ مرجع به‌کاررفته: @RateFormat.Money(reference, CurrencyUnit.Irt) (هر گرم طلای ۱۸ عیار)</p>
+    }
+    @if (Model.ReferenceIsStale)
+    {
+        <p class="small text-danger mb-0 mt-2">
+            نرخ مرجع کهنه یا ناموجود است؛ نتیجه‌ها قابل اعتماد نیستند و «لحظه‌ای» شمرده نمی‌شوند.
+        </p>
+    }
+</section>
+
+@if (Model.IsSampleData)
+{
+    <div class="alert alert-warning small" role="alert">
+        منبع نرخ فعلی «نمونهٔ آزمایشی» (محیط توسعه) است؛ نرخ روز بازار نیست.
+    </div>
+}
+else if (Model.RateNotice is { } notice)
+{
+    <div class="alert alert-light border small" role="alert">@notice</div>
+}
+
+<div class="sg-card">
+    <div class="sg-card__title">مقایسه مسکوکات</div>
+    <div class="table-responsive">
+        <table class="sg-table">
+            <thead>
+                <tr>
+                    <th scope="col">سکه</th>
+                    <th scope="col">وزن (گرم)</th>
+                    <th scope="col">خلوص</th>
+                    <th scope="col">قیمت بازار</th>
+                    <th scope="col">ارزش ذاتی</th>
+                    <th scope="col">حباب ریالی</th>
+                    <th scope="col">حباب درصدی</th>
+                    <th scope="col">اعتبار</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@row.Title</td>
+                        <td>@RateFormat.Amount(row.WeightGrams)</td>
+                        <td>@RateFormat.Amount(row.Purity)</td>
+
+                        @if (row.Result is { IsValid: true } result)
+                        {
+                            <td>@RateFormat.Money(row.MarketPriceIrt!.Value, CurrencyUnit.Irt)</td>
+                            <td>@RateFormat.Money(result.IntrinsicValueIrt!.Value, CurrencyUnit.Irt)</td>
+                            <td>@RateFormat.Money(result.BubbleIrt!.Value, CurrencyUnit.Irt)</td>
+                            <td class="fw-bold">@RateFormat.Percent(result.BubblePercent!.Value)</td>
+                            <td>
+                                @if (result.IsTrusted)
+                                {
+                                    <span class="badge text-bg-success sg-quality">معتبر</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-warning sg-quality">نرخ کهنه</span>
+                                }
+                            </td>
+                        }
+                        else
+                        {
+                            <td colspan="5" class="text-muted small">نرخ بازار این سکه در دسترس نیست؛ محاسبه انجام نمی‌شود.</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 d-flex flex-wrap gap-2">
+    <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="History">تاریخچه نرخ‌ها</a>
+    <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="Bubble">حباب‌سنج ساده</a>
+</div>

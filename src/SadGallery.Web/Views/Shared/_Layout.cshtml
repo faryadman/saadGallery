@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
+    <div class="sg-offline-banner" role="alert">
+        اتصال اینترنت شما قطع است؛ نرخ‌های نمایش‌داده‌شده «ذخیره‌شده» هستند و لحظه‌ای نیستند. پس از برقراری اتصال، صفحه را تازه کنید.
+    </div>
     <header class="sg-header">
         <nav class="navbar navbar-expand-lg container">
             <a class="navbar-brand sg-brand" asp-controller="Home" asp-action="Index">
@@ -22,13 +25,15 @@
             <div class="collapse navbar-collapse" id="sgNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">خانه</a></li>
-                    <li class="nav-item"><span class="nav-link sg-navlink--soon" title="فاز ۲">نرخ‌ها <small>(به‌زودی)</small></span></li>
-                    <li class="nav-item"><span class="nav-link sg-navlink--soon" title="فاز ۳">حباب‌سنج <small>(به‌زودی)</small></span></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Index">بازار</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Bubble">حباب‌سنج</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Gold">ماشین‌حساب طلا</a></li>
                     <li class="nav-item"><span class="nav-link sg-navlink--soon" title="فاز ۴">محصولات <small>(به‌زودی)</small></span></li>
                 </ul>
                 <ul class="navbar-nav">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="History">تاریخچه نرخ‌ها</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Member" asp-action="Index">ناحیه اعضا</a></li>
                         @if (User.IsInRole(RoleNames.Operator) || User.IsInRole(RoleNames.Admin))
                         {
@@ -69,6 +74,7 @@
 
     <script src="~/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js"></script>
+    <script src="~/js/offline-status.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

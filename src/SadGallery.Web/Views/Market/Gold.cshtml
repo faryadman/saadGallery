@@ -1,0 +1,133 @@
+@model SadGallery.Web.Models.Market.GoldPageModel
+@using SadGallery.Application.Market
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = "ماشین‌حساب طلا";
+    var result = Model.Result;
+
+    static string UnitLabel(WeightUnit unit) => unit switch
+    {
+        WeightUnit.Mesghal => "مثقال (۴٫۶۰۸۳ گرم)",
+        WeightUnit.Sot => "سوت (میلی‌گرم)",
+        _ => "گرم",
+    };
+}
+
+<section class="sg-hero">
+    <h1 class="h4 mb-2">ماشین‌حساب طلا</h1>
+    <p class="mb-0 text-muted small">
+        تبدیل وزن و عیار و محاسبه ارزش؛ همه ورودی‌ها صریح‌اند و نتیجه با نسخه فرمول نمایش داده می‌شود.
+    </p>
+</section>
+
+@if (Model.IsSampleData)
+{
+    <div class="alert alert-warning small" role="alert">
+        منبع نرخ فعلی «نمونهٔ آزمایشی» (محیط توسعه) است؛ نرخ پیشنهادی فرم نرخ روز بازار نیست.
+    </div>
+}
+else if (Model.RateNotice is { } notice)
+{
+    <div class="alert alert-light border small" role="alert">@notice</div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger small" role="alert">
+        <ul class="mb-0">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <form method="post" asp-action="Gold" class="sg-card">
+            @Html.AntiForgeryToken()
+
+            <div class="row">
+                <div class="col-sm-6 mb-3">
+                    <label class="form-label" for="amount">وزن</label>
+                    <input class="form-control sg-touch" id="amount" name="Amount" value="@Model.Form.Amount" inputmode="decimal" />
+                </div>
+                <div class="col-sm-6 mb-3">
+                    <label class="form-label" for="unit">واحد</label>
+                    <select class="form-select sg-touch" id="unit" name="Unit">
+                        @foreach (var unit in new[] { WeightUnit.Gram, WeightUnit.Mesghal, WeightUnit.Sot })
+                        {
+                            <option value="@unit" selected="@(unit == Model.Unit)">@UnitLabel(unit)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6 mb-3">
+                    <label class="form-label" for="karat">عیار (۰ تا ۲۴)</label>
+                    <input class="form-control sg-touch" id="karat" name="Karat" value="@Model.Form.Karat" inputmode="decimal" />
+                </div>
+                <div class="col-sm-6 mb-3">
+                    <label class="form-label" for="referenceRate">نرخ گرم ۱۸ عیار (تومان)</label>
+                    <input class="form-control sg-touch" id="referenceRate" name="ReferenceRate" value="@Model.Form.ReferenceRate" inputmode="decimal" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn sg-btn-gold sg-touch">محاسبه ارزش</button>
+            <p class="form-text mb-0 mt-2">
+                تبدیل‌های مستند: مثقال = ۴٫۶۰۸۳ گرم • سوت = ۰٫۰۰۱ گرم • عیار ۱۸ = خلوص ۰٫۷۵۰
+            </p>
+        </form>
+    </div>
+
+    <div class="col-lg-6">
+        @if (result is { } r)
+        {
+            <div class="sg-result">
+                <div class="sg-card__title mb-2">نتیجه</div>
+
+                @if (!r.IsValid)
+                {
+                    <p class="text-danger small mb-0">@r.Reason</p>
+                }
+                else
+                {
+                    @if (!r.IsTrusted)
+                    {
+                        <div class="alert alert-warning small" role="alert">
+                            نرخ به‌کاررفته کهنه است؛ نتیجه قابل اعتماد نیست و «لحظه‌ای» شمرده نمی‌شود.
+                        </div>
+                    }
+
+                    <dl class="row mb-0 small">
+                        <dt class="col-6">وزن (گرم)</dt>
+                        <dd class="col-6 sg-result__value">@RateFormat.Amount(r.WeightGrams!.Value)</dd>
+
+                        <dt class="col-6">وزن (مثقال)</dt>
+                        <dd class="col-6 sg-result__value">@RateFormat.Amount(r.WeightMesghal!.Value)</dd>
+
+                        <dt class="col-6">طلای خالص</dt>
+                        <dd class="col-6 sg-result__value">@RateFormat.Amount(r.PureGoldGrams!.Value) گرم</dd>
+
+                        <dt class="col-6">ارزش</dt>
+                        <dd class="col-6 sg-result__value">@RateFormat.Money(r.ValueIrt!.Value, CurrencyUnit.Irt)</dd>
+
+                        <dt class="col-6">نسخه فرمول</dt>
+                        <dd class="col-6"><code>@r.FormulaVersion</code></dd>
+                    </dl>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="sg-card">
+                <p class="small text-muted mb-0">
+                    وزن، واحد و عیار را وارد کنید. مثال شناخته‌شده: ۱ مثقال طلای ۱۸ عیار = ۴٫۶۰۸۳ گرم و ارزش آن
+                    دقیقاً ۴٫۶۰۸۳ برابر «نرخ گرم ۱۸ عیار» است.
+                </p>
+            </div>
+        }
+    </div>
+</div>

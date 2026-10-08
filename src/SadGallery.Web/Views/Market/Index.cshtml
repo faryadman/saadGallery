@@ -1,0 +1,109 @@
+@model SadGallery.Application.Market.RateDisplayModel
+@using SadGallery.Application.Market
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = "بازار";
+
+    static string QualityBadge(RateQuality quality) => quality switch
+    {
+        RateQuality.Live => "text-bg-success",
+        RateQuality.Delayed => "text-bg-warning",
+        RateQuality.Stale => "text-bg-secondary",
+        _ => "text-bg-danger",
+    };
+
+    var sections = RateSections.Build(Model.Items);
+}
+
+<section class="sg-hero">
+    <h1 class="h3 mb-2">بازار طلا، مسکوکات و ارز</h1>
+    <p class="mb-1 text-muted small">
+        نرخ‌ها با واحد صریح و زمان آخرین به‌روزرسانی نمایش داده می‌شوند. نرخ «کهنه» هرگز به‌عنوان لحظه‌ای معرفی نمی‌شود.
+    </p>
+    @if (Model.LastFetchedUtc is { } fetchedAt)
+    {
+        <p class="mb-0 small">
+            <span>آخرین دریافت: @PersianDate.ToJalaliDateTimeText(fetchedAt)</span>
+            @if (Model.OverallQuality is { } overall)
+            {
+                <span class="badge @QualityBadge(overall) sg-quality ms-2">@RateFormat.QualityLabel(overall)</span>
+            }
+        </p>
+    }
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <a class="btn btn-sm sg-btn-gold sg-touch" asp-action="Bubble">حباب‌سنج</a>
+        <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="Gold">ماشین‌حساب طلا</a>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="History">تاریخچه نرخ‌ها (ویژه اعضا)</a>
+            <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="AdvancedBubble">حباب‌سنج پیشرفته (ویژه اعضا)</a>
+        }
+    </div>
+</section>
+
+@if (Model.Notice is { } notice)
+{
+    <div class="alert @(Model.Items.Count == 0 ? "alert-warning" : "alert-light border") small" role="alert">
+        @notice
+    </div>
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="sg-card">
+        <p class="small text-muted mb-0">
+            طبق اصل پروژه، تا دریافت نرخ معتبر از منبع رسمی، <strong>هیچ عدد یا نرخ ساختگی نمایش داده نمی‌شود</strong>.
+        </p>
+    </div>
+}
+else
+{
+    @foreach (var group in sections)
+    {
+        <div class="sg-card mb-3">
+            <div class="sg-card__title">@group.Title</div>
+
+            @if (group.Items.Count == 0)
+            {
+                <p class="small text-muted mb-0">@group.Hint</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="sg-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">دارایی</th>
+                                <th scope="col">نرخ</th>
+                                <th scope="col">واحد</th>
+                                <th scope="col">وضعیت</th>
+                                <th scope="col">زمان نرخ</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in group.Items)
+                            {
+                                <tr>
+                                    <td>@item.Title</td>
+                                    <td class="fw-bold">@item.AmountText</td>
+                                    <td class="text-muted">@item.UnitText</td>
+                                    <td><span class="badge @QualityBadge(item.Quality) sg-quality" data-sg-quality="@(item.Quality == RateQuality.Live ? "live" : "other")">@item.QualityLabel</span></td>
+                                    <td class="text-muted small">@item.QuotedAtText</td>
+                                    <td class="text-end"><a class="sg-touch small" asp-action="Details" asp-route-code="@item.AssetCode">جزئیات</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.IsSampleData)
+    {
+        <p class="small text-danger">
+            هشدار: این بخش با منبع «نمونهٔ آزمایشی» کار می‌کند (فقط محیط توسعه) و نرخ روز بازار نیست.
+        </p>
+    }
+}

@@ -13,6 +13,11 @@ public static class Measurements
     /// </summary>
     public const decimal MesghalInGrams = 4.6083m;
 
+    /// <summary>
+    /// یک سوت بر حسب گرم. در بازار ایران هر سوت = یک میلی‌گرم = ۰٫۰۰۱ گرم.
+    /// </summary>
+    public const decimal SotInGrams = 0.001m;
+
     /// <summary>عیار طلای خالص.</summary>
     public const decimal PureKarat = 24m;
 

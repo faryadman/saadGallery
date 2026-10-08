@@ -122,7 +122,8 @@ main {
 .sg-btn-gold:focus {
     background-color: var(--sg-gold-dark);
     border-color: var(--sg-gold-dark);
-    color: #fff;
+    /* متن سرمه‌ای می‌ماند: سفید روی طلای تیره فقط ۳٫۴۴:۱ می‌داد (زیر WCAG AA). */
+    color: var(--sg-navy);
 }
 
 /* ---------- کارت‌ها ---------- */
@@ -173,6 +174,96 @@ code {
 
 .sg-footer__note {
     color: #9fb0c8;
+}
+
+
+/* ---------- فاز ۳: دسترس‌پذیری و رابط مشتری ---------- */
+
+/* هدف لمسی حداقل ۴۴×۴۴ پیکسل (WCAG 2.5.5 / معیار پذیرش فاز ۳). */
+.sg-touch {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* نوار حالت آفلاین (مرورگر قطع بودن اتصال را تشخیص می‌دهد — js/offline-status.js) */
+.sg-offline-banner {
+    display: none;
+    background: #7a1f1f;
+    color: #fff;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+}
+
+body.sg-offline .sg-offline-banner {
+    display: block;
+}
+
+/* جدول نرخ‌ها/تاریخچه */
+.sg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.sg-table th,
+.sg-table td {
+    border-bottom: 1px solid var(--sg-border);
+    padding: 0.5rem 0.6rem;
+    text-align: right;
+}
+
+.sg-table th {
+    color: var(--sg-navy);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* برچسب وضعیت تازگی */
+.sg-quality {
+    font-size: 0.75rem;
+    border-radius: 0.375rem;
+    padding: 0.15rem 0.45rem;
+    white-space: nowrap;
+}
+
+/* خلاصه محاسبه */
+.sg-result {
+    background: #fff;
+    border: 1px solid var(--sg-border);
+    border-right: 4px solid var(--sg-gold);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.sg-result__value {
+    font-weight: 700;
+    color: var(--sg-navy);
+}
+
+.sg-formula {
+    direction: ltr;
+    text-align: left;
+    font-size: 0.8rem;
+    color: var(--sg-navy-soft);
+    background: var(--sg-cream);
+    border: 1px dashed var(--sg-border);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* نمودار SVG تاریخچه */
+.sg-chart {
+    width: 100%;
+    height: auto;
+}
+
+.sg-chart polyline {
+    fill: none;
+    stroke: var(--sg-navy-soft);
+    stroke-width: 2;
 }
 
 /* ---------- دسترس‌پذیری ---------- */

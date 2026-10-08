@@ -131,6 +131,20 @@
 | تغییر ناگهانی واحد (ریال/تومان) | بازه معقول + نگهبان جهش (ManualReview) + تست |
 | محدودیت IP و پایان اشتراک | fail-closed + پیام فارسی + پایش `/health/rates` |
 
+## بخش الف-ج — مسیرهای وب فاز ۳ (رابط مشتری)
+
+| مسیر | دسترسی | خروجی |
+| --- | --- | --- |
+| `GET /market` | عمومی | نمای کامل بازار (گروه‌بندی‌شده، با واحد و برچسب تازگی) |
+| `GET /market/rate/{code}` | عمومی | جزئیات یک نرخ (code مثل `GOLD_GRAM_18` یا `COIN_EMAMI`) |
+| `GET/POST /market/bubble` | عمومی | حباب‌سنج؛ POST با فیلدهای `MarketPrice`، `Weight`، `Purity`، `ReferenceRate`، `MintingCost` (ارقام فارسی/جداکننده‌دار پذیرفته می‌شود) |
+| `GET/POST /market/gold` | عمومی | ماشین‌حساب طلا؛ فیلدها: `Amount`، `Unit` (`Gram`/`Mesghal`/`Sot`)، `Karat`، `ReferenceRate` |
+| `GET /market/history?code=&days=` | عضو (`MemberFeatures`) | تاریخچه گسترده + نمودار SVG؛ `days` به بازه ۱–۹۰ محدود می‌شود |
+| `GET /market/advanced-bubble` | عضو | مقایسه حباب همه مسکوکات رسمی |
+| `GET /api/rates/{assetCode}/history?days=` | عضو | JSON: `{assetCode, title, unit, days, notice, points:[{quotedAtUtc, quotedAt, amount, quality}]}` — سقف ۹۰ روز / ۵۰۰ نقطه |
+
+نکته امنیتی: مسیرهای «عضو» با Policy سرور محافظت می‌شوند؛ درخواست مهمان ⇒ ۳۰۲ به صفحه ورود. POST فرم‌ها نیازمند توکن ضدجعل است.
+
 ## بخش ب — مدل داخلی نرخ (قرارداد ما، مستقل از منبع)
 
 ```csharp

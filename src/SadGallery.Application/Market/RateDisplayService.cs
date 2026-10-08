@@ -2,6 +2,7 @@ using System.Globalization;
 using SadGallery.Application.Abstractions;
 using SadGallery.Application.Text;
 using SadGallery.Domain.Enums;
+using SadGallery.Domain.Market;
 
 namespace SadGallery.Application.Market;
 
@@ -9,6 +10,9 @@ namespace SadGallery.Application.Market;
 public sealed record RateDisplayItem(
     string AssetCode,
     string Title,
+    AssetKind Kind,
+    decimal RawAmount,
+    CurrencyUnit Unit,
     string AmountText,
     string UnitText,
     RateQuality Quality,
@@ -102,6 +106,9 @@ public sealed class RateDisplayService
             items.Add(new RateDisplayItem(
                 rate.AssetCode,
                 rate.Title,
+                AssetCatalog.FindByCode(rate.AssetCode)?.Kind ?? AssetKind.GoldGram,
+                rate.Amount,
+                rate.QuoteUnit,
                 RateFormat.Amount(rate.Amount),
                 RateFormat.Unit(rate.QuoteUnit),
                 quality,
@@ -188,7 +195,7 @@ public sealed class RateDisplayService
 /// <summary>قالب‌بندی افقی مقادیر بازار (نمایش — بدون تبدیل واحد).</summary>
 public static class RateFormat
 {
-    /// <summary>عدد با ارقام فارسی و جداکننده هزارگان؛ اعشار فقط در صورت وجود.</summary>
+    /// <summary>عدد با ارقام فارسی و جداکننده هزارگان؛ اعشار فقط در صورت وجود. علامت منفی با U+2212 نمایش می‌یابد.</summary>
     public static string Amount(decimal amount)
     {
         var text = amount == Math.Truncate(amount)
@@ -197,7 +204,22 @@ public static class RateFormat
 
         return PersianText.ToPersianDigits(text)
             .Replace(",", "٬", StringComparison.Ordinal)
-            .Replace(".", "٫", StringComparison.Ordinal);
+            .Replace(".", "٫", StringComparison.Ordinal)
+            .Replace('-', '−');
+    }
+
+    /// <summary>عدد پولی با واحد صریح (هرگز واحد حذف نمی‌شود — معیار پذیرش فاز ۳).</summary>
+    public static string Money(decimal amount, CurrencyUnit unit) => $"{Amount(amount)} {Unit(unit)}";
+
+    /// <summary>درصد با ارقام فارسی (دو رقم اعشار؛ مثال: ‎−۱۲٫۳۴٪).</summary>
+    public static string Percent(decimal percent)
+    {
+        var text = percent.ToString("N2", CultureInfo.InvariantCulture);
+
+        return PersianText.ToPersianDigits(text)
+            .Replace(",", "٬", StringComparison.Ordinal)
+            .Replace(".", "٫", StringComparison.Ordinal)
+            .Replace('-', '−') + "٪";
     }
 
     /// <summary>نام واحد پول (هرگز تبدیل نمی‌شود — ADR-0009).</summary>

@@ -109,6 +109,18 @@ dotnet run --project src/SadGallery.Web              # اجرا (ورود: /Acco
 - آپلود تصویر با اعتبارسنجی واقعی محتوا، نام تصادفی، جداسازی مسیر عمومی/خصوصی.
 - هیچ Secret در Git نیست: `docs/SECURITY.md` و `docs/DECISIONS/ADR-0006`.
 
+## ابزارهای بازار (فاز ۳)
+
+| مسیر | توضیح |
+| --- | --- |
+| `/market` | نمای کامل بازار (طلا، مسکوکات، ارز، اونس) با واحد و برچسب تازگی |
+| `/market/bubble` | حباب‌سنج با ورودی صریح و نسخه فرمول (`bubble-v1`) |
+| `/market/gold` | ماشین‌حساب طلا: گرم/مثقال/سوت، عیار ۰–۲۴، ارزش‌گذاری |
+| `/market/history` · `/market/advanced-bubble` | ویژه اعضا (Policy سرور `MemberFeatures`) |
+
+اعداد پولی همیشه با جداکننده فارسی و **واحد صریح** نمایش می‌یابند؛ ریال هرگز به‌عنوان تومان نمایش داده نمی‌شود.
+سنجش دسترس‌پذیری: `python3 scripts/accessibility-check.py --write-doc` (نتیجه در `docs/ACCESSIBILITY.md`).
+
 ## نرخ‌های بازار (فاز ۲)
 
 ```powershell

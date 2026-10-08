@@ -1,0 +1,67 @@
+@model SadGallery.Web.Models.Market.RateDetailsModel
+@using SadGallery.Application.Market
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = Model.Item.Title;
+
+    static string QualityBadge(RateQuality quality) => quality switch
+    {
+        RateQuality.Live => "text-bg-success",
+        RateQuality.Delayed => "text-bg-warning",
+        RateQuality.Stale => "text-bg-secondary",
+        _ => "text-bg-danger",
+    };
+}
+
+<nav aria-label="مسیر" class="mb-3 small">
+    <a asp-action="Index">بازار</a>
+    <span aria-hidden="true">/</span>
+    <span>@Model.Item.Title</span>
+</nav>
+
+<section class="sg-hero">
+    <h1 class="h4 mb-2">@Model.Item.Title</h1>
+    <p class="mb-1">
+        <span class="fs-4 fw-bold">@Model.Item.AmountText</span>
+        <span class="text-muted">@Model.Item.UnitText</span>
+    </p>
+    <p class="mb-0 small text-muted">
+        <span class="badge @QualityBadge(Model.Item.Quality) sg-quality" data-sg-quality="@(Model.Item.Quality == RateQuality.Live ? "live" : "other")">@Model.Item.QualityLabel</span>
+        <span class="ms-2">زمان نرخ: @Model.Item.QuotedAtText</span>
+        @if (Model.LastFetchedUtc is { } fetchedAt)
+        {
+            <span class="ms-2">آخرین دریافت: @PersianDate.ToJalaliDateTimeText(fetchedAt)</span>
+        }
+    </p>
+</section>
+
+<div class="sg-card mb-3">
+    <div class="sg-card__title">تاریخچه و نمودار</div>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <p class="small text-muted mb-2">
+            تاریخچه گسترده (تا ۹۰ روز) و نمودار برای اعضا فعال است.
+        </p>
+        <a class="btn btn-sm sg-btn-gold sg-touch" asp-action="History" asp-route-code="@Model.Item.AssetCode">مشاهده تاریخچه</a>
+    }
+    else
+    {
+        <p class="small text-muted mb-2">
+            تاریخچه گسترده و نمودار نرخ‌ها ویژه اعضاست؛ نرخ روز و ابزارهای محاسبه برای همه (بدون ورود) آزاد است.
+        </p>
+        <a class="btn btn-sm sg-btn-gold sg-touch" asp-controller="Account" asp-action="Login">ورود / ثبت‌نام</a>
+    }
+</div>
+
+<div class="sg-card">
+    <div class="sg-card__title">ابزارهای مرتبط</div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="Bubble">حباب‌سنج</a>
+        <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="Gold">ماشین‌حساب طلا</a>
+    </div>
+</div>
+
+@if (Model.IsSampleData)
+{
+    <p class="small text-danger mt-3 mb-0">هشدار: منبع فعلی «نمونهٔ آزمایشی» است و نرخ روز بازار نیست.</p>
+}

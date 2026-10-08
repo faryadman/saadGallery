@@ -12,19 +12,7 @@ namespace SadGallery.Tests.Integration.Infrastructure;
 public sealed class SadGalleryWebFactory : WebApplicationFactory<Program>
 {
     /// <summary>رشته اتصال بی‌خطر برای مسیرهایی که به دیتابیس دست نمی‌زنند.</summary>
-    public const string PlaceholderConnectionString =
-        "Server=(localdb)\\MSSQLLocalDB;Database=SadGallery_WebTests_NotUsed;Trusted_Connection=True;TrustServerCertificate=True";
+    public const string PlaceholderConnectionString = WebFactorySettings.PlaceholderConnectionString;
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-
-        builder.UseEnvironment("Development");
-        builder.UseSetting("ConnectionStrings:SadGallery", PlaceholderConnectionString);
-
-        // تست‌ها «هرمتیک» هستند: منبع نرخ واقعی/Fixture در تست‌های HTTP فعال نمی‌شود تا
-        // هیچ درخواست خروجی و هیچ نوشتن خودکار در دیتابیس رخ ندهد. تست‌های مربوط به نمایش نرخ،
-        // کش را مستقیم پر می‌کنند.
-        builder.UseSetting("RateOptions:Provider", "Disabled");
-    }
+    protected override void ConfigureWebHost(IWebHostBuilder builder) => WebFactorySettings.Apply(builder);
 }

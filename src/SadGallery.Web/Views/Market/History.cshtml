@@ -1,0 +1,102 @@
+@model SadGallery.Web.Models.Market.HistoryPageModel
+@using SadGallery.Application.Market
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = "تاریخچه نرخ‌ها";
+    var history = Model.History;
+
+    static string QualityBadge(RateQuality quality) => quality switch
+    {
+        RateQuality.Live => "text-bg-success",
+        RateQuality.Delayed => "text-bg-warning",
+        RateQuality.Stale => "text-bg-secondary",
+        _ => "text-bg-danger",
+    };
+}
+
+<section class="sg-hero">
+    <h1 class="h4 mb-2">تاریخچه نرخ‌ها (ویژه اعضا)</h1>
+    <p class="mb-0 text-muted small">
+        تاریخچه گسترده از رکوردهای ثبت‌شده ساخته می‌شود؛ حداکثر بازه ۹۰ روز و حداکثر ۵۰۰ نقطه در هر نمایش.
+    </p>
+</section>
+
+<form method="get" asp-action="History" class="sg-card mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label" for="code">دارایی</label>
+            <select class="form-select sg-touch" id="code" name="code">
+                @foreach (var asset in Model.Assets)
+                {
+                    <option value="@asset.Code" selected="@(asset.Code == history.AssetCode)">@asset.Title</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="days">بازه (روز)</label>
+            <select class="form-select sg-touch" id="days" name="days">
+                @foreach (var days in new[] { 1, 7, 30, 90 })
+                {
+                    <option value="@days" selected="@(days == history.Days)">@days روز</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn sg-btn-gold sg-touch w-100">نمایش</button>
+        </div>
+    </div>
+</form>
+
+<div class="sg-card mb-3">
+    <div class="sg-card__title">@history.Title — @PersianText.ToPersianDigits(history.Days.ToString()) روز اخیر</div>
+
+    @if (history.Points.Count == 0)
+    {
+        <p class="small text-muted mb-0">@(history.Notice ?? "داده‌ای برای نمایش نیست.")</p>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(Model.Chart))
+        {
+            @Html.Raw(Model.Chart)
+            <p class="small text-muted mt-1 mb-2">
+                @MarketChart.DescribeRange(history.Min!.Value, history.Max!.Value, Model.Unit)
+                — @MarketChart.DescribeCount(history.Points.Count)
+            </p>
+        }
+
+        @if (history.Notice is { } notice)
+        {
+            <p class="small text-muted">@notice</p>
+        }
+
+        <div class="table-responsive">
+            <table class="sg-table">
+                <thead>
+                    <tr>
+                        <th scope="col">زمان نرخ</th>
+                        <th scope="col">مقدار</th>
+                        <th scope="col">واحد</th>
+                        <th scope="col">وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var point in history.Points)
+                    {
+                        <tr>
+                            <td class="small">@point.QuotedAtText</td>
+                            <td class="fw-bold">@point.AmountText</td>
+                            <td class="text-muted">@point.UnitText</td>
+                            <td><span class="badge @QualityBadge(point.Quality) sg-quality" data-sg-quality="@(point.Quality == RateQuality.Live ? "live" : "other")">@RateFormat.QualityLabel(point.Quality)</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="Index">نمای بازار</a>
+    <a class="btn btn-sm btn-outline-secondary sg-touch" asp-action="AdvancedBubble">حباب‌سنج پیشرفته</a>
+</div>

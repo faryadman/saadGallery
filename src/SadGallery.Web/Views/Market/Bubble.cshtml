@@ -1,0 +1,179 @@
+@model SadGallery.Web.Models.Market.BubblePageModel
+@using SadGallery.Application.Market
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = "حباب‌سنج";
+    var result = Model.Result;
+}
+
+<section class="sg-hero">
+    <h1 class="h4 mb-2">حباب‌سنج مسکوکات</h1>
+    <p class="mb-0 text-muted small">
+        ارزش ذاتی و حباب هر سکه با ورودی‌های صریح محاسبه می‌شود؛ نسخه فرمول در نتیجه ثبت و نمایش داده می‌شود.
+        ورودی‌ها به‌صورت پیش‌فرض از آخرین نرخ‌های بازار پر می‌شوند، اما می‌توانید هر مقدار را دستی تغییر دهید.
+    </p>
+</section>
+
+@if (Model.IsSampleData)
+{
+    <div class="alert alert-warning small" role="alert">
+        منبع نرخ فعلی «نمونهٔ آزمایشی» (محیط توسعه) است؛ اعداد پیشنهادی فرم نرخ روز بازار نیستند.
+    </div>
+}
+else if (Model.RateNotice is { } notice)
+{
+    <div class="alert alert-light border small" role="alert">@notice</div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger small" role="alert">
+        <ul class="mb-0">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <form method="post" asp-action="Bubble" class="sg-card">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label" for="coin">سکه (برای پیش‌پر کردن وزن و عیار)</label>
+                <select class="form-select sg-touch" id="coin" name="Coin">
+                    @foreach (var coin in Model.Coins)
+                    {
+                        <option value="@coin.AssetCode"
+                                selected="@(coin.AssetCode == Model.Form.Coin)"
+                                data-weight="@coin.WeightGrams.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                data-purity="@coin.Purity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                data-price="@(coin.MarketPriceIrt?.ToString(System.Globalization.CultureInfo.InvariantCulture))">
+                            @coin.Title
+                        </option>
+                    }
+                </select>
+                <div class="form-text">وزن/عیار استاندارد بانک مرکزی؛ در فرم قابل ویرایش است.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="marketPrice">قیمت بازار قطعه (تومان)</label>
+                <input class="form-control sg-touch" id="marketPrice" name="MarketPrice" value="@Model.Form.MarketPrice" inputmode="decimal" />
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6 mb-3">
+                    <label class="form-label" for="weight">وزن (گرم)</label>
+                    <input class="form-control sg-touch" id="weight" name="Weight" value="@Model.Form.Weight" inputmode="decimal" />
+                </div>
+                <div class="col-sm-6 mb-3">
+                    <label class="form-label" for="purity">خلوص (عیار ۹۰۰ ⇒ ۰٫۹)</label>
+                    <input class="form-control sg-touch" id="purity" name="Purity" value="@Model.Form.Purity" inputmode="decimal" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="referenceRate">نرخ مرجع: گرم طلای ۱۸ عیار (تومان)</label>
+                <input class="form-control sg-touch" id="referenceRate" name="ReferenceRate" value="@Model.Form.ReferenceRate" inputmode="decimal" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="mintingCost">هزینه ضرب (تومان، اختیاری)</label>
+                <input class="form-control sg-touch" id="mintingCost" name="MintingCost" value="@Model.Form.MintingCost" inputmode="decimal" />
+            </div>
+
+            <button type="submit" class="btn sg-btn-gold sg-touch">محاسبه حباب</button>
+        </form>
+    </div>
+
+    <div class="col-lg-6">
+        @if (result is { } r)
+        {
+            <div class="sg-result mb-3">
+                <div class="sg-card__title mb-2">نتیجه</div>
+
+                @if (!r.IsValid)
+                {
+                    <p class="text-danger small mb-0">@r.Reason</p>
+                }
+                else
+                {
+                    @if (!r.IsTrusted)
+                    {
+                        <div class="alert alert-warning small" role="alert">
+                            نرخ مرجع کهنه یا ناموجود است؛ این محاسبه قابل اعتماد نیست و «لحظه‌ای» شمرده نمی‌شود.
+                        </div>
+                    }
+
+                    <dl class="row mb-0 small">
+                        <dt class="col-6">ارزش ذاتی</dt>
+                        <dd class="col-6 sg-result__value">@RateFormat.Money(r.IntrinsicValueIrt!.Value, CurrencyUnit.Irt)</dd>
+
+                        <dt class="col-6">حباب ریالی</dt>
+                        <dd class="col-6 sg-result__value">@RateFormat.Money(r.BubbleIrt!.Value, CurrencyUnit.Irt)</dd>
+
+                        <dt class="col-6">حباب درصدی</dt>
+                        <dd class="col-6 sg-result__value">@RateFormat.Percent(r.BubblePercent!.Value)</dd>
+
+                        <dt class="col-6">نسخه فرمول</dt>
+                        <dd class="col-6"><code>@r.FormulaVersion</code></dd>
+                    </dl>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="sg-card mb-3">
+                <p class="small text-muted mb-0">
+                    مقدارها را وارد و «محاسبه حباب» را بزنید. هیچ نتیجه‌ای بدون ورودی معتبر ساخته نمی‌شود.
+                </p>
+            </div>
+        }
+
+        <div class="sg-card">
+            <div class="sg-card__title">فرمول (نسخه @BubbleFormula.Version)</div>
+            <p class="sg-formula mb-2">intrinsic = weight_g x (purity / reference_purity) x reference_rate_irt + minting_cost_irt</p>
+            <p class="sg-formula mb-2">bubble_irt = market_price_irt - intrinsic</p>
+            <p class="sg-formula mb-0">bubble_percent = bubble_irt / intrinsic x 100</p>
+            <p class="small text-muted mt-2 mb-0">
+                نرخ مرجع باید «گرم طلای ۱۸ عیار به تومان» باشد؛ تبدیل ریال↔تومان انجام نمی‌شود.
+            </p>
+        </div>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <p class="small mt-3 mb-0">
+                <a asp-action="AdvancedBubble">حباب‌سنج پیشرفته (مقایسه همه مسکوکات)</a> برای اعضا فعال است.
+            </p>
+        }
+        else
+        {
+            <p class="small text-muted mt-3 mb-0">
+                مقایسه هم‌زمان همه مسکوکات (حباب‌سنج پیشرفته) ویژه اعضاست.
+            </p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // پیش‌پر کردن وزن/عیار/قیمت از سکه انتخابی — پیش‌ارتقا؛ بدون JS هم فرم کار می‌کند.
+        (function () {
+            var coin = document.getElementById("coin");
+            if (!coin) { return; }
+            coin.addEventListener("change", function () {
+                var option = coin.options[coin.selectedIndex];
+                if (!option) { return; }
+                var weight = option.getAttribute("data-weight");
+                var purity = option.getAttribute("data-purity");
+                var price = option.getAttribute("data-price");
+                if (weight) { document.getElementById("weight").value = weight; }
+                if (purity) { document.getElementById("purity").value = purity; }
+                if (price) { document.getElementById("marketPrice").value = price; }
+            });
+        })();
+    </script>
+}

@@ -108,11 +108,11 @@ Seed را دو بار اجرا می‌کند (اثبات ایدِمپوتنت) �
 | نرمال‌سازی و سیاست‌ها | `RateNormalizerTests`, `RateFreshnessPolicyTests`, `RateAnomalyDetectorTests`, `RateBackoffPolicyTests`, `AssetCatalogTests`, `RateOptionsTests`, `TgnEndpointTemplateTests` | مقیاس سکه ×۱۰۰۰ و نقره ×۰٫۰۰۱ (یک بار)، خطای ریال/تومان، بازه معقول، تازگی (Live/Delayed/Stale/Invalid)، جهش ۵۰٪، عقب‌نشینی نمایی، پوشاندن اعتبارنامه، نبود خطا با رمز در پیام‌ها |
 | کش، نمایش و هماهنگی | `RateSnapshotCacheTests`, `RateDisplayServiceTests`, `RateFetchOrchestratorTests`, `TgnRateProviderTests`, `HomeRatesTests`, `RateHealthTests` | مسیر گرم = صفر کوئری، fallback دیتابیس، پیام‌های فارسی حالت‌های نبود داده، برچسب کهنگی، حذف نرخ نامعتبر/مشکوک، قفل درون‌فرایندی، حداقل فاصله، مقاومت در برابر خرابی دیتابیس، ۴۲۹/۵۰۰/Timeout/پاسخ غول‌آسا، «هیچ اعتبارنامه‌ای در لاگ» |
 
-**آمار اجراشده (2026-10-08):**
+**آمار اجراشده (2026-10-08، پس از فاز ۳):**
 
 ```
-Unit:        232/232 سبز
-Integration:  55/55 سبز + 9 Skip
+Unit:        300/300 سبز
+Integration:  80/80 سبز + 9 Skip
 ```
 ۹ مورد Skip = تست‌های نیازمند SQL Server واقعی (۶ مورد بازار + ۳ مورد قبلی). اجرای آن‌ها:
 ```powershell
@@ -120,6 +120,21 @@ $env:SADGALLERY_TEST_SQL = "Server=localhost;Database=SadGallery_Test;Trusted_Co
 dotnet test
 ```
 آن‌ها شامل: درج و خواندن «آخرین نرخ هر دارایی»، تاریخچه، ثبت رکورد اجرا، انحصار و انقضای قفل چند-نمونه‌ای، و رد نرخ ناقص توسط دیتابیس.
+
+### فاز ۳ — تست‌های افزوده‌شده
+
+| فایل | پوشش |
+| --- | --- |
+| `Unit/Market/BubbleCalculatorTests` | مرزی‌ها: حباب صفر/منفی، نرخ صفر ⇒ نامعتبر، کهنه ⇒ نامعتبر-اعتماد، دقت اعشاری (تقسیم تکرارشونده)، عیار ≠ ۱۸، هزینه ضرب، نسخه فرمول |
+| `Unit/Market/GoldCalculatorTests` | مثقال/سوت/گرم، ۱۸↔۲۴ عیار با تلورانس، ارزش، ورودی نامعتبر، واحد ریال رد |
+| `Unit/Market/CoinStandardsTests` | قفل وزن/عیار استاندارد، نصف‌بودن دقیق، نگاشت به کاتالوگ |
+| `Unit/Market/RateSectionsTests` | ترتیب بخش‌ها، بخش رمزارز با پیام صریح |
+| `Unit/Market/MarketChartTests` | SVG ساده/تک‌نقطه/یکنواخت، escape برچسب، گزارش فارسی |
+| `Unit/Text/PersianNumberTests` | ارقام فارسی/عربی، جداکننده‌ها، رد «7.600.000» |
+| `Integration/Endpoints/MarketPagesTests` | مهمان: همه صفحه‌ها، POST حباب/طلا با توکن، خطای ورودی فارسی، «هرگز لحظه‌ای برای داده ذخیره‌شده»، اسکریپت آفلاین |
+| `Integration/Endpoints/MarketAuthorizationTests` | مهمان ۳۰۲ / عضو ۲۰۰ برای تاریخچه، حباب پیشرفته و API؛ سقف ۹۰ روز |
+| `Integration/Endpoints/AccessibilityTests` | پاسبان رگرسیون کنتراست AA از خود site.css + هدف لمسی + سند سنجش |
+| `Integration/Infrastructure/TestAuthHandler + MemberWebFactory` | طرح احراز هویت فقط-تست برای آزمون Policy (در برنامه واقعی اثری ندارد) |
 
 **اجرای دستی زنجیره (بدون تست، روی محیط واقعی):**
 ```powershell
