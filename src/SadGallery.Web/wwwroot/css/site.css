@@ -281,3 +281,71 @@ body.sg-offline .sg-offline-banner {
         padding: 1rem;
     }
 }
+
+/* ══════════ فاز ۴ — ویترین محصولات ══════════ */
+
+.sg-product-card {
+    border: 1px solid var(--sg-border);
+    transition: box-shadow .15s ease-in-out;
+}
+
+.sg-product-card:hover { box-shadow: 0 .25rem .75rem rgba(16, 35, 63, .12); }
+
+.sg-product-card__img {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: var(--sg-cream);
+}
+
+.sg-product-card__noimage {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sg-cream);
+    color: var(--sg-muted);
+    font-size: .875rem;
+}
+
+.sg-product-card__noimage--large {
+    aspect-ratio: 4 / 3;
+    border: 1px dashed var(--sg-border);
+    border-radius: .5rem;
+}
+
+.sg-product-card__summary {
+    color: var(--sg-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.sg-price { color: var(--sg-ink); }
+
+.sg-price-box {
+    border: 1px solid var(--sg-border);
+    border-radius: .5rem;
+    padding: 1rem;
+    background: var(--sg-cream);
+}
+
+.sg-product-image { width: 100%; height: auto; background: var(--sg-cream); }
+
+.sg-thumb {
+    width: 88px;
+    height: 88px;
+    object-fit: cover;
+    border: 1px solid var(--sg-border);
+}
+
+.sg-thumb-card {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: var(--sg-cream);
+}
+
+.sg-description { line-height: 2; white-space: pre-wrap; }
+
+.sg-empty { border: 1px dashed var(--sg-border); }

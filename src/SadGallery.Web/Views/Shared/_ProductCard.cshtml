@@ -1,0 +1,60 @@
+@model SadGallery.Application.Catalog.PublicProduct
+@using SadGallery.Domain.Enums
+
+@* کارت محصول در ویترین عمومی.
+   قاعده: اگر عدد قیمت معتبر نباشد، هیچ عددی نمایش داده نمی‌شود (نه صفر و نه خط تیرهٔ بی‌توضیح). *@
+
+<article class="card h-100 sg-product-card">
+    <a href="/products/@Model.Id" class="text-decoration-none">
+        @if (Model.ThumbnailUrl is { } thumb)
+        {
+            <img src="@thumb"
+                 class="card-img-top sg-product-card__img"
+                 alt="تصویر @Model.Title"
+                 loading="lazy"
+                 width="480" height="480" />
+        }
+        else
+        {
+            <div class="sg-product-card__noimage" role="img" aria-label="بدون تصویر">بدون تصویر</div>
+        }
+    </a>
+
+    <div class="card-body d-flex flex-column">
+        <h3 class="h6 card-title mb-1">
+            <a href="/products/@Model.Id" class="text-decoration-none text-dark">@Model.Title</a>
+        </h3>
+
+        @if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+        {
+            <p class="small text-muted mb-2">@Model.CategoryName</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Summary))
+        {
+            <p class="small mb-2 sg-product-card__summary">@Model.Summary</p>
+        }
+
+        <div class="mt-auto">
+            @if (Model.Price.HasAmount)
+            {
+                <p class="fw-bold mb-1 sg-price">@Model.Price.AmountText</p>
+            }
+            else
+            {
+                <p class="mb-1 text-muted small">
+                    @(Model.Price.WarningText ?? "قیمت اعلام نشده است.")
+                </p>
+            }
+
+            @if (!Model.IsInStock)
+            {
+                <span class="badge text-bg-secondary sg-quality">ناموجود</span>
+            }
+            else if (Model.Price.IsStale)
+            {
+                <span class="badge text-bg-warning sg-quality">قیمت به‌روزرسانی شده</span>
+            }
+        </div>
+    </div>
+</article>

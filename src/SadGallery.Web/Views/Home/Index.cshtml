@@ -15,6 +15,11 @@
     var sections = RateSections.Build(Model.Items);
 }
 
+@using SadGallery.Application.Catalog
+@{
+    var latest = ViewData["LatestProducts"] as IReadOnlyList<PublicProduct> ?? [];
+}
+
 <section class="sg-hero">
     <h1 class="h2 mb-2">ویترین آنلاین طلا و جواهر گالری صاد</h1>
     <p class="mb-0 text-muted">
@@ -112,6 +117,40 @@ else
         </div>
     </div>
 }
+
+
+@* ── فاز ۴: آخرین محصولاتِ منتشرشده ── *@
+<section class="sg-section mt-4" aria-labelledby="latestHeading">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 mb-0" id="latestHeading">آخرین محصولات</h2>
+        <a href="/products" class="btn btn-sm btn-outline-primary sg-touch">مشاهدهٔ همه</a>
+    </div>
+
+    @if (ViewData["CatalogUnavailable"] is true)
+    {
+        <div class="alert alert-warning" role="status">
+            نمایش ویترین در این لحظه ممکن نیست (ارتباط با دیتابیس برقرار نشد).
+            بقیهٔ بخش‌های سایت در دسترس است.
+        </div>
+    }
+    else if (latest is { Count: > 0 })
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+            @foreach (var product in latest)
+            {
+                <div class="col">
+                    @await Html.PartialAsync("_ProductCard", product)
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="status">
+            هنوز کالایی منتشر نشده است.
+        </div>
+    }
+</section>
 
 <div class="row g-3">
     <div class="col-md-6">

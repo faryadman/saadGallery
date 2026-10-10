@@ -25,6 +25,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SadGallery.Domain\SadGallery.Domain.csproj" />
     <ProjectReference Include="..\..\src\SadGallery.Application\SadGallery.Application.csproj" />
+      <!-- ارجاع به Infrastructure فقط برای تستِ «پردازشگر واقعی تصویر» (SkiaSharp) است؛
+           این تست‌ها هیچ دیتابیس یا شبکه‌ای لمس نمی‌کنند و همچنان سریع‌اند.
+           بدون این ارجاع نمی‌شد رفتارِ واقعیِ رمزگشاییِ نمونه‌های مسموم را سنجید. -->
+      <ProjectReference Include="..\..\src\SadGallery.Infrastructure\SadGallery.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

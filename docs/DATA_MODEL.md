@@ -100,20 +100,58 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 - `Id long PK` · `AssetDefinitionId` · `MarketPriceId` · `ReferenceGoldPriceId` (نرخ مرجع ۱۸ عیار/خالص استفاده‌شده) · `StandardWeightGram` · `Purity` · `UnitPriceReference decimal(18,4)` · `IntrinsicValue decimal(18,2)` · `MarketValue decimal(18,2)` · `BubbleAmount decimal(18,2)` · `BubblePercent decimal(9,4)` · `CurrencyUnit` · `FormulaVersion nvarchar(20)` · `IsTrusted bit` · `InputQuotedAtUtc` · `ComputedAtUtc`.
 - **قاعده:** این جدول فقط Snapshot است. محاسبه همیشه در `Domain` انجام و تست می‌شود؛ جدول «منبع فرمول» نیست.
 
-### ۳.۴ ویترین محصولات
-**ProductCategory**
-- `Id int PK` · `Slug nvarchar(100) UNIQUE` · `Title nvarchar(100)` · `ParentId int? FK` · `DisplayOrder int` · `IsActive bit` · `CreatedAtUtc`/`UpdatedAtUtc` · `RowVersion`.
+### ۳.۴ ویترین محصولات — **پیاده‌شده در فاز ۴** (مهاجرت `AddProductsAndMedia`)
 
-**Product**
-- `Id int PK` · `Code nvarchar(40) UNIQUE` (کد محصول) · `Title nvarchar(200)` · `Slug nvarchar(200) UNIQUE` · `CategoryId int FK` · `Description nvarchar(4000)` · `WeightGram decimal(9,4)?` · `Purity decimal(5,2)?` · `Status` enum `Draft`/`Published`/`Inactive` · `Availability` enum `InStock`/`OutOfStock`/`MadeToOrder` · `IsFeaturedOnHome bit` · `PricePolicy` enum `QuoteOnly`/`Fixed`/`Computed` · `FixedPriceAmount decimal(18,2)?` + `FixedPriceUnit` · `ComputedBaseAssetId int? FK` · `ComputedWagePercent decimal(9,4)?` (اجرت) · `ComputedProfitPercent decimal(9,4)?` · `PriceCalculatedAtUtc datetimeoffset?` · `PublishedAtUtc?` · `CreatedByUserId`/`UpdatedByUserId` · `CreatedAtUtc`/`UpdatedAtUtc` · `RowVersion`.
-- **قواعد:**
-  - `Status=Published` فقط با تأیید اپراتور/مدیر؛ هیچ محتوای تأییدنشده منتشر نمی‌شود.
-  - `PricePolicy=Computed` ⇒ نمایش قیمت **الزاماً** همراه `PriceCalculatedAtUtc` و هشدار کهنگی.
-  - `PricePolicy=QuoteOnly` ⇒ هیچ عددی نمایش داده نمی‌شود، فقط دکمه «استعلام قیمت».
+> این بخش جایگزینِ طراحیِ اولیه شده و **وضعیتِ واقعیِ کد** را نشان می‌دهد.
+> تغییراتِ مهم نسبت به طراحیِ اولیه در انتهای همین بخش فهرست شده‌اند.
 
-**ProductImage**
-- `Id int PK` · `ProductId int FK` · `StoragePath nvarchar(300)` (نسبی؛ بیرون `wwwroot`) · `PublicUrl nvarchar(300)` · `ThumbnailPath nvarchar(300)` · `WidthPx int` · `HeightPx int` · `ByteSize int` · `ContentHash char(64)` (SHA-256 برای تشخیص تکرار/تغییر) · `AltText nvarchar(200)?` · `DisplayOrder int` · `UploadedByUserId` · `UploadedAtUtc`.
-- **Index:** `IX_ProductImage_Product_Order (ProductId, DisplayOrder)`.
+**ProductCategory** (جدول `ProductCategories`)
+- `Id int PK` · `Name nvarchar` · `Description nvarchar?` · `DisplayOrder int`.
+
+**Product** (جدول `Products`)
+- `Id int PK` · `Title nvarchar` · `Summary nvarchar?` · `Description nvarchar?` · `CategoryId int? FK`.
+- **سیاست قیمت:** `PricePolicy` enum `Fixed` / `Computed` / `QuoteOnly` ·
+  `FixedPriceIrt decimal?` (فقط برای `Fixed`).
+- **ورودی‌های محاسبه** (فقط برای `Computed`): `WeightGrams` · `Karat` ·
+  `MakingChargePercent` · `ProfitPercent` · `TaxPercent`.
+- **وضعیت:** `IsInStock bit` · `IsPublished bit` · `IsDeleted bit` (حذفِ نرم).
+- **ممیزی:** `CreatedAtUtc` · `UpdatedAtUtc?` · `PublishedAtUtc?` · `DeletedAtUtc?` ·
+  `CreatedByUserId` · `UpdatedByUserId?` · `DeletedByUserId?`.
+- **عکسِ فوریِ قیمت** (`Price*`): مبلغِ کل و اجزا (`PriceGoldValueIrt`، `PriceMakingIrt`،
+  `PriceProfitIrt`، `PriceTaxIrt`)، مبنا (`PriceRateAmountIrt` + `PriceRateQuotedAtUtc`)،
+  ورودی‌های استفاده‌شده (`PriceWeightGrams`، `PriceKarat`، درصدها)،
+  `PriceComputedAtUtc`، `PriceFormulaVersion`، `PriceReason`.
+
+  > چرا عکسِ فوری ذخیره می‌شود؟ چون معیارِ پذیرش می‌گوید «برای `Computed` مبنای محاسبه
+  > و زمان محاسبه ذخیره و نمایش داده شود». نگه‌داریِ عدد بدون مبنا، عددی است که
+  > نمی‌توان از آن دفاع کرد.
+
+**ProductImage** (جدول `ProductImages`)
+- `Id int PK` · `ProductId int FK` · `StoredFileName nvarchar` · `ThumbnailFileName nvarchar` ·
+  `DisplayOrder int` · `SizeBytes bigint` · `Width int` · `Height int` · `DetectedFormat nvarchar`.
+- **ردیابی برای بررسیِ امنیتی:** `OriginalFileName nvarchar?` (نامی که کاربر فرستاده) ·
+  `ClaimedContentType nvarchar?` (نوعی که کاربر ادعا کرده — فقط برای گزارش).
+- **ممیزی:** `UploadedByUserId` · `UploadedAtUtc`.
+
+**قواعدِ اعمال‌شده در کد (نه فقط در مستند):**
+- محصولِ منتشرنشده یا حذف‌شده در **هیچ** فهرست یا جزئیاتِ عمومی دیده نمی‌شود؛
+  شرط در خودِ پرس‌وجو اعمال می‌شود (پاسخ ۴۰۴، نه ۴۰۳ — تا وجودِ شناسه فاش نشود).
+- `PricePolicy=QuoteOnly` ⇒ هیچ عددی نمایش داده نمی‌شود.
+- `PricePolicy=Computed` با مبنای ناقص یا کهنه ⇒ **عددی نمایش داده نمی‌شود**؛
+  به‌جای آن دلیل گفته می‌شود (معیارِ «منسوخ بدون هشدار نمایش داده نشود»).
+- نامِ فایلِ ذخیره‌شده هرگز از ورودی کاربر نمی‌آید (ADR-0014 §۵).
+
+**تغییرات نسبت به طراحیِ اولیهٔ این سند (ثبت برای بازبینیِ مالک):**
+1. از `Status` (سه‌حالته) به دو پرچمِ `IsPublished` + `IsDeleted` ساده شد؛ حالتِ
+   `Inactive` در عمل با «منتشرنشده» یکی بود و فقط ابهام می‌آفرید.
+2. ستون‌های `Code` و `Slug` فعلاً حذف شدند؛ نگه‌داریِ شناسهٔ متنی نیازمند مدیریتِ
+   یکتایی و تغییرِ نشانی است که در این فاز ارزش افزوده نداشت (در صورت نیاز، با
+   مهاجرتِ جدا اضافه می‌شود).
+3. `ContentHash` (SHA-256) برای تصویر فعلاً پیاده نشد؛ تشخیصِ تکرار در این مرحله
+   نیاز نبود و افزودنش بدون مصرف‌کننده پیچیدگیِ بی‌دلیل بود (مغایر با ADR-0003).
+4. سلسله‌مراتبِ دسته (`ParentId`) پیاده نشد؛ درختِ دسته‌بندی نیازمند رابطِ مدیریتی
+   است که در فاز ۶ می‌آید.
+
 
 ### ۳.۵ تیکت و استعلام قیمت
 **SupportTicket**

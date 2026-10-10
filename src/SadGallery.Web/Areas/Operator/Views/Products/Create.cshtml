@@ -1,0 +1,10 @@
+@model SadGallery.Web.Models.Catalog.ProductFormModel
+@{
+    ViewData["Title"] = "کالای جدید";
+}
+
+<h1 class="h4 mb-3">کالای جدید</h1>
+
+<form asp-action="Create" method="post">
+    @await Html.PartialAsync("_ProductForm", Model)
+</form>

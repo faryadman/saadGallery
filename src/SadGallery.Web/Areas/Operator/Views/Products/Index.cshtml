@@ -1,0 +1,141 @@
+@model IReadOnlyList<SadGallery.Application.Catalog.ProductListRow>
+@using SadGallery.Domain.Enums
+@using SadGallery.Application.Text
+@{
+    ViewData["Title"] = "مدیریت کالاها";
+    var includeDeleted = ViewData["IncludeDeleted"] is true;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h4 mb-0">مدیریت کالاها</h1>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="/Operator/Products/Create" class="btn btn-primary sg-touch">کالای جدید</a>
+        @if (includeDeleted)
+        {
+            <a href="/Operator/Products" class="btn btn-outline-secondary sg-touch">پنهان کردنِ حذف‌شده‌ها</a>
+        }
+        else
+        {
+            <a href="/Operator/Products?includeDeleted=true" class="btn btn-outline-secondary sg-touch">نمایشِ حذف‌شده‌ها</a>
+        }
+    </div>
+</div>
+
+@if (TempData["Notice"] is string notice)
+{
+    <div class="alert alert-success" role="status">@notice</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info" role="status">هنوز کالایی ثبت نشده است.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle sg-table">
+            <thead>
+                <tr>
+                    <th scope="col">کالا</th>
+                    <th scope="col">دسته</th>
+                    <th scope="col">سیاست قیمت</th>
+                    <th scope="col">قیمت</th>
+                    <th scope="col">وضعیت</th>
+                    <th scope="col">تصویر</th>
+                    <th scope="col">عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    <tr class="@(row.IsDeleted ? "table-secondary text-muted" : null)">
+                        <td>
+                            <strong>@row.Title</strong>
+                            <div class="small text-muted">ثبت: @PersianDate.ToJalaliDateText(row.CreatedAtUtc)</div>
+                        </td>
+                        <td>@(row.CategoryName ?? "—")</td>
+                        <td>
+                            @switch (row.PricePolicy)
+                            {
+                                case PricePolicy.Fixed:
+                                    <span>قیمت ثابت</span>
+                                    break;
+                                case PricePolicy.Computed:
+                                    <span>محاسبه‌شده</span>
+                                    if (row.PriceComputedAtUtc is { } computedAt)
+                                    {
+                                        <div class="small text-muted">@PersianDate.ToJalaliDateTimeText(computedAt)</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="small text-muted">هنوز محاسبه نشده</div>
+                                    }
+                                    break;
+                                default:
+                                    <span>استعلامی</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if (row.PriceTotalIrt is { } price)
+                            {
+                                <span dir="rtl">@SadGallery.Application.Market.RateFormat.Money(price, SadGallery.Domain.Enums.CurrencyUnit.Irt)</span>
+                            }
+                            else if (row.PricePolicy == PricePolicy.Fixed)
+                            {
+                                <span class="text-muted">ثبت‌نشده</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (row.IsDeleted)
+                            {
+                                <span class="badge text-bg-dark">حذف‌شده</span>
+                            }
+                            else if (row.IsPublished)
+                            {
+                                <span class="badge text-bg-success sg-quality">منتشرشده</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-warning sg-quality">پیش‌نویس</span>
+                            }
+
+                            @if (!row.IsInStock)
+                            {
+                                <span class="badge text-bg-secondary sg-quality">ناموجود</span>
+                            }
+                        </td>
+                        <td>@row.ImageCount</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                @if (!row.IsDeleted)
+                                {
+                                    <a href="/Operator/Products/Edit/@row.Id" class="btn btn-sm btn-outline-primary sg-touch">ویرایش</a>
+                                    <a href="/Operator/Products/Images/@row.Id" class="btn btn-sm btn-outline-secondary sg-touch">تصاویر</a>
+
+                                    <form method="post" action="/Operator/Products/Publish/@row.Id" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="published" value="@(row.IsPublished ? "false" : "true")" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success sg-touch">
+                                            @(row.IsPublished ? "خروج از ویترین" : "انتشار")
+                                        </button>
+                                    </form>
+
+                                    <form method="post" action="/Operator/Products/Delete/@row.Id" class="d-inline"
+                                          onsubmit="return confirm('حذف این کالا را تأیید می‌کنید؟');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger sg-touch">حذف</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

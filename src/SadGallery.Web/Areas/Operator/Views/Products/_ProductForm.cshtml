@@ -1,0 +1,158 @@
+@model SadGallery.Web.Models.Catalog.ProductFormModel
+@using SadGallery.Domain.Enums
+@using SadGallery.Domain.Catalog
+
+@if (Model.Errors.Count > 0)
+{
+    <div class="alert alert-danger" role="alert">
+        <ul class="mb-0">
+            @foreach (var error in Model.Errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Notice))
+{
+    <div class="alert alert-success" role="status">@Model.Notice</div>
+}
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="mb-3">
+            <label for="Title" class="form-label">عنوان کالا</label>
+            <input id="Title" name="Title" class="form-control" maxlength="200" autocomplete="off"
+                   value="@Model.Title" />
+            <span class="form-text">نام کالا همان‌طور که در فاکتور می‌آید.</span>
+        </div>
+
+        <div class="mb-3">
+            <label for="Summary" class="form-label">خلاصه (کارت محصول)</label>
+            <input id="Summary" name="Summary" class="form-control" maxlength="400" autocomplete="off"
+                   value="@Model.Summary" />
+        </div>
+
+        <div class="mb-3">
+            <label for="Description" class="form-label">توضیحات کامل</label>
+            <textarea id="Description" name="Description" class="form-control" rows="6" maxlength="8000">@Model.Description</textarea>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="mb-3">
+            <label for="CategoryId" class="form-label">دسته‌بندی</label>
+            <select id="CategoryId" name="CategoryId" class="form-select">
+                <option value="">— بدون دسته —</option>
+                @foreach (var category in Model.Categories)
+                {
+                    if (Model.CategoryId == category.Id)
+                    {
+                        <option value="@category.Id" selected>@category.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="PricePolicy" class="form-label">سیاست قیمت</label>
+            <select id="PricePolicy" name="PricePolicy" class="form-select">
+                @foreach (var policy in new[] { PricePolicy.Fixed, PricePolicy.Computed, PricePolicy.QuoteOnly })
+                {
+                    var label = policy switch
+                    {
+                        PricePolicy.Fixed => "قیمت ثابت",
+                        PricePolicy.Computed => "محاسبه‌شده از نرخ روز",
+                        _ => "فقط استعلام قیمت",
+                    };
+
+                    if (Model.PricePolicy == policy)
+                    {
+                        <option value="@((int)policy)" selected>@policy — @label</option>
+                    }
+                    else
+                    {
+                        <option value="@((int)policy)">@policy — @label</option>
+                    }
+                }
+            </select>
+            <span class="form-text">
+                در حالت «محاسبه‌شده»، مبلغ از روی نرخِ روزِ طلای ۱۸ عیار به‌همراه اجرت،
+                سود و مالیات محاسبه می‌شود و مبنا و زمانِ محاسبه ذخیره می‌گردد.
+            </span>
+        </div>
+
+        <div class="mb-3">
+            <label for="FixedPriceIrt" class="form-label">قیمت ثابت (تومان)</label>
+            <input id="FixedPriceIrt" name="FixedPriceIrt" class="form-control" inputmode="decimal" autocomplete="off"
+                   placeholder="مثلاً ۱۵٬۰۰۰٬۰۰۰" value="@Model.FixedPriceIrt" />
+            <span class="form-text">فقط برای سیاست «قیمت ثابت».</span>
+        </div>
+
+        <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-1 small">ویژهٔ سیاست «محاسبه‌شده»</legend>
+
+            <div class="mb-2">
+                <label for="WeightGrams" class="form-label">وزن (گرم)</label>
+                <input id="WeightGrams" name="WeightGrams" class="form-control" inputmode="decimal" autocomplete="off"
+                       placeholder="مثلاً ۸٫۱۳۳" value="@Model.WeightGrams" />
+            </div>
+
+            <div class="mb-2">
+                <label for="Karat" class="form-label">عیار (۰ تا ۲۴)</label>
+                <input id="Karat" name="Karat" class="form-control" inputmode="decimal" autocomplete="off"
+                       placeholder="مثلاً ۱۸" value="@Model.Karat" />
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="mb-2">
+                <label for="MakingChargePercent" class="form-label">اجرت ساخت (درصد از ارزش طلا)</label>
+                <input id="MakingChargePercent" name="MakingChargePercent" class="form-control" inputmode="decimal"
+                       autocomplete="off" value="@Model.MakingChargePercent" />
+            </div>
+
+            <div class="mb-2">
+                <label for="ProfitPercent" class="form-label">سود فروشنده (درصد)</label>
+                <input id="ProfitPercent" name="ProfitPercent" class="form-control" inputmode="decimal"
+                       autocomplete="off" value="@Model.ProfitPercent" />
+                <span class="form-text">سقف متداولِ سودِ فروشنده در بازار @ProductPriceFormula.DefaultProfitPercent درصد است.</span>
+            </div>
+
+            <div class="mb-0">
+                <label for="TaxPercent" class="form-label">مالیات بر ارزش افزوده (درصد)</label>
+                <input id="TaxPercent" name="TaxPercent" class="form-control" inputmode="decimal"
+                       autocomplete="off" value="@Model.TaxPercent" />
+                <span class="form-text">
+                    مالیات تنها به «اجرت + سود» تعلق می‌گیرد و اصلِ طلا از آن معاف است
+                    (نرخ @ProductPriceFormula.DefaultTaxPercent درصد در سال ۱۴۰۵).
+                </span>
+            </div>
+        </fieldset>
+
+        <div class="form-check mb-2">
+            <input id="IsInStock" name="IsInStock" class="form-check-input" type="checkbox" value="true"
+                   @(Model.IsInStock ? "checked" : null) />
+            <input name="IsInStock" type="hidden" value="false" />
+            <label for="IsInStock" class="form-check-label">موجود است</label>
+        </div>
+
+        <div class="form-check mb-3">
+            <input id="IsPublished" name="IsPublished" class="form-check-input" type="checkbox" value="true"
+                   @(Model.IsPublished ? "checked" : null) />
+            <input name="IsPublished" type="hidden" value="false" />
+            <label for="IsPublished" class="form-check-label">منتشر شده در ویترین</label>
+            <span class="form-text d-block">تا وقتی منتشر نشود، کالا در هیچ صفحهٔ عمومی دیده نمی‌شود.</span>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mt-3">
+    <button type="submit" class="btn btn-primary sg-touch">ذخیره</button>
+    <a href="/Operator/Products" class="btn btn-outline-secondary sg-touch">بازگشت</a>
+</div>

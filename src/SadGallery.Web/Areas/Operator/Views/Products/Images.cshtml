@@ -1,0 +1,111 @@
+@model SadGallery.Web.Models.Catalog.ProductImagesViewModel
+@using SadGallery.Application.Text
+@{
+    ViewData["Title"] = "تصاویر کالا";
+    var remaining = Model.MaxImages - Model.Images.Count;
+    var maxMegaBytesText = (Model.MaxUploadBytes / 1024d / 1024d).ToString("0.#");
+}
+
+<nav aria-label="مسیر" class="small mb-3">
+    <a href="/Operator/Products">مدیریت کالاها</a>
+    <span aria-hidden="true"> / </span>
+    <span>@Model.ProductTitle</span>
+</nav>
+
+<h1 class="h4 mb-1">تصاویر کالا</h1>
+<p class="text-muted small mb-4">@Model.ProductTitle</p>
+
+@if (!string.IsNullOrWhiteSpace(Model.Notice))
+{
+    <div class="alert alert-success" role="status">@Model.Notice</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Error))
+{
+    <div class="alert alert-danger" role="alert">@Model.Error</div>
+}
+
+<section class="mb-4" aria-labelledby="uploadHeading">
+    <h2 class="h6 mb-2" id="uploadHeading">بارگذاری تصویر جدید</h2>
+
+    @if (remaining <= 0)
+    {
+        <div class="alert alert-warning" role="status">
+            بیشینهٔ تعداد تصویر (@Model.MaxImages عدد) پر شده است. برای افزودن تصویر جدید،
+            ابتدا یکی از تصاویر را حذف کنید.
+        </div>
+    }
+    else
+    {
+        <form method="post" action="/Operator/Products/Images/@Model.ProductId/Upload" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-2">
+                <label for="file" class="form-label">انتخاب فایل تصویر</label>
+                <input id="file" name="file" type="file" class="form-control"
+                       accept="image/jpeg,image/png,image/webp" required />
+                <span class="form-text">
+                    قالب‌های پذیرفته‌شده: @string.Join("، ", Model.AcceptedLabels).
+                    بیشینهٔ حجم هر فایل: @maxMegaBytesText مگابایت.
+                    @remaining تصویر دیگر می‌توانید اضافه کنید.
+                </span>
+            </div>
+
+            <button type="submit" class="btn btn-primary sg-touch">بارگذاری</button>
+
+            <div class="alert alert-secondary small mt-3 mb-0" role="note">
+                <strong>نکتهٔ امنیتی:</strong> فایل تنها با نام و نوعِ خودش پذیرفته نمی‌شود؛
+                ساختار درونیِ آن بررسی و سپس دوباره رمزگذاری می‌شود. هر دادهٔ پنهانِ
+                چسبیده به تصویر در این فرایند حذف می‌گردد و نام فایل به‌صورت تصادفی
+                (غیرقابل حدس) ساخته می‌شود.
+            </div>
+        </form>
+    }
+</section>
+
+<section aria-labelledby="currentHeading">
+    <h2 class="h6 mb-2" id="currentHeading">تصاویر فعلی (@Model.Images.Count از @Model.MaxImages)</h2>
+
+    @if (Model.Images.Count == 0)
+    {
+        <div class="alert alert-info" role="status">هنوز تصویری برای این کالا بارگذاری نشده است.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
+            @foreach (var image in Model.Images)
+            {
+                <div class="col">
+                    <div class="card h-100">
+                        <img src="/media/products/@image.ThumbnailFileName"
+                             class="card-img-top sg-thumb-card"
+                             alt="تصویر @Model.ProductTitle"
+                             loading="lazy" />
+
+                        <div class="card-body small">
+                            <p class="mb-1"><strong>قالبِ تشخیصی:</strong> @image.DetectedFormat · @image.Width×@image.Height</p>
+                            <p class="mb-1"><strong>حجمِ بهینه‌شده:</strong> @image.SizeText کیلوبایت</p>
+                            <p class="mb-1"><strong>نامِ اصلی:</strong> @(image.OriginalFileName ?? "—")</p>
+                            <p class="mb-1"><strong>نوعِ اعلامی:</strong> @(image.ClaimedContentType ?? "—")</p>
+                            <p class="mb-1"><strong>بارگذار:</strong> @(image.UploadedByName ?? "—")</p>
+                            <p class="mb-0"><strong>زمان:</strong> @PersianDate.ToJalaliDateTimeText(image.UploadedAtUtc)</p>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-0">
+                            <form method="post" action="/Operator/Products/Images/Delete/@image.Id"
+                                  onsubmit="return confirm('حذف این تصویر را تأیید می‌کنید؟');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@Model.ProductId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger sg-touch">حذف تصویر</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<div class="mt-4">
+    <a href="/Operator/Products/Edit/@Model.ProductId" class="btn btn-outline-secondary sg-touch">بازگشت به ویرایش</a>
+</div>

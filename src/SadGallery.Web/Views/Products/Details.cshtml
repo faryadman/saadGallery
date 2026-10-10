@@ -1,0 +1,108 @@
+@model SadGallery.Application.Catalog.PublicProduct
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<nav aria-label="مسیر" class="small mb-3">
+    <a href="/products">ویترین محصولات</a>
+    <span aria-hidden="true"> / </span>
+    <span>@Model.Title</span>
+</nav>
+
+<article class="row g-4">
+    <div class="col-12 col-lg-6">
+        @if (Model.Images.Count > 0)
+        {
+            <img src="@Model.Images[0].Url"
+                 class="img-fluid rounded sg-product-image"
+                 alt="تصویر @Model.Title"
+                 width="1600" height="1600" />
+
+            @if (Model.Images.Count > 1)
+            {
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    @foreach (var image in Model.Images)
+                    {
+                        <img src="@image.ThumbnailUrl"
+                             class="rounded sg-thumb"
+                             alt="نمای کوچک @Model.Title"
+                             loading="lazy"
+                             width="480" height="480" />
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="sg-product-card__noimage sg-product-card__noimage--large" role="img" aria-label="بدون تصویر">
+                بدون تصویر
+            </div>
+        }
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <h1 class="h3 mb-2">@Model.Title</h1>
+
+        @if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+        {
+            <p class="text-muted small mb-3">@Model.CategoryName</p>
+        }
+
+        @* ---- وضعیت موجودی ---- *@
+        @if (!Model.IsInStock)
+        {
+            <div class="alert alert-secondary py-2" role="status">این کالا در حال حاضر موجود نیست.</div>
+        }
+
+        @* ---- قیمت ---- *@
+        <section class="sg-price-box mb-3" aria-label="قیمت">
+            @if (Model.Price.HasAmount)
+            {
+                <p class="h4 fw-bold mb-1 sg-price">@Model.Price.AmountText</p>
+            }
+            else
+            {
+                <p class="mb-1 text-muted">
+                    @(Model.Price.WarningText ?? "قیمت اعلام نشده است.")
+                </p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Price.BasisText))
+            {
+                <p class="small text-muted mb-1">مبنای محاسبه: @Model.Price.BasisText</p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Price.ComputedAtText))
+            {
+                <p class="small text-muted mb-1">زمان محاسبه: @Model.Price.ComputedAtText</p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Price.FormulaVersion))
+            {
+                <p class="small text-muted mb-0">نسخهٔ فرمول: @Model.Price.FormulaVersion</p>
+            }
+
+            @if (Model.Price.IsStale)
+            {
+                <div class="alert alert-warning py-2 mt-2 mb-0 small" role="status">
+                    @(Model.Price.WarningText ?? "این قیمت با نرخِ جاری بازار دوباره محاسبه شده است.")
+                </div>
+            }
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Summary))
+        {
+            <p class="mb-3">@Model.Summary</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <div class="sg-description">@Html.Raw(Html.Encode(Model.Description).Replace("\n", "<br />"))</div>
+        }
+
+        <p class="small text-muted mt-4 mb-0">
+            برای اطلاع از قیمتِ نهایی و موجودیِ دقیق، با گالری تماس بگیرید.
+        </p>
+    </div>
+</article>

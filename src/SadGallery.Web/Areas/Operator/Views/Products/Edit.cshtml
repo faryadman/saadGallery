@@ -1,0 +1,39 @@
+@model SadGallery.Web.Models.Catalog.ProductFormModel
+@using SadGallery.Domain.Enums
+@{
+    ViewData["Title"] = "ویرایش کالا";
+}
+
+<h1 class="h4 mb-1">ویرایش کالا</h1>
+<p class="text-muted small mb-3">@Model.Title</p>
+
+@if (TempData["Notice"] is string notice)
+{
+    <div class="alert alert-success" role="status">@notice</div>
+}
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    @await Html.PartialAsync("_ProductForm", Model)
+</form>
+
+@if (Model.PricePolicy == PricePolicy.Computed)
+{
+    <hr class="my-4" />
+
+    <h2 class="h6 mb-2">به‌روزرسانی قیمت</h2>
+    <p class="small text-muted">
+        با تغییرِ نرخِ بازار، می‌توانید قیمت را با نرخِ جاری دوباره محاسبه و ذخیره کنید.
+        مبنای محاسبه و زمانِ آن در رکورد کالا ثبت می‌شود.
+    </p>
+
+    <form asp-action="RefreshPrice" asp-route-id="@Model.Id" method="post" class="d-inline">
+        <button type="submit" class="btn btn-outline-primary sg-touch">محاسبهٔ دوباره با نرخِ جاری</button>
+    </form>
+
+    <a asp-action="Images" asp-route-id="@Model.Id" class="btn btn-outline-secondary sg-touch">مدیریت تصاویر</a>
+}
+else
+{
+    <hr class="my-4" />
+    <a asp-action="Images" asp-route-id="@Model.Id" class="btn btn-outline-secondary sg-touch">مدیریت تصاویر</a>
+}

@@ -1,0 +1,41 @@
+@model IReadOnlyList<SadGallery.Application.Catalog.PublicProduct>
+@{
+    ViewData["Title"] = "ویترین محصولات";
+}
+
+<section class="sg-hero">
+    <h1 class="h3 mb-2">ویترین محصولات</h1>
+    <p class="mb-0 text-muted small">
+        فقط کالاهای منتشرشده نمایش داده می‌شوند. قیمتِ هر کالا با واحدِ صریح (تومان) و در صورت
+        محاسبه‌ای‌بودن، همراه با مبنا و زمانِ محاسبه نمایش داده می‌شود.
+    </p>
+</section>
+
+@if (ViewData["CatalogUnavailable"] is true)
+{
+    @* دیتابیس در دسترس نیست: به‌جای خطای ۵۰۰ یا «ویترین خالی» دروغین، وضعیت واقعی گفته می‌شود. *@
+    <div class="alert alert-warning sg-empty" role="alert">
+        <h2 class="h6">ویترین در این لحظه در دسترس نیست</h2>
+        <p class="mb-0">
+            برقراری ارتباط با پایگاه داده ممکن نشد. لطفاً چند لحظه دیگر دوباره تلاش کنید.
+            این وضعیت ثبت شده و بررسی می‌شود.
+        </p>
+    </div>
+}
+else if (Model.Count == 0)
+{
+    <div class="alert alert-info sg-empty" role="status">
+        <p class="mb-0">هنوز کالایی منتشر نشده است. به‌زودی محصول‌های جدید اینجا نمایش داده می‌شوند.</p>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+        @foreach (var product in Model)
+        {
+            <div class="col">
+                @await Html.PartialAsync("_ProductCard", product)
+            </div>
+        }
+    </div>
+}

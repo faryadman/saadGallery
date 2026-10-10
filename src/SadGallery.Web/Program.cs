@@ -1,15 +1,18 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.WebEncoders;
 using SadGallery.Application;
 using SadGallery.Application.Abstractions;
 using SadGallery.Application.Identity;
 using SadGallery.Application.Market;
+using SadGallery.Application.Media;
 using SadGallery.Application.Text;
 using SadGallery.Infrastructure;
 using SadGallery.Infrastructure.Identity;
 using SadGallery.Infrastructure.Market;
+using SadGallery.Infrastructure.Media;
 using SadGallery.Infrastructure.Persistence;
 using SadGallery.Web.HealthChecks;
 using SadGallery.Web.Middleware;
@@ -26,6 +29,17 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 // ---- لایه‌های پروژه ----
 builder.Services.AddSadGalleryApplication();
 builder.Services.AddSadGalleryInfrastructure(builder.Configuration);
+
+// ---- فاز ۴: کاتالوگ محصول و خطِ لولهٔ تصویر ----
+// تنظیمات از بخش‌های StorageOptions و ProductOptions خوانده می‌شوند (کلیدهای
+// StorageOptions از فاز صفر در appsettings بوده‌اند؛ بخشِ دومِ هم‌پوشان نساختیم).
+var storageOptions = new MediaOptions();
+builder.Configuration.GetSection("StorageOptions").Bind(storageOptions);
+
+var productOptions = new SadGallery.Application.Catalog.ProductOptions();
+builder.Configuration.GetSection("ProductOptions").Bind(productOptions);
+
+builder.Services.AddSadGalleryCatalog(builder.Configuration);
 
 // ---- بازار: زنجیره نرخ (فاز ۲) ----
 // تنظیمات از بخش RateOptions خوانده می‌شود؛ اعتبارنامه فقط از ENV/User Secrets.
@@ -145,6 +159,44 @@ var app = builder.Build();
 foreach (var rateConfigurationError in rateOptions.Validate())
 {
     app.Logger.LogWarning("تنظیمات نرخ (RateOptions): {Error}", rateConfigurationError);
+}
+
+foreach (var storageError in storageOptions.Validate())
+{
+    app.Logger.LogWarning("تنظیمات رسانه: {Error}", storageError);
+}
+
+foreach (var catalogError in productOptions.Validate())
+{
+    app.Logger.LogWarning("تنظیمات کاتالوگ: {Error}", catalogError);
+}
+
+// ---- فاز ۴: ارائهٔ تصاویر عمومی محصول ----
+// نگهبانِ امنیتی: مسیرِ ذخیره‌سازی نباید درون پوشهٔ ارائه‌شده (wwwroot) باشد.
+// در غیر این صورت فایل‌های بارگذاری‌شده بدون هیچ کنترلی در دسترس قرار می‌گیرند؛
+// بنابراین برنامه همان ابتدا با پیامی روشن متوقف می‌شود (fail-closed).
+var mediaStore = app.Services.GetRequiredService<LocalMediaStore>();
+var webRootPath = app.Environment.WebRootPath;
+
+if (!string.IsNullOrEmpty(webRootPath))
+{
+    var webRootFull = Path.GetFullPath(webRootPath);
+
+    foreach (var (label, path) in new[]
+             {
+                 ("تصاویر عمومی", Path.GetFullPath(mediaStore.PublicRoot)),
+                 ("فایل‌های خصوصی", Path.GetFullPath(mediaStore.PrivateRoot)),
+             })
+    {
+        if (path.StartsWith(webRootFull, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"پوشهٔ {label} نباید درون پوشهٔ ارائه‌شده (wwwroot) باشد، چون در این صورت " +
+                "فایل‌های بارگذاری‌شده بدون کنترل در دسترس خواهند بود. " +
+                "مقدار StorageOptions:UploadsRoot را به مسیری بیرون از wwwroot تغییر دهید " +
+                "(راهنما: docs/DEPLOYMENT.md §ذخیره‌سازی تصاویر).");
+        }
+    }
 }
 
 // دستور عملیاتی: dotnet run --project src/SadGallery.Web -- --seed
@@ -275,6 +327,19 @@ else
 
 app.UseStatusCodePagesWithReExecute("/error/{0}");
 app.UseStaticFiles();
+
+// تصاویر عمومی محصول: تنها همین پوشه به یک مسیر ایستا نقشه می‌شود.
+// پوشهٔ فایل‌های خصوصی هیچ مسیر ایستایی ندارد و فقط از راه کنترلرِ دارای مجوز در دسترس است.
+// چون نام فایل‌ها تصادفی و محتوایشان تغییرناپذیر است، کشِ طولانی‌مدت امن است.
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(mediaStore.PublicRoot),
+    RequestPath = storageOptions.PublicRequestPath,
+    OnPrepareResponse = context =>
+    {
+        context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+    },
+});
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();

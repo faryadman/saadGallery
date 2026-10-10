@@ -28,6 +28,17 @@ public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     /// <summary>اجاره تک‌ردیفی جلوگیری از اجرای هم‌زمان چند نمونه‌ای.</summary>
     public DbSet<MarketFetchLease> MarketFetchLeases => Set<MarketFetchLease>();
 
+    // ---- فاز ۴: ویترین محصولات ----
+
+    /// <summary>کالاها (شامل پیش‌نویس‌ها و حذف‌شده‌های نرم).</summary>
+    public DbSet<Product> Products => Set<Product>();
+
+    /// <summary>دسته‌بندی کالاها.</summary>
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+
+    /// <summary>تصاویر کالاها (هر تصویر دو فایل دارد: کامل و بندانگشتی).</summary>
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -99,6 +110,82 @@ public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRo
                 AcquiredAtUtc = DateTimeOffset.UnixEpoch,
                 ExpiresAtUtc = DateTimeOffset.UnixEpoch,
             });
+        });
+
+        // ---- فاز ۴: کاتالوگ محصول ----
+
+        builder.Entity<ProductCategory>(entity =>
+        {
+            entity.ToTable("ProductCategories");
+            entity.HasKey(category => category.Id);
+
+            entity.Property(category => category.Name).HasMaxLength(100).IsRequired();
+            entity.Property(category => category.Description).HasMaxLength(500);
+        });
+
+        builder.Entity<Product>(entity =>
+        {
+            entity.ToTable("Products");
+            entity.HasKey(product => product.Id);
+
+            entity.Property(product => product.Title).HasMaxLength(200).IsRequired();
+            entity.Property(product => product.Summary).HasMaxLength(400);
+            // توضیحاتِ بلند مجاز است؛ طول دقیق در لایه Application محدود می‌شود (ProductOptions).
+            entity.Property(product => product.Description).HasMaxLength(8000);
+
+            // مبالغ به تومان (Irt) با دو رقم اعشار کافی است؛ محاسباتِ خودکار
+            // از پیش روی «تومانِ کامل» گرد می‌شوند (ProductPriceMath).
+            entity.Property(product => product.FixedPriceIrt).HasPrecision(18, 2);
+            entity.Property(product => product.PriceTotalIrt).HasPrecision(18, 2);
+            entity.Property(product => product.PriceGoldValueIrt).HasPrecision(18, 2);
+            entity.Property(product => product.PriceMakingIrt).HasPrecision(18, 2);
+            entity.Property(product => product.PriceProfitIrt).HasPrecision(18, 2);
+            entity.Property(product => product.PriceTaxIrt).HasPrecision(18, 2);
+            entity.Property(product => product.PriceRateAmountIrt).HasPrecision(18, 2);
+
+            entity.Property(product => product.WeightGrams).HasPrecision(10, 3);
+            entity.Property(product => product.PriceWeightGrams).HasPrecision(10, 3);
+            entity.Property(product => product.Karat).HasPrecision(5, 2);
+            entity.Property(product => product.PriceKarat).HasPrecision(5, 2);
+
+            entity.Property(product => product.MakingChargePercent).HasPrecision(6, 3);
+            entity.Property(product => product.ProfitPercent).HasPrecision(6, 3);
+            entity.Property(product => product.TaxPercent).HasPrecision(6, 3);
+            entity.Property(product => product.PriceMakingPercent).HasPrecision(6, 3);
+            entity.Property(product => product.PriceProfitPercent).HasPrecision(6, 3);
+            entity.Property(product => product.PriceTaxPercent).HasPrecision(6, 3);
+
+            entity.Property(product => product.PriceFormulaVersion).HasMaxLength(32);
+            entity.Property(product => product.PriceReason).HasMaxLength(500);
+
+            // پرتکرارترین کوئریٔ سایت: «آخرین کالاهای منتشرشده»
+            entity.HasIndex(product => new { product.IsPublished, product.IsDeleted, product.PublishedAtUtc });
+            entity.HasIndex(product => product.CreatedAtUtc);
+
+            entity.HasOne(product => product.Category)
+                .WithMany(category => category.Products)
+                .HasForeignKey(product => product.CategoryId)
+                // حذفِ دسته نباید کالاها را نابود کند
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<ProductImage>(entity =>
+        {
+            entity.ToTable("ProductImages");
+            entity.HasKey(image => image.Id);
+
+            entity.Property(image => image.StoredFileName).HasMaxLength(64).IsRequired();
+            entity.Property(image => image.ThumbnailFileName).HasMaxLength(64).IsRequired();
+            entity.Property(image => image.DetectedFormat).HasMaxLength(16).IsRequired();
+            entity.Property(image => image.OriginalFileName).HasMaxLength(200);
+            entity.Property(image => image.ClaimedContentType).HasMaxLength(100);
+
+            entity.HasIndex(image => image.ProductId);
+
+            entity.HasOne(image => image.Product)
+                .WithMany(product => product.Images)
+                .HasForeignKey(image => image.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // همه زمان‌ها UTC هستند (docs/DATA_MODEL.md §1). Collation فارسی روی دیتابیس تنظیم می‌شود، نه ستون‌ها.

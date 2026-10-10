@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "ویترین در دسترس نیست";
+}
+
+@* این نما زمانی نشان داده می‌شود که پایگاه داده در دسترس نباشد.
+   عمداً «یافت نشد» (۴۰۴) نشان نمی‌دهیم: کالا ممکن است موجود باشد و فقط
+   در این لحظه نتوانسته‌ایم آن را بخوانیم. پاسخِ دروغین، اعتماد کاربر را
+   بیشتر از یک پیامِ صادقانه از بین می‌برد. *@
+
+<section class="sg-hero">
+    <h1 class="h3 mb-2">ویترین در این لحظه در دسترس نیست</h1>
+    <p class="mb-0 text-muted small">
+        برقراری ارتباط با پایگاه داده برای خواندنِ مشخصات این کالا ممکن نشد.
+    </p>
+</section>
+
+<div class="alert alert-warning sg-empty" role="alert">
+    <h2 class="h6">چه اتفاقی افتاده؟</h2>
+    <p class="mb-2">
+        درخواست شما دریافت شد، اما سامانه نتوانست در این لحظه به پایگاه داده دسترسی پیدا کند.
+        این به معنای «نبودنِ کالا» نیست؛ ممکن است کالا موجود باشد و فقط در این لحظه
+        قابل نمایش نباشد.
+    </p>
+    <p class="mb-0">این وضعیت به‌طور خودکار ثبت شده و بررسی می‌شود.</p>
+</div>
+
+<div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-primary" href="@Url.Action("Details", "Products")">تلاشِ دوباره</a>
+    <a class="btn btn-outline-secondary" asp-controller="Products" asp-action="Index">بازگشت به ویترین</a>
+    <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">صفحهٔ اصلی</a>
+</div>

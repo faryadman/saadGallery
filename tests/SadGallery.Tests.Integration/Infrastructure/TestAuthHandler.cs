@@ -21,6 +21,13 @@ public sealed class TestAuthHandler : AuthenticationHandler<AuthenticationScheme
     /// <summary>هدر فعال‌ساز.</summary>
     public const string HeaderName = "X-Test-Member";
 
+    /// <summary>
+    /// سرآیندِ تعیینِ نقش‌ها (جدا شده با ویرگول)، مانند <c>X-Test-Roles: Customer</c>.
+    /// وجودش برای آزمونِ Policyهای نقش‌محور است: بدون آن نمی‌توان «رد شدنِ درخواستِ
+    /// مستقیمِ یک مشتری به مسیرهای اپراتور» را واقعاً سنجید.
+    /// </summary>
+    public const string RolesHeaderName = "X-Test-Roles";
+
     /// <summary>ساخت هندلر.</summary>
     public TestAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -47,6 +54,14 @@ public sealed class TestAuthHandler : AuthenticationHandler<AuthenticationScheme
         };
 
         var identity = new ClaimsIdentity(claims, SchemeName);
+
+        if (Request.Headers.TryGetValue(RolesHeaderName, out var roles))
+        {
+            foreach (var role in roles.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Role, role));
+            }
+        }
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, SchemeName);
 

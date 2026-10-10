@@ -6,8 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using SadGallery.Application.Abstractions;
 using SadGallery.Application.Data;
 using SadGallery.Infrastructure.Identity;
+using SadGallery.Application.Catalog;
 using SadGallery.Application.Market;
+using SadGallery.Application.Media;
+using SadGallery.Infrastructure.Catalog;
 using SadGallery.Infrastructure.Market;
+using SadGallery.Infrastructure.Media;
 using SadGallery.Infrastructure.Persistence;
 using SadGallery.Infrastructure.Time;
 using Microsoft.Extensions.Logging;
@@ -102,6 +106,48 @@ public static class DependencyInjection
         }
 
         services.AddHostedService<RateFetchBackgroundService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// ثبت کاتالوگ محصول و خطِ لولهٔ تصویر (فاز ۴).
+    /// </summary>
+    /// <remarks>
+    /// تنظیمات از دو بخش <c>StorageOptions</c> و <c>ProductOptions</c> خوانده می‌شوند.
+    /// مسیر ذخیرهٔ فایل‌ها هرگز در کد ثابت نیست و در استقرار باید به مسیری
+    /// بیرون از پوشهٔ برنامه اشاره کند (راهنما: docs/DEPLOYMENT.md).
+    /// </remarks>
+    public static IServiceCollection AddSadGalleryCatalog(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        // بخشِ تنظیمات همان StorageOptions است که از فاز صفر در appsettings بود؛
+        // ساختنِ بخشِ دومِ هم‌پوشان (MediaOptions) باعث سردرگمی در استقرار می‌شد.
+        var mediaOptions = new MediaOptions();
+        configuration.GetSection("StorageOptions").Bind(mediaOptions);
+
+        var productOptions = new ProductOptions();
+        configuration.GetSection("ProductOptions").Bind(productOptions);
+
+        services.AddSingleton(mediaOptions);
+        services.AddSingleton(productOptions);
+
+        // پردازشگر تصویر بی‌حالت (Stateless) و سنگین است ⇒ Singleton.
+        services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
+
+        // مخزن فایل دو بار ثبت می‌شود: یک‌بار با نوعِ مشخص (برای پیکربندی مسیر ایستا در لایه وب)
+        // و یک‌بار با واسط (برای استفاده در سرویس‌ها).
+        services.AddSingleton<LocalMediaStore>();
+        services.AddSingleton<IMediaStore>(provider => provider.GetRequiredService<LocalMediaStore>());
+
+        services.AddSingleton<MediaUploadService>();
+        services.AddScoped<IProductStore, ProductStore>();
+        services.AddScoped<IProductPriceCalculator, ProductPriceCalculator>();
+        services.AddScoped<ProductService>();
 
         return services;
     }
