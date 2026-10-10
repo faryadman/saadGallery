@@ -205,6 +205,19 @@ public sealed class ProductPricePresentationTests
     }
 
     [Fact]
+    public void CategoryValidation_RequiresNameAndBoundedDisplayOrder()
+    {
+        var service = Service(CacheWith(1_000_000m), Now);
+
+        var invalid = service.ValidateCategoryDraft(new ProductCategoryDraft("  ", null, 10001));
+        Assert.Contains(invalid, error => error.Contains("نام دسته‌بندی الزامی", StringComparison.Ordinal));
+        Assert.Contains(invalid, error => error.Contains("ترتیب نمایش", StringComparison.Ordinal));
+
+        var valid = service.ValidateCategoryDraft(new ProductCategoryDraft("انگشتر", "", 10));
+        Assert.Empty(valid);
+    }
+
+    [Fact]
     public void Computed_WithoutWeightOrKarat_ShowsNoNumber()
     {
         var presentation = Service(CacheWith(1_000_000m), Now)
@@ -333,6 +346,12 @@ public sealed class ProductPricePresentationTests
 
         public Task<IReadOnlyList<CategoryRecord>> GetCategoriesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<CategoryRecord>>([]);
 
+        public Task<bool> CategoryNameExistsAsync(string name, int? excludingCategoryId, CancellationToken cancellationToken) => Task.FromResult(false);
+
+        public Task<int> CreateCategoryAsync(ProductCategoryDraft draft, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<bool> UpdateCategoryAsync(int id, ProductCategoryDraft draft, CancellationToken cancellationToken) => throw new NotSupportedException();
+
         public Task<ProductImageRecord?> GetImageAsync(int imageId, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public Task<ProductRecord?> GetByIdAsync(int id, CancellationToken cancellationToken) => throw new NotSupportedException();
@@ -346,6 +365,9 @@ public sealed class ProductPricePresentationTests
         public Task<ProductRecord?> GetPublishedByIdAsync(int id, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public Task<IReadOnlyList<ProductRecord>> GetPublishedAsync(int take, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<ProductRecord>>([]);
+
+        public Task<PublicProductRecordPage> SearchPublishedAsync(PublicProductSearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult(new PublicProductRecordPage([], 0));
 
         public Task RemoveImageAsync(int imageId, CancellationToken cancellationToken) => throw new NotSupportedException();
 

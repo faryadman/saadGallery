@@ -1,0 +1,10 @@
+@model SadGallery.Web.Models.Catalog.ProductCategoryFormModel
+@{
+    ViewData["Title"] = "ویرایش گروه";
+}
+
+<h1 class="h4 mb-3">ویرایش گروه: @Model.Name</h1>
+<form method="post" action="/Operator/Categories/Edit/@Model.Id">
+    @Html.AntiForgeryToken()
+    @await Html.PartialAsync("_CategoryForm", Model)
+</form>

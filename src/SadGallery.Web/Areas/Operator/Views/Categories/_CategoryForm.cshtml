@@ -1,0 +1,45 @@
+@model SadGallery.Web.Models.Catalog.ProductCategoryFormModel
+@using System.Globalization
+@using SadGallery.Application.Text
+
+@if (Model.Errors.Count > 0)
+{
+    <div class="alert alert-danger" role="alert">
+        <ul class="mb-0">
+            @foreach (var error in Model.Errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <label for="Name" class="form-label">نام گروه</label>
+        <input id="Name" name="Name" class="form-control" maxlength="100" required autocomplete="off"
+               value="@Model.Name" />
+    </div>
+    <div class="col-12 col-lg-4">
+        <label for="DisplayOrder" class="form-label">ترتیب نمایش</label>
+        <input id="DisplayOrder" name="DisplayOrder" class="form-control" type="number" min="0" max="10000"
+               value="@Model.DisplayOrder" />
+    </div>
+    <div class="col-12">
+        <label for="Description" class="form-label">توضیح (اختیاری)</label>
+        <textarea id="Description" name="Description" class="form-control" rows="3" maxlength="500">@Model.Description</textarea>
+    </div>
+</div>
+
+@if (Model.Id > 0)
+{
+    <p class="small text-muted mt-3 mb-0">
+        کالاهای منتشرشده در این گروه: @PersianText.ToPersianDigits(Model.PublishedProductCount.ToString(CultureInfo.InvariantCulture)).
+        تغییر نام گروه، دسته‌بندی کالاهای وابسته را نگه می‌دارد.
+    </p>
+}
+
+<div class="d-flex flex-wrap gap-2 mt-3">
+    <button type="submit" class="btn btn-primary sg-touch">ذخیره</button>
+    <a href="/Operator/Categories" class="btn btn-outline-secondary sg-touch">انصراف</a>
+</div>

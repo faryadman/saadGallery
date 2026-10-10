@@ -41,6 +41,76 @@ public sealed class ProductStore : IProductStore
         return products.Select(Map).ToList();
     }
 
+    public async Task<PublicProductRecordPage> SearchPublishedAsync(
+        PublicProductSearchQuery query,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        if (query.Skip < 0 || query.Take is < 1 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(query), "بازهٔ صفحه‌بندی ویترین معتبر نیست.");
+        }
+
+        if (query.MaximumBudgetToman is <= 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(query), "بودجه باید بزرگ‌تر از صفر باشد.");
+        }
+
+        IQueryable<Product> products = _db.Products
+            .AsNoTracking()
+            .Include(product => product.Category)
+            // شرط انتشار همیشه پیش از فیلترها و صفحه‌بندی اعمال می‌شود.
+            .Where(product => product.IsPublished && !product.IsDeleted);
+
+        if (query.CategoryId is { } categoryId)
+        {
+            products = products.Where(product => product.CategoryId == categoryId);
+        }
+
+        if (query.InStockOnly || query.MaximumBudgetToman.HasValue)
+        {
+            // پیشنهاد بودجه فقط باید کالای قابل خرید را نشان دهد؛ مقدارِ query رشته‌ای
+            // نمی‌تواند این قاعده را با ارسال inStockOnly=false دور بزند.
+            products = products.Where(product => product.IsInStock);
+        }
+
+        if (query.MaximumBudgetToman is { } budget)
+        {
+            var freshSince = query.FreshComputedPriceSinceUtc
+                ?? throw new ArgumentException("حدّ تازگیِ قیمتِ محاسبه‌شده برای فیلتر بودجه الزامی است.", nameof(query));
+
+            // فقط قیمت ثابتِ مثبت یا Snapshot محاسبه‌شدهٔ تازه قابل مقایسه با بودجه است.
+            products = products.Where(product =>
+                (product.PricePolicy == PricePolicy.Fixed &&
+                 product.FixedPriceIrt.HasValue && product.FixedPriceIrt.Value > 0m &&
+                 product.FixedPriceIrt.Value <= budget) ||
+                (product.PricePolicy == PricePolicy.Computed &&
+                 product.PriceTotalIrt.HasValue && product.PriceTotalIrt.Value > 0m &&
+                 product.PriceTotalIrt.Value <= budget &&
+                 product.PriceComputedAtUtc.HasValue && product.PriceComputedAtUtc.Value >= freshSince));
+        }
+
+        var totalCount = await products.CountAsync(cancellationToken);
+        IOrderedQueryable<Product> ordered = query.MaximumBudgetToman.HasValue
+            ? products
+                .OrderByDescending(product => product.PricePolicy == PricePolicy.Fixed
+                    ? product.FixedPriceIrt
+                    : product.PriceTotalIrt)
+                .ThenByDescending(product => product.PublishedAtUtc ?? product.CreatedAtUtc)
+                .ThenByDescending(product => product.Id)
+            : products
+                .OrderByDescending(product => product.PublishedAtUtc ?? product.CreatedAtUtc)
+                .ThenByDescending(product => product.Id);
+
+        var page = await ordered
+            .Skip(query.Skip)
+            .Take(query.Take)
+            .ToListAsync(cancellationToken);
+
+        return new PublicProductRecordPage(page.Select(Map).ToList(), totalCount);
+    }
+
     public async Task<ProductRecord?> GetPublishedByIdAsync(int id, CancellationToken cancellationToken)
     {
         var product = await _db.Products
@@ -84,10 +154,55 @@ public sealed class ProductStore : IProductStore
                 category.Id,
                 category.Name,
                 category.Description,
-                category.Products.Count(product => product.IsPublished && !product.IsDeleted)))
+                category.Products.Count(product => product.IsPublished && !product.IsDeleted),
+                category.DisplayOrder))
             .ToListAsync(cancellationToken);
 
         return categories;
+    }
+
+    public Task<bool> CategoryNameExistsAsync(
+        string name,
+        int? excludingCategoryId,
+        CancellationToken cancellationToken) =>
+        _db.ProductCategories.AsNoTracking().AnyAsync(category =>
+            category.Name == name && (!excludingCategoryId.HasValue || category.Id != excludingCategoryId.Value),
+            cancellationToken);
+
+    public async Task<int> CreateCategoryAsync(ProductCategoryDraft draft, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+
+        var entity = new ProductCategory
+        {
+            Name = draft.Name.Trim(),
+            Description = NullIfWhiteSpace(draft.Description),
+            DisplayOrder = draft.DisplayOrder,
+        };
+
+        _db.ProductCategories.Add(entity);
+        await _db.SaveChangesAsync(cancellationToken);
+        return entity.Id;
+    }
+
+    public async Task<bool> UpdateCategoryAsync(
+        int id,
+        ProductCategoryDraft draft,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+
+        var entity = await _db.ProductCategories.FirstOrDefaultAsync(category => category.Id == id, cancellationToken);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        entity.Name = draft.Name.Trim();
+        entity.Description = NullIfWhiteSpace(draft.Description);
+        entity.DisplayOrder = draft.DisplayOrder;
+        await _db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     // ================= مدیریت =================

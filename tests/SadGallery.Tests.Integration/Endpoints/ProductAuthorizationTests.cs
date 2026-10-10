@@ -38,6 +38,9 @@ public sealed class ProductAuthorizationTests
     [InlineData("/Operator/Products/Create")]
     [InlineData("/Operator/Products/Edit/1")]
     [InlineData("/Operator/Products/Images/1")]
+    [InlineData("/Operator/Categories")]
+    [InlineData("/Operator/Categories/Create")]
+    [InlineData("/Operator/Categories/Edit/1")]
     public async Task OperatorPages_ForAnonymousUser_RedirectToLogin(string path)
     {
         // نکتهٔ آموخته‌شده از فاز ۳: برای سنجشِ «تغییرمسیرِ مهمان به صفحهٔ ورود» باید از
@@ -57,6 +60,9 @@ public sealed class ProductAuthorizationTests
     [Theory]
     [InlineData("/Operator/Products")]
     [InlineData("/Operator/Products/Create")]
+    [InlineData("/Operator/Categories")]
+    [InlineData("/Operator/Categories/Create")]
+    [InlineData("/Operator/Categories/Edit/1")]
     public async Task OperatorPages_ForCustomer_AreForbidden(string path)
     {
         using var client = CreateClientWithRole(RoleNames.Customer);
@@ -70,6 +76,8 @@ public sealed class ProductAuthorizationTests
     [InlineData("/Operator/Products/Delete/1")]
     [InlineData("/Operator/Products/Publish/1")]
     [InlineData("/Operator/Products/RefreshPrice/1")]
+    [InlineData("/Operator/Categories/Create")]
+    [InlineData("/Operator/Categories/Edit/1")]
     public async Task OperatorWriteActions_ForCustomer_AreRejected(string path)
     {
         using var client = CreateClientWithRole(RoleNames.Customer);

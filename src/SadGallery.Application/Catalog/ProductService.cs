@@ -107,6 +107,67 @@ public sealed class ProductService
     }
 
     /// <summary>
+    /// جست‌وجوی عمومیِ صفحه‌بندی‌شده. فیلتر قیمت پیش از صفحه‌بندی در خودِ Store اعمال می‌شود.
+    /// </summary>
+    public async Task<PublicProductPage> SearchPublishedCatalogAsync(
+        int? categoryId,
+        bool inStockOnly,
+        decimal? maximumBudgetToman,
+        int page,
+        CancellationToken cancellationToken)
+    {
+        if (maximumBudgetToman is <= 0m || maximumBudgetToman > ProductBudgetInput.MaximumToman)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumBudgetToman), "بودجهٔ تومان نامعتبر است.");
+        }
+
+        var pageSize = Math.Clamp(_productOptions.CatalogPageSize, 1, 100);
+        var safePage = Math.Clamp(page, 1, int.MaxValue / pageSize);
+        var skip = (safePage - 1) * pageSize;
+        var now = _clock.UtcNow;
+        DateTimeOffset? freshSince = maximumBudgetToman.HasValue
+            ? now - TimeSpan.FromMinutes(_productOptions.PriceStaleAfterMinutes)
+            : null;
+
+        var recordsPage = await _store.SearchPublishedAsync(
+            new PublicProductSearchQuery(
+                CategoryId: categoryId,
+                InStockOnly: inStockOnly,
+                MaximumBudgetToman: maximumBudgetToman,
+                FreshComputedPriceSinceUtc: freshSince,
+                Skip: skip,
+                Take: pageSize),
+            cancellationToken);
+
+        var imagesByProduct = await _store.GetImagesForProductsAsync(
+            recordsPage.Items.Select(record => record.Id).ToList(),
+            cancellationToken);
+
+        var products = recordsPage.Items.Select(record =>
+        {
+            var images = imagesByProduct.TryGetValue(record.Id, out var found) ? found : [];
+
+            return new PublicProduct(
+                Id: record.Id,
+                Title: record.Title,
+                Summary: record.Summary,
+                Description: record.Description,
+                CategoryName: record.CategoryName,
+                Price: PresentPrice(record, now),
+                IsInStock: record.IsInStock,
+                Images: images
+                    .OrderBy(image => image.DisplayOrder)
+                    .Select(image => new PublicProductImage(
+                        Url: _media.GetPublicUrl(image.StoredFileName),
+                        ThumbnailUrl: _media.GetPublicUrl(image.ThumbnailFileName),
+                        DisplayOrder: image.DisplayOrder))
+                    .ToList());
+        }).ToList();
+
+        return new PublicProductPage(products, recordsPage.TotalCount, safePage, pageSize);
+    }
+
+    /// <summary>
     /// جزئیات یک محصول برای عموم. محصولِ منتشرنشده یا حذف‌شده ⇒ <c>null</c>
     /// (فراخوان باید ۴۰۴ بدهد — معیار پذیرش فاز ۴).
     /// </summary>
@@ -140,6 +201,90 @@ public sealed class ProductService
 
     public Task<IReadOnlyList<CategoryRecord>> GetCategoriesAsync(CancellationToken cancellationToken) =>
         _store.GetCategoriesAsync(cancellationToken);
+
+    /// <summary>اعتبارسنجیِ ورودی دسته‌بندی (پیام‌ها برای نمایش مستقیم به کاربر فارسی هستند).</summary>
+    public IReadOnlyList<string> ValidateCategoryDraft(ProductCategoryDraft draft)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(draft.Name))
+        {
+            errors.Add("نام دسته‌بندی الزامی است.");
+        }
+        else if (draft.Name.Trim().Length > 100)
+        {
+            errors.Add("نام دسته‌بندی نمی‌تواند بلندتر از ۱۰۰ نویسه باشد.");
+        }
+
+        if (draft.Description is { Length: > 500 })
+        {
+            errors.Add("توضیحات دسته‌بندی نمی‌تواند بلندتر از ۵۰۰ نویسه باشد.");
+        }
+
+        if (draft.DisplayOrder is < 0 or > 10000)
+        {
+            errors.Add("ترتیب نمایش باید بین ۰ و ۱۰۰۰۰ باشد.");
+        }
+
+        return errors;
+    }
+
+    public async Task<ProductCategoryWriteOutcome> CreateCategoryAsync(
+        ProductCategoryDraft draft,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        var errors = ValidateCategoryDraft(draft);
+
+        if (errors.Count > 0)
+        {
+            return ProductCategoryWriteOutcome.Fail(errors.ToArray());
+        }
+
+        var normalized = draft with { Name = draft.Name.Trim() };
+
+        if (await _store.CategoryNameExistsAsync(normalized.Name, null, cancellationToken))
+        {
+            return ProductCategoryWriteOutcome.Fail("دسته‌بندی‌ای با این نام از قبل وجود دارد.");
+        }
+
+        var id = await _store.CreateCategoryAsync(normalized, cancellationToken);
+        return ProductCategoryWriteOutcome.Ok(id);
+    }
+
+    public async Task<ProductCategoryWriteOutcome> UpdateCategoryAsync(
+        int id,
+        ProductCategoryDraft draft,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+
+        if (id <= 0)
+        {
+            return ProductCategoryWriteOutcome.Fail("شناسهٔ دسته‌بندی معتبر نیست.");
+        }
+
+        var errors = ValidateCategoryDraft(draft);
+
+        if (errors.Count > 0)
+        {
+            return ProductCategoryWriteOutcome.Fail(errors.ToArray());
+        }
+
+        var normalized = draft with { Name = draft.Name.Trim() };
+
+        if (await _store.CategoryNameExistsAsync(normalized.Name, id, cancellationToken))
+        {
+            return ProductCategoryWriteOutcome.Fail("دسته‌بندی‌ای با این نام از قبل وجود دارد.");
+        }
+
+        var updated = await _store.UpdateCategoryAsync(id, normalized, cancellationToken);
+        return updated
+            ? ProductCategoryWriteOutcome.Ok(id)
+            : ProductCategoryWriteOutcome.Fail("این دسته‌بندی پیدا نشد.");
+    }
 
     /// <summary>تصاویر یک کالا برای مدیریت (همراه نامِ بارگذار جهت ممیزی).</summary>
     public Task<IReadOnlyList<ProductImageRecord>> GetImagesAsync(int productId, CancellationToken cancellationToken) =>

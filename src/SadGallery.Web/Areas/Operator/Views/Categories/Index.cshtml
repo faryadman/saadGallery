@@ -1,0 +1,55 @@
+@model IReadOnlyList<SadGallery.Application.Catalog.CategoryRecord>
+@using SadGallery.Application.Text
+@using System.Globalization
+@{
+    ViewData["Title"] = "گروه‌های محصولات";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">گروه‌های محصولات</h1>
+        <p class="text-muted small mb-0">گروه‌ها در فیلترهای ویترینِ عمومی نمایش داده می‌شوند.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Operator/Categories/Create" class="btn btn-primary sg-touch">گروه جدید</a>
+        <a href="/Operator/Products" class="btn btn-outline-secondary sg-touch">بازگشت به کالاها</a>
+    </div>
+</div>
+
+@if (TempData["Notice"] is string notice)
+{
+    <div class="alert alert-success" role="status">@notice</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info" role="status">هنوز گروهی ساخته نشده است. گروه‌های رایج طلا و جواهر را می‌توانید اضافه کنید.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle sg-table">
+            <thead>
+                <tr>
+                    <th scope="col">گروه</th>
+                    <th scope="col">توضیح</th>
+                    <th scope="col">ترتیب</th>
+                    <th scope="col">کالای منتشرشده</th>
+                    <th scope="col">عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@category.Name</td>
+                        <td>@(string.IsNullOrWhiteSpace(category.Description) ? "—" : category.Description)</td>
+                        <td>@PersianText.ToPersianDigits(category.DisplayOrder.ToString(CultureInfo.InvariantCulture))</td>
+                        <td>@PersianText.ToPersianDigits(category.ProductCount.ToString(CultureInfo.InvariantCulture))</td>
+                        <td><a href="/Operator/Categories/Edit/@category.Id" class="btn btn-sm btn-outline-primary sg-touch">ویرایش</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

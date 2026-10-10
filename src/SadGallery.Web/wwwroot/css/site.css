@@ -349,3 +349,113 @@ body.sg-offline .sg-offline-banner {
 .sg-description { line-height: 2; white-space: pre-wrap; }
 
 .sg-empty { border: 1px dashed var(--sg-border); }
+
+/* ══════════ ویترین هوشمند: دسته‌بندی و پیشنهاد بر اساس بودجه ══════════ */
+.sg-catalog-hero {
+    background: linear-gradient(125deg, #fff 0%, #fff 70%, #f5edda 100%);
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.sg-eyebrow {
+    display: inline-block;
+    color: #735600;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    margin-bottom: .35rem;
+}
+
+.sg-catalog-search {
+    background: #fff;
+    border: 1px solid var(--sg-border);
+    border-top: 4px solid var(--sg-gold);
+    border-radius: .85rem;
+    box-shadow: 0 .35rem 1.2rem rgba(16, 35, 63, .06);
+    padding: clamp(1rem, 3vw, 1.6rem);
+}
+
+.sg-catalog-search__heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.sg-budget-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 3rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--sg-cream);
+    color: var(--sg-navy);
+    font-size: 1.35rem;
+}
+
+.sg-budget-submit {
+    background: var(--sg-navy);
+    border-color: var(--sg-navy);
+    min-height: 48px;
+    font-weight: 700;
+}
+
+.sg-budget-submit:hover,
+.sg-budget-submit:focus {
+    background: var(--sg-navy-soft);
+    border-color: var(--sg-navy-soft);
+}
+
+.sg-catalog-search a.small,
+.sg-catalog-search .form-check-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+.sg-category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.sg-category-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: .35rem .85rem;
+    border: 1px solid var(--sg-border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--sg-navy);
+    text-decoration: none;
+}
+
+.sg-category-chip:hover,
+.sg-category-chip.is-active {
+    border-color: var(--sg-navy);
+    background: var(--sg-navy);
+    color: #fff;
+}
+
+.sg-catalog-hero + .sg-catalog-search ~ .pagination .page-link,
+.sg-category-chips ~ .pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+@media (max-width: 575.98px) {
+    .sg-catalog-search__heading {
+        align-items: flex-start;
+    }
+
+    .sg-budget-icon {
+        flex-basis: 2.5rem;
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+}

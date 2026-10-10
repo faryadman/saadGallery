@@ -1,41 +1,202 @@
-@model IReadOnlyList<SadGallery.Application.Catalog.PublicProduct>
+@model SadGallery.Web.Models.Catalog.PublicCatalogViewModel
+@using System.Globalization
+@using SadGallery.Application.Market
+@using SadGallery.Application.Text
+@using SadGallery.Domain.Enums
 @{
-    ViewData["Title"] = "ویترین محصولات";
+    ViewData["Title"] = "محصولات طلا";
+    var countText = PersianText.ToPersianDigits(Model.TotalCount.ToString("N0", CultureInfo.InvariantCulture));
+    var visibleCategories = Model.Categories.Where(category => category.ProductCount > 0).ToList();
 }
 
-<section class="sg-hero">
-    <h1 class="h3 mb-2">ویترین محصولات</h1>
-    <p class="mb-0 text-muted small">
-        فقط کالاهای منتشرشده نمایش داده می‌شوند. قیمتِ هر کالا با واحدِ صریح (تومان) و در صورت
-        محاسبه‌ای‌بودن، همراه با مبنا و زمانِ محاسبه نمایش داده می‌شود.
+<section class="sg-hero sg-catalog-hero">
+    <span class="sg-eyebrow">ویترین گالری صاد</span>
+    <h1 class="h2 mb-2">محصولات طلا، متناسب با بودجهٔ شما</h1>
+    <p class="mb-0 text-muted">
+        بودجه را به تومان وارد کنید؛ کالاهای منتشرشده و دارای قیمت معتبر را می‌بینید.
+        برای قیمت‌های محاسبه‌شده، مبنا و زمان نیز نمایش داده می‌شود.
     </p>
 </section>
 
-@if (ViewData["CatalogUnavailable"] is true)
+<section class="sg-catalog-search mb-4" aria-labelledby="budget-search-title">
+    <div class="sg-catalog-search__heading">
+        <div>
+            <span class="sg-eyebrow">پیدا کردن گزینهٔ مناسب</span>
+            <h2 id="budget-search-title" class="h4 mb-1">با بودجه‌ات جست‌وجو کن</h2>
+            <p class="small text-muted mb-0">بودجه سقف قیمت است؛ نزدیک‌ترین گزینه‌های ارزان‌تر اول می‌آیند.</p>
+        </div>
+        <span class="sg-budget-icon" aria-hidden="true">✦</span>
+    </div>
+
+    <form method="get" action="/products" class="row g-3 align-items-end">
+        <div class="col-12 col-md-5">
+            <label for="budget" class="form-label fw-semibold">بودجهٔ من (تومان)</label>
+            <div class="input-group input-group-lg">
+                <input id="budget" name="budget" class="form-control" type="text"
+                       inputmode="decimal" autocomplete="off" placeholder="مبلغ بودجه را وارد کنید"
+                       value="@Model.BudgetInput" aria-describedby="budget-help" />
+                <span class="input-group-text">تومان</span>
+            </div>
+            <div id="budget-help" class="form-text">
+                ارقام فارسی یا انگلیسی و جداکنندهٔ هزارگان قابل قبول است؛ تبدیل ریال انجام نمی‌شود.
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label for="categoryId" class="form-label fw-semibold">گروه محصول</label>
+            <select id="categoryId" name="categoryId" class="form-select form-select-lg">
+                <option value="">همهٔ گروه‌ها</option>
+                @foreach (var category in visibleCategories)
+                {
+                    if (Model.CategoryId == category.Id)
+                    {
+                        <option value="@category.Id" selected>@category.Name (@PersianText.ToPersianDigits(category.ProductCount.ToString(CultureInfo.InvariantCulture)))</option>
+                    }
+                    else
+                    {
+                        <option value="@category.Id">@category.Name (@PersianText.ToPersianDigits(category.ProductCount.ToString(CultureInfo.InvariantCulture)))</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-12 col-md-3">
+            <button type="submit" class="btn btn-primary btn-lg w-100 sg-budget-submit">نمایش گزینه‌ها</button>
+        </div>
+
+        <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            @if (Model.HasBudget)
+            {
+                <input name="inStockOnly" type="hidden" value="true" />
+                <span class="small text-muted">در پیشنهاد بودجه فقط کالاهای موجود می‌آیند.</span>
+            }
+            else
+            {
+                <div class="form-check">
+                    <input id="inStockOnly" name="inStockOnly" class="form-check-input" type="checkbox"
+                           value="true" @(Model.InStockOnly ? "checked" : null) />
+                    <input name="inStockOnly" type="hidden" value="false" />
+                    <label for="inStockOnly" class="form-check-label">فقط کالاهای موجود</label>
+                </div>
+            }
+            <a href="/products" class="small">پاک‌کردن فیلترها</a>
+        </div>
+    </form>
+
+    @if (Model.FilterError is not null)
+    {
+        <div class="alert alert-danger mt-3 mb-0" role="alert">@Model.FilterError</div>
+    }
+</section>
+
+@if (Model.CatalogUnavailable)
 {
-    @* دیتابیس در دسترس نیست: به‌جای خطای ۵۰۰ یا «ویترین خالی» دروغین، وضعیت واقعی گفته می‌شود. *@
     <div class="alert alert-warning sg-empty" role="alert">
         <h2 class="h6">ویترین در این لحظه در دسترس نیست</h2>
-        <p class="mb-0">
-            برقراری ارتباط با پایگاه داده ممکن نشد. لطفاً چند لحظه دیگر دوباره تلاش کنید.
-            این وضعیت ثبت شده و بررسی می‌شود.
-        </p>
+        <p class="mb-0">برقراری ارتباط با پایگاه داده ممکن نشد. لطفاً چند لحظه دیگر دوباره تلاش کنید.</p>
     </div>
 }
-else if (Model.Count == 0)
+else if (Model.FilterError is null)
 {
-    <div class="alert alert-info sg-empty" role="status">
-        <p class="mb-0">هنوز کالایی منتشر نشده است. به‌زودی محصول‌های جدید اینجا نمایش داده می‌شوند.</p>
-    </div>
-}
-else
-{
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
-        @foreach (var product in Model)
+    @if (visibleCategories.Count > 0)
+    {
+        <nav class="sg-category-chips mb-4" aria-label="گروه‌های محصول">
+            <span class="small fw-semibold text-muted">دسته‌ها:</span>
+            <a class="sg-category-chip @(Model.CategoryId is null ? "is-active" : null)" href="/products">همه</a>
+            @foreach (var category in visibleCategories)
+            {
+                <a class="sg-category-chip @(Model.CategoryId == category.Id ? "is-active" : null)"
+                   href="@Url.Action("Index", "Products", new { categoryId = category.Id, budget = Model.BudgetInput, inStockOnly = Model.InStockOnly })">
+                    @category.Name
+                </a>
+            }
+        </nav>
+    }
+
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div>
+            <h2 class="h4 mb-1">@(Model.HasBudget ? "گزینه‌های در محدودهٔ بودجه" : "همهٔ محصولات")</h2>
+            <p class="small text-muted mb-0">
+                @if (Model.HasBudget)
+                {
+                    <span>سقف شما: <strong>@RateFormat.Money(Model.BudgetToman!.Value, CurrencyUnit.Irt)</strong> · ترتیب از نزدیک‌ترین قیمتِ پایین‌تر به سقف</span>
+                }
+                else
+                {
+                    <span>فقط محصولات منتشرشده نمایش داده می‌شوند.</span>
+                }
+                @if (Model.InStockOnly)
+                {
+                    <span> · فقط موجودها</span>
+                }
+            </p>
+        </div>
+        @if (Model.TotalCount > 0)
         {
-            <div class="col">
-                @await Html.PartialAsync("_ProductCard", product)
-            </div>
+            <span class="badge rounded-pill text-bg-light border">@countText نتیجه</span>
         }
     </div>
+
+    @if (Model.HasBudget)
+    {
+        <div class="alert alert-info small" role="note">
+            در پیشنهاد بودجه فقط قیمت ثابت و قیمت محاسبه‌شدهٔ تازه و معتبر لحاظ می‌شود.
+            کالاهای استعلامی، بدون قیمت، یا با قیمت محاسبه‌شدهٔ کهنه در این فهرست نیستند.
+        </div>
+    }
+
+    @if (Model.Products.Count == 0)
+    {
+        <div class="alert alert-info sg-empty" role="status">
+            @if (Model.HasBudget)
+            {
+                <p class="mb-1">با این فیلتر، محصولی با قیمت معتبر پیدا نشد.</p>
+                <p class="small mb-0">امتحان کنید بودجه را تغییر دهید یا گروه دیگری انتخاب کنید.</p>
+            }
+            else if (Model.TotalCount > 0)
+            {
+                <p class="mb-0">این صفحه نتیجه‌ای ندارد؛ به صفحهٔ قبلی برگردید.</p>
+            }
+            else
+            {
+                <p class="mb-0">هنوز محصولی برای نمایش منتشر نشده است.</p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+            @foreach (var product in Model.Products)
+            {
+                <div class="col">
+                    @await Html.PartialAsync("_ProductCard", product)
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4" aria-label="صفحه‌بندی محصولات">
+            <ul class="pagination justify-content-center">
+                @if (Model.Page > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" rel="prev"
+                           href="@Url.Action("Index", "Products", new { budget = Model.BudgetInput, categoryId = Model.CategoryId, inStockOnly = Model.InStockOnly, page = Model.Page - 1 })">قبلی</a>
+                    </li>
+                }
+                <li class="page-item disabled" aria-current="page">
+                    <span class="page-link">صفحهٔ @PersianText.ToPersianDigits(Model.Page.ToString(CultureInfo.InvariantCulture)) از @PersianText.ToPersianDigits(Model.TotalPages.ToString(CultureInfo.InvariantCulture))</span>
+                </li>
+                @if (Model.Page < Model.TotalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" rel="next"
+                           href="@Url.Action("Index", "Products", new { budget = Model.BudgetInput, categoryId = Model.CategoryId, inStockOnly = Model.InStockOnly, page = Model.Page + 1 })">بعدی</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
 }

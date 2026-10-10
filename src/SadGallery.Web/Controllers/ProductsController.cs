@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SadGallery.Application.Catalog;
+using SadGallery.Domain.Enums;
+using SadGallery.Web.Models.Catalog;
 
 namespace SadGallery.Web.Controllers;
 
@@ -22,42 +24,99 @@ public sealed class ProductsController : Controller
 {
     private readonly ProductService _products;
     private readonly ProductOptions _options;
+    private readonly ILogger<ProductsController> _logger;
 
-    public ProductsController(ProductService products, ProductOptions options)
+    public ProductsController(ProductService products, ProductOptions options, ILogger<ProductsController> logger)
     {
         ArgumentNullException.ThrowIfNull(products);
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(logger);
 
         _products = products;
         _options = options;
+        _logger = logger;
     }
 
     [HttpGet("/products")]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(
+        string? budget,
+        int? categoryId,
+        bool inStockOnly = true,
+        int page = 1,
+        CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<PublicProduct> items;
+        IReadOnlyList<CategoryRecord> categories = [];
+        PublicProductPage? result = null;
+        decimal? budgetToman = null;
+        var effectiveInStockOnly = inStockOnly;
+        string? filterError = null;
 
         try
         {
-            // اندازهٔ صفحهٔ ویترین از تنظیمات می‌آید، نه از مقدارِ ثابت در کد،
-            // و با اندازهٔ صفحهٔ خانه یکی نیست (HomeLatestCount در برابر CatalogPageSize).
-            items = await _products.GetPublishedAsync(_options.CatalogPageSize, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(budget))
+            {
+                if (ProductBudgetInput.TryParseToman(budget, out var parsedBudget))
+                {
+                    budgetToman = parsedBudget;
+                }
+                else
+                {
+                    // ورودی نامعتبر نباید بی‌صدا به «بدون فیلتر» تبدیل شود.
+                    filterError = "بودجه را به‌صورت عدد مثبت و با واحد تومان وارد کنید.";
+                }
+            }
+
+            effectiveInStockOnly = inStockOnly || budgetToman.HasValue;
+            categories = await _products.GetCategoriesAsync(cancellationToken);
+
+            if (categoryId is { } requestedCategory &&
+                (requestedCategory <= 0 || categories.All(category => category.Id != requestedCategory)))
+            {
+                filterError = "دسته‌بندی انتخاب‌شده معتبر نیست.";
+            }
+
+            if (filterError is null)
+            {
+                result = await _products.SearchPublishedCatalogAsync(
+                    categoryId,
+                    effectiveInStockOnly,
+                    budgetToman,
+                    page,
+                    cancellationToken);
+            }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // از دسترس خارج شدنِ دیتابیس نباید کل صفحه را با خطای ۵۰۰ بشکند؛
-            // همان سیاستِ صفحهٔ خانه: نمایشِ وضعیتِ «در دسترس نیست» به‌جای استثنای خام.
-            // جزئیاتِ خطا هرگز به مرورگر فرستاده نمی‌شود؛ فقط در لاگ ثبت می‌گردد.
-            ViewData["CatalogUnavailable"] = true;
-            items = [];
+            // از دسترس خارج شدنِ دیتابیس نباید استثنای خام یا فهرستِ خالیِ دروغین نشان دهد.
+            _logger.LogError(exception, "جست‌وجوی ویترین محصولات عمومی ناموفق بود.");
 
-            // ثبت در لاغ برای پیگیریِ عملیاتی (بدون نشتِ اطلاعات به پاسخ)
-            HttpContext.RequestServices
-                .GetService<Microsoft.Extensions.Logging.ILogger<ProductsController>>()?
-                .LogError(exception, "خواندن فهرست محصولات عمومی ناموفق بود.");
+            return View(new PublicCatalogViewModel
+            {
+                Categories = categories,
+                BudgetInput = budget,
+                BudgetToman = budgetToman,
+                CategoryId = categoryId,
+                InStockOnly = effectiveInStockOnly,
+                Page = Math.Max(page, 1),
+                PageSize = _options.CatalogPageSize,
+                CatalogUnavailable = true,
+                FilterError = filterError,
+            });
         }
 
-        return View(items);
+        return View(new PublicCatalogViewModel
+        {
+            Products = result?.Items ?? [],
+            Categories = categories,
+            BudgetInput = budget,
+            BudgetToman = budgetToman,
+            CategoryId = categoryId,
+            InStockOnly = effectiveInStockOnly,
+            Page = result?.Page ?? Math.Max(page, 1),
+            PageSize = result?.PageSize ?? _options.CatalogPageSize,
+            TotalCount = result?.TotalCount ?? 0,
+            FilterError = filterError,
+        });
     }
 
     [HttpGet("/products/{id:int}")]

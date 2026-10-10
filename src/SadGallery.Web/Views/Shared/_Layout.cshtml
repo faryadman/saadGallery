@@ -29,7 +29,7 @@
                     <li class="nav-item"><a class="nav-link" asp-controller="Products" asp-action="Index">ویترین</a></li>
                     <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Bubble">حباب‌سنج</a></li>
                     <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Gold">ماشین‌حساب طلا</a></li>
-                    <li class="nav-item"><span class="nav-link sg-navlink--soon" title="فاز ۴">محصولات <small>(به‌زودی)</small></span></li>
+
                 </ul>
                 <ul class="navbar-nav">
                     @if (User.Identity?.IsAuthenticated == true)
@@ -40,6 +40,7 @@
                         {
                             <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Dashboard" asp-action="Index">پنل اپراتور</a></li>
                             <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Products" asp-action="Index">مدیریت کالاها</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Categories" asp-action="Index">گروه‌بندی کالاها</a></li>
                         }
                         @if (User.IsInRole(RoleNames.Admin))
                         {

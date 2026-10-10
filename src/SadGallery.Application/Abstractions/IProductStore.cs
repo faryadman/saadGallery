@@ -16,6 +16,9 @@ public interface IProductStore
     /// <summary>آخرین محصول‌های منتشرشده (برای صفحهٔ اصلی و ویترین).</summary>
     Task<IReadOnlyList<ProductRecord>> GetPublishedAsync(int take, CancellationToken cancellationToken);
 
+    /// <summary>جست‌وجوی صفحه‌بندی‌شده در کالاهای منتشرشده با دسته/موجودی/سقف بودجه.</summary>
+    Task<PublicProductRecordPage> SearchPublishedAsync(PublicProductSearchQuery query, CancellationToken cancellationToken);
+
     /// <summary>
     /// یک محصول برای نمایش عمومی. تنها در صورتی ردیف برمی‌گردد که منتشرشده و حذف‌نشده باشد؛
     /// در غیر این صورت <c>null</c> (یعنی ۴۰۴ — معیار پذیرش فاز ۴).
@@ -32,6 +35,12 @@ public interface IProductStore
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<CategoryRecord>> GetCategoriesAsync(CancellationToken cancellationToken);
+
+    Task<bool> CategoryNameExistsAsync(string name, int? excludingCategoryId, CancellationToken cancellationToken);
+
+    Task<int> CreateCategoryAsync(ProductCategoryDraft draft, CancellationToken cancellationToken);
+
+    Task<bool> UpdateCategoryAsync(int id, ProductCategoryDraft draft, CancellationToken cancellationToken);
 
     // ---- مدیریت ----
 

@@ -129,6 +129,121 @@ public sealed class ProductCatalogSqlTests : IClassFixture<CatalogWebFactory>
         }
     }
 
+    // ─────────── مدیریت گروه‌ها و جست‌وجوی بودجه ───────────
+
+    [RequiresSqlServerFact]
+    public async Task CategoryService_CreatesUpdatesAndRejectsDuplicateNames()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var originalName = UniqueTitle("دسته");
+        var updatedName = UniqueTitle("دسته-ویرایش");
+
+        await using var db = CreateContext();
+        await db.Database.MigrateAsync(cancellationToken);
+        var service = CreateProductService(db);
+        int? categoryId = null;
+
+        try
+        {
+            var created = await service.CreateCategoryAsync(
+                new ProductCategoryDraft(originalName, "توضیح آزمایشی", 70),
+                cancellationToken);
+            Assert.True(created.Succeeded, string.Join(" | ", created.Errors));
+            categoryId = created.CategoryId;
+
+            var duplicate = await service.CreateCategoryAsync(
+                new ProductCategoryDraft(originalName, null, 80),
+                cancellationToken);
+            Assert.False(duplicate.Succeeded);
+            Assert.Contains("از قبل وجود دارد", string.Join(" | ", duplicate.Errors), StringComparison.Ordinal);
+
+            var updated = await service.UpdateCategoryAsync(
+                categoryId!.Value,
+                new ProductCategoryDraft(updatedName, "توضیح به‌روزشده", 80),
+                cancellationToken);
+            Assert.True(updated.Succeeded, string.Join(" | ", updated.Errors));
+
+            var records = await service.GetCategoriesAsync(cancellationToken);
+            var record = Assert.Single(records, item => item.Id == categoryId.Value);
+            Assert.Equal(updatedName, record.Name);
+            Assert.Equal("توضیح به‌روزشده", record.Description);
+            Assert.Equal(80, record.DisplayOrder);
+        }
+        finally
+        {
+            if (categoryId is { } id)
+            {
+                var category = await db.ProductCategories.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+                if (category is not null)
+                {
+                    db.ProductCategories.Remove(category);
+                    await db.SaveChangesAsync(cancellationToken);
+                }
+            }
+        }
+    }
+
+    [RequiresSqlServerFact]
+    public async Task BudgetSearch_OnlyReturnsPublishedInStockFreshPricedProductsInSelectedCategory()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var budget = 2_000_000m;
+        var freshSince = Now.AddMinutes(-60);
+        var suffix = Guid.NewGuid().ToString("N");
+
+        await using var db = CreateContext();
+        await db.Database.MigrateAsync(cancellationToken);
+
+        var category = new ProductCategory { Name = "گروه بودجه " + suffix, DisplayOrder = 1 };
+        var otherCategory = new ProductCategory { Name = "گروه دیگر " + suffix, DisplayOrder = 2 };
+        db.ProductCategories.AddRange(category, otherCategory);
+        await db.SaveChangesAsync(cancellationToken);
+
+        var fixtures = new List<Product>
+        {
+            SearchFixture("ثابت دقیق بودجه", category.Id, PricePolicy.Fixed, fixedPrice: budget),
+            SearchFixture("ثابت نزدیک بودجه", category.Id, PricePolicy.Fixed, fixedPrice: 1_950_000m),
+            SearchFixture("محاسبه‌شده تازه", category.Id, PricePolicy.Computed, calculatedPrice: 1_800_000m, computedAt: freshSince),
+            SearchFixture("ثابت ارزان‌تر", category.Id, PricePolicy.Fixed, fixedPrice: 1_500_000m),
+            SearchFixture("محاسبه‌شده کهنه", category.Id, PricePolicy.Computed, calculatedPrice: 1_000_000m, computedAt: freshSince.AddSeconds(-1)),
+            SearchFixture("محاسبه‌شده گران", category.Id, PricePolicy.Computed, calculatedPrice: 2_100_000m, computedAt: Now),
+            SearchFixture("استعلامی", category.Id, PricePolicy.QuoteOnly),
+            SearchFixture("بدون قیمت", category.Id, PricePolicy.Computed),
+            SearchFixture("ناموجود", category.Id, PricePolicy.Fixed, fixedPrice: 900_000m, inStock: false),
+            SearchFixture("منتشرنشده", category.Id, PricePolicy.Fixed, fixedPrice: 900_000m, published: false),
+            SearchFixture("دسته دیگر", otherCategory.Id, PricePolicy.Fixed, fixedPrice: 900_000m),
+        };
+
+        try
+        {
+            db.Products.AddRange(fixtures);
+            await db.SaveChangesAsync(cancellationToken);
+
+            var result = await new ProductStore(db).SearchPublishedAsync(
+                new PublicProductSearchQuery(
+                    CategoryId: category.Id,
+                    InStockOnly: true,
+                    MaximumBudgetToman: budget,
+                    FreshComputedPriceSinceUtc: freshSince,
+                    Skip: 0,
+                    Take: 24),
+                cancellationToken);
+
+            Assert.Equal(4, result.TotalCount);
+            Assert.Equal(
+                new[] { fixtures[0].Id, fixtures[1].Id, fixtures[2].Id, fixtures[3].Id },
+                result.Items.Select(item => item.Id));
+        }
+        finally
+        {
+            var fixtureIds = fixtures.Where(product => product.Id > 0).Select(product => product.Id).ToArray();
+            var savedProducts = await db.Products.Where(product => fixtureIds.Contains(product.Id)).ToListAsync(cancellationToken);
+            db.Products.RemoveRange(savedProducts);
+            db.ProductCategories.RemoveRange(category, otherCategory);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
     // ─────────── بارگذاری تصویر ───────────
 
     [RequiresSqlServerFact]
@@ -327,6 +442,34 @@ public sealed class ProductCatalogSqlTests : IClassFixture<CatalogWebFactory>
         TaxPercent: ProductPriceFormula.DefaultTaxPercent,
         IsInStock: true,
         IsPublished: published);
+
+    private static Product SearchFixture(
+        string title,
+        int categoryId,
+        PricePolicy policy,
+        decimal? fixedPrice = null,
+        decimal? calculatedPrice = null,
+        DateTimeOffset? computedAt = null,
+        bool inStock = true,
+        bool published = true) =>
+        new()
+        {
+            Title = UniqueTitle(title),
+            CategoryId = categoryId,
+            PricePolicy = policy,
+            FixedPriceIrt = fixedPrice,
+            PriceTotalIrt = calculatedPrice,
+            PriceComputedAtUtc = computedAt,
+            MakingChargePercent = 0m,
+            ProfitPercent = 0m,
+            TaxPercent = 0m,
+            IsInStock = inStock,
+            IsPublished = published,
+            IsDeleted = false,
+            CreatedAtUtc = Now,
+            PublishedAtUtc = published ? Now : null,
+            CreatedByUserId = 1,
+        };
 
     private static byte[] RealPng(int width, int height)
     {

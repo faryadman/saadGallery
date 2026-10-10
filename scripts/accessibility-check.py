@@ -5,7 +5,7 @@
 چه چیزی را می‌سنجد؟
   ۱) نسبت کنتراست WCAG 2.1 برای جفت‌های «متن/پس‌زمینه» که واقعاً در site.css استفاده می‌شوند
      (مقادیر از خود فایل CSS خوانده می‌شوند، نه کپی دستی).
-  ۲) وجود قاعده «هدف لمسی حداقل ۴۴px» (.sg-touch) در CSS.
+  ۲) وجود قاعده «هدف لمسی حداقل ۴۴px» (.sg-touch) و هدف‌های کنترل بودجه/دسته در CSS.
   ۳) وجود نوار حالت آفلاین (.sg-offline-banner) و اسکریپت تشخیص قطعی.
 
 استفاده:
@@ -29,7 +29,8 @@ AA_NORMAL = 4.5   # متن معمولی
 AA_LARGE = 3.0    # متن بزرگ (≥۱۸٫۶۶px ضخیم یا ≥۲۴px)
 
 # جفت‌هایی که در رابط واقعاً به‌کار می‌روند: (توضیح، رنگ متن، رنگ پس‌زمینه، حد لازم)
-# رنگ‌ها یا از متغیرهای :root می‌آیند یا ثابت‌های همان CSS (سفید کارت‌ها، سوءاستفاده‌شده در Bootstrap badge).
+# جفت‌های تازهٔ ویترین هم افزوده شده‌اند تا eyebrow، دکمهٔ بودجه و chipهای دسته رگرسیون‌پذیر باشند.
+# رنگ‌ها از متغیرهای :root یا ثابت‌های همان CSS می‌آیند.
 PAIRS = [
     ("متن اصلی روی پس‌زمینه کرم", "ink", "cream", AA_NORMAL),
     ("متن خاموش (muted) روی کارت سفید", "muted", "#ffffff", AA_NORMAL),
@@ -48,6 +49,12 @@ PAIRS = [
     ("نشان ثانویه Bootstrap: سفید روی خاکستری", "#ffffff", "#6c757d", AA_NORMAL),
     ("نشان خطر Bootstrap: سفید روی قرمز", "#ffffff", "#dc3545", AA_NORMAL),
     ("نوار آفلاین: سفید روی قرمز تیره", "#ffffff", "#7a1f1f", AA_NORMAL),
+    ("برچسب ویترین: قهوه‌ای تیره روی کرم", "#735600", "cream", AA_NORMAL),
+    ("دکمه بودجه: سفید روی سرمه‌ای", "#ffffff", "navy", AA_NORMAL),
+    ("دکمه بودجه در hover: سفید روی سرمه‌ای روشن", "#ffffff", "navy_soft", AA_NORMAL),
+    ("گروه غیرفعال: سرمه‌ای روی سفید", "navy", "#ffffff", AA_NORMAL),
+    ("گروه فعال: سفید روی سرمه‌ای", "#ffffff", "navy", AA_NORMAL),
+    ("نشان بودجه: سرمه‌ای روی کرم", "navy", "cream", AA_NORMAL),
 ]
 
 VAR_RE = re.compile(r"--sg-([a-z-]+)\s*:\s*(#[0-9a-fA-F]{6})")
@@ -104,6 +111,15 @@ def main() -> int:
         lines.append(f"| {label} | {value:.2f}:1 | {threshold}:1 | {'قبول ✓' if passed else 'رد ✗'} |")
 
     touch_ok = ".sg-touch" in css and "min-height: 44px" in css and "min-width: 44px" in css
+    catalog_touch_ok = (
+        ".sg-budget-submit" in css
+        and "min-height: 48px" in css
+        and ".sg-category-chip" in css
+        and ".sg-catalog-search .form-check-label" in css
+        and ".sg-catalog-search a.small" in css
+        and ".page-link" in css
+        and "min-height: 44px" in css
+    )
     banner_ok = ".sg-offline-banner" in css
     js_ok = "navigator.onLine" in js and "offline" in js
 
@@ -112,20 +128,21 @@ def main() -> int:
         print("  " + line)
     print()
     print(f"  هدف لمسی ۴۴px (.sg-touch): {'موجود ✓' if touch_ok else 'غایب ✗'}")
+    print(f"  هدف لمسی فیلترهای ویترین (دکمه/دسته/برچسب/صفحه‌بندی): {'موجود ✓' if catalog_touch_ok else 'غایب ✗'}")
     print(f"  نوار حالت آفلاین: {'موجود ✓' if banner_ok else 'غایب ✗'}")
     print(f"  اسکریپت تشخیص قطعی: {'موجود ✓' if js_ok else 'غایب ✗'}")
     print()
-    print("  نتیجه:", "همه معیارها قبول ✓" if failures == 0 and touch_ok and banner_ok and js_ok
+    print("  نتیجه:", "همه معیارها قبول ✓" if failures == 0 and touch_ok and catalog_touch_ok and banner_ok and js_ok
           else f"{failures} کنتراست زیر حد یا عنصر غایب ✗")
 
     if "--write-doc" in sys.argv:
         stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        header = f"""# دسترس‌پذیری (فاز ۳)
+        header = f"""# دسترس‌پذیری (فازهای ۳ و ۴.۱)
 
 - **روش سنجش:** ابزار داخلی `scripts/accessibility-check.py` (اجراشده در {stamp}) — رنگ‌ها مستقیماً از
   `src/SadGallery.Web/wwwroot/css/site.css` خوانده و نسبت کنتراست WCAG 2.1 محاسبه می‌شود.
 - **حد پذیرفته‌شده:** متن معمولی ≥ ۴٫۵:۱ و متن بزرگ ≥ ۳:۱ (سطح AA).
-- **کاربرگ‌های لمسی:** قاعده `.sg-touch` (حداقل ۴۴×۴۴px) برای کنترل‌های تعاملی؛ در بررسی هم ارزیابی می‌شود.
+- **هدف‌های لمسی:** قاعدهٔ عمومی `.sg-touch` (حداقل ۴۴×۴۴px) و کنترل‌های ویترین (دکمهٔ بودجه، گروه‌ها، پاک‌کردن فیلتر و صفحه‌بندی) بررسی می‌شوند.
 - **حالت آفلاین:** نوار هشدار `.sg-offline-banner` + `wwwroot/js/offline-status.js` (بدون منبع خارجی).
 
 ## نتیجه اجرای ابزار
@@ -140,7 +157,7 @@ def main() -> int:
         DOC_PATH.write_text(header + "\n".join(lines) + "\n" + footer, encoding="utf-8")
         print(f"  ✓ نوشته شد: {DOC_PATH.relative_to(ROOT)}")
 
-    return 0 if failures == 0 and touch_ok and banner_ok and js_ok else 1
+    return 0 if failures == 0 and touch_ok and catalog_touch_ok and banner_ok and js_ok else 1
 
 
 if __name__ == "__main__":

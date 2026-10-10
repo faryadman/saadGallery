@@ -137,4 +137,4 @@ public sealed record ProductListRow(
     decimal? PriceTotalIrt);
 
 /// <summary>دسته‌بندی محصول.</summary>
-public sealed record CategoryRecord(int Id, string Name, string? Description, int ProductCount);
+public sealed record CategoryRecord(int Id, string Name, string? Description, int ProductCount, int DisplayOrder = 0);
