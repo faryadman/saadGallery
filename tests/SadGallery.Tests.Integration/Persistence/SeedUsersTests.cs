@@ -247,7 +247,15 @@ public sealed class SeedUsersTests
         services.AddLogging();
         services.AddDbContext<SadGalleryDbContext>(builder => builder.UseSqlServer(connectionString));
         services
-            .AddIdentityCore<ApplicationUser>()
+            .AddIdentityCore<ApplicationUser>(options =>
+            {
+                // Match the application's actual Identity password policy.
+                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+            })
             .AddRoles<IdentityRole<int>>()
             .AddEntityFrameworkStores<SadGalleryDbContext>();
 

@@ -23,6 +23,8 @@ public sealed class RateStoreSqlTests
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = CreateContext();
         await db.Database.MigrateAsync(cancellationToken);
+        // Roll back each test's writes, including its lease, so order and reruns cannot affect results.
+        await using var isolation = await db.Database.BeginTransactionAsync(cancellationToken);
 
         var store = new RateStore(db, new TestClock(QuotedAt));
         var runId = await store.BeginRunAsync(new RateFetchRunStart("Tgn", "Manual", QuotedAt), cancellationToken);
@@ -46,6 +48,8 @@ public sealed class RateStoreSqlTests
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = CreateContext();
         await db.Database.MigrateAsync(cancellationToken);
+        // Roll back each test's writes, including its lease, so order and reruns cannot affect results.
+        await using var isolation = await db.Database.BeginTransactionAsync(cancellationToken);
 
         var store = new RateStore(db, new TestClock(QuotedAt));
         var runId = await store.BeginRunAsync(new RateFetchRunStart("Tgn", "Manual", QuotedAt), cancellationToken);
@@ -71,6 +75,8 @@ public sealed class RateStoreSqlTests
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = CreateContext();
         await db.Database.MigrateAsync(cancellationToken);
+        // Roll back each test's writes, including its lease, so order and reruns cannot affect results.
+        await using var isolation = await db.Database.BeginTransactionAsync(cancellationToken);
 
         var store = new RateStore(db, new TestClock(QuotedAt));
         var runId = await store.BeginRunAsync(new RateFetchRunStart("Tgn", "Scheduled", QuotedAt), cancellationToken);
@@ -96,6 +102,8 @@ public sealed class RateStoreSqlTests
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = CreateContext();
         await db.Database.MigrateAsync(cancellationToken);
+        // Roll back each test's writes, including its lease, so order and reruns cannot affect results.
+        await using var isolation = await db.Database.BeginTransactionAsync(cancellationToken);
 
         var store = new RateStore(db, new TestClock(QuotedAt));
         var ttl = TimeSpan.FromMinutes(1);
@@ -115,6 +123,8 @@ public sealed class RateStoreSqlTests
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = CreateContext();
         await db.Database.MigrateAsync(cancellationToken);
+        // Roll back each test's writes, including its lease, so order and reruns cannot affect results.
+        await using var isolation = await db.Database.BeginTransactionAsync(cancellationToken);
 
         var clock = new TestClock(QuotedAt);
         var store = new RateStore(db, clock);
@@ -133,6 +143,8 @@ public sealed class RateStoreSqlTests
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = CreateContext();
         await db.Database.MigrateAsync(cancellationToken);
+        // Roll back each test's writes, including its lease, so order and reruns cannot affect results.
+        await using var isolation = await db.Database.BeginTransactionAsync(cancellationToken);
 
         var store = new RateStore(db, new TestClock(QuotedAt));
         var runId = await store.BeginRunAsync(new RateFetchRunStart("Tgn", "Manual", QuotedAt), cancellationToken);
