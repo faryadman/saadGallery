@@ -7,5 +7,7 @@ namespace SadGallery.Web.Security;
 public static class RateLimitPolicies
 {
     /// <summary>ورود، ثبت‌نام و بازیابی رمز.</summary>
+    public const string Tickets = "sg-tickets";
+
     public const string Authentication = "sg-auth";
 }

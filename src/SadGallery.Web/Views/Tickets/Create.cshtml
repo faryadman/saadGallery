@@ -1,0 +1,17 @@
+@model SadGallery.Web.Models.Tickets.CreateTicketForm
+@using SadGallery.Domain.Tickets
+@using SadGallery.Web.Models.Tickets
+@{ ViewData["Title"] = "ثبت تیکت و استعلام قیمت"; }
+<h1>ثبت تیکت و استعلام قیمت</h1>
+<form method="post" action="/tickets/new">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <input asp-for="ProductId" type="hidden" />
+    <label asp-for="Subject">موضوع</label><input asp-for="Subject" class="form-control" maxlength="150" required />
+    <label asp-for="Type">نوع درخواست</label><select asp-for="Type" class="form-select">
+    @foreach (var type in Enum.GetValues<TicketType>()) { <option value="@((int)type)">@TicketLabels.Type(type)</option> }
+    </select>
+    <label asp-for="Body">پیام</label><textarea asp-for="Body" class="form-control" maxlength="4000" rows="6" required></textarea>
+    <p>پیام‌ها به‌صورت متن ذخیره می‌شوند. رمز عبور، کد ورود یا اطلاعات بانکی نفرستید.</p>
+    <button class="btn sg-btn-gold mt-3" type="submit">ثبت درخواست</button>
+</form>

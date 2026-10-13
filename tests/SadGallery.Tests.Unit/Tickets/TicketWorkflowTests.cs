@@ -1,0 +1,43 @@
+using SadGallery.Application.Tickets;
+using SadGallery.Domain.Tickets;
+using Xunit;
+namespace SadGallery.Tests.Unit.Tickets;
+public sealed class TicketWorkflowTests
+{
+    [Fact]
+    public void EveryTransitionMatchesDocumentedStateMachine()
+    {
+        var allowed = new HashSet<(TicketStatus, TicketStatus)>
+        {
+            (TicketStatus.New,TicketStatus.InReview),
+            (TicketStatus.InReview,TicketStatus.AwaitingCustomer), (TicketStatus.InReview,TicketStatus.Answered),
+            (TicketStatus.AwaitingCustomer,TicketStatus.InReview), (TicketStatus.AwaitingCustomer,TicketStatus.Closed),
+            (TicketStatus.Answered,TicketStatus.InReview), (TicketStatus.Answered,TicketStatus.Closed),
+            (TicketStatus.Closed,TicketStatus.InReview),
+        };
+        foreach(var from in Enum.GetValues<TicketStatus>())
+        foreach(var to in Enum.GetValues<TicketStatus>())
+            Assert.Equal(allowed.Contains((from,to)),TicketWorkflow.CanTransition(from,to));
+        Assert.False(TicketWorkflow.CanTransition((TicketStatus)99,TicketStatus.InReview));
+    }
+    [Theory]
+    [InlineData(TicketStatus.New,TicketStatus.New)]
+    [InlineData(TicketStatus.InReview,TicketStatus.InReview)]
+    [InlineData(TicketStatus.AwaitingCustomer,TicketStatus.InReview)]
+    [InlineData(TicketStatus.Answered,TicketStatus.InReview)]
+    [InlineData(TicketStatus.Closed,TicketStatus.InReview)]
+    public void CustomerReplyReopensOnlyResolvedOrWaitingTickets(TicketStatus from,TicketStatus expected) =>
+        Assert.Equal(expected,TicketWorkflow.AfterCustomerReply(from));
+    [Theory]
+    [InlineData(null,false)] [InlineData("",false)] [InlineData("   ",false)]
+    [InlineData("hello\u0000",false)] [InlineData("سلام\nمتن",true)]
+    [InlineData("<script>alert(1)</script>",true)]
+    public void InputMustBeBoundedPlainText(string? input,bool valid) => Assert.Equal(valid,TicketService.ValidText(input,4000));
+    [Fact]
+    public void InputLengthLimitsAreExact()
+    {
+        Assert.True(TicketService.ValidText(new string('a',4000),4000));
+        Assert.False(TicketService.ValidText(new string('a',4001),4000));
+        Assert.False(TicketService.ValidText(new string('a',2001),2000));
+    }
+}

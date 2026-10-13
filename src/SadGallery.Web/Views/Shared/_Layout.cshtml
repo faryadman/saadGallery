@@ -35,9 +35,11 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="History">تاریخچه نرخ‌ها</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/tickets">تیکت‌های من</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Member" asp-action="Index">ناحیه اعضا</a></li>
                         @if (User.IsInRole(RoleNames.Operator) || User.IsInRole(RoleNames.Admin))
                         {
+                            <li class="nav-item"><a class="nav-link" href="/operator/tickets">صف تیکت‌ها</a></li>
                             <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Dashboard" asp-action="Index">پنل اپراتور</a></li>
                             <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Products" asp-action="Index">مدیریت کالاها</a></li>
                             <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Categories" asp-action="Index">گروه‌بندی کالاها</a></li>

@@ -44,6 +44,7 @@ public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         ArgumentNullException.ThrowIfNull(builder);
 
         base.OnModelCreating(builder);
+        TicketModel.Configure(builder);
 
         builder.Entity<ApplicationUser>(entity =>
         {

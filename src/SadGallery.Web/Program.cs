@@ -132,6 +132,22 @@ builder.Services.Configure<WebEncoderOptions>(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(RateLimitPolicies.Tickets, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    options.OnRejected = async (context, ct) =>
+    {
+        if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>()?.PolicyName != RateLimitPolicies.Tickets) return;
+        var id = int.TryParse(context.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId) ? (int?)userId : null;
+        try { await context.HttpContext.RequestServices.GetRequiredService<SadGallery.Application.Tickets.ITicketStore>().RecordSecurityAsync(id, "RateLimitHit", ct); }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("TicketSecurity")
+                .LogWarning("SecurityEvent RateLimitHit: persistence unavailable ({ErrorType})", exception.GetType().Name);
+        }
+    };
 
     options.AddPolicy(RateLimitPolicies.Authentication, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -152,6 +168,8 @@ builder.Services.AddHealthChecks()
 // ---- OpenAPI (فقط محیط توسعه منتشر می‌شود؛ در Prod سطح حمله کم می‌شود) ----
 builder.Services.AddOpenApi();
 
+if (builder.Configuration.GetValue<bool>("TicketNotifications:Enabled"))
+    throw new InvalidOperationException("ارسال sms.ir هنوز پیکربندی و پیاده‌سازی نشده است؛ TicketNotifications:Enabled باید false بماند.");
 var app = builder.Build();
 
 // اعتبارسنجی تنظیمات بازار (بدون متوقف کردن سایت: سایت باید صفحه «نرخ در دسترس نیست» را نشان دهد،
@@ -341,8 +359,8 @@ app.UseStaticFiles(new StaticFileOptions
     },
 });
 app.UseRouting();
-app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 // /health = زنده بودن خود سرویس (بدون وابستگی) · /health/ready = آمادگی، شامل دیتابیس

@@ -1,0 +1,24 @@
+@model IReadOnlyList<SadGallery.Application.Tickets.TicketSummary>
+@using SadGallery.Web.Models.Tickets
+@{ ViewData["Title"] = "تیکت‌های من"; }
+<h1>تیکت‌های من</h1>
+<a class="btn sg-btn-gold" href="/tickets/new">ثبت تیکت</a>
+<table class="table"><thead><tr><th>شماره پیگیری</th><th>موضوع</th><th>وضعیت</th><th>آخرین فعالیت</th></tr></thead><tbody>
+@foreach (var ticket in Model)
+{
+    <tr><td><a href="/tickets/@ticket.Id">@ticket.TrackingCode</a></td><td>@ticket.Subject</td><td>@TicketLabels.Status(ticket.Status)</td><td>@PersianDate.ToJalaliDateTimeText(ticket.LastActivityAtUtc)</td></tr>
+}
+</tbody></table>
+@if (Model.Count == 0) { <p>تیکتی یافت نشد.</p> }
+@{ var currentPage = int.TryParse(Context.Request.Query["page"], out var p) && p > 0 ? p : 1; }
+@if (currentPage > 1) { <a href="@PageLink(currentPage-1)">صفحه قبل</a> }
+@if (Model.Count == 25) { <a href="@PageLink(currentPage+1)">صفحه بعد</a> }
+
+@functions {
+    private string PageLink(int page)
+    {
+        var query = Context.Request.Query.ToDictionary(x => x.Key, x => (string?)x.Value.ToString());
+        query["page"] = page.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(Context.Request.Path, query);
+    }
+}

@@ -1,0 +1,9 @@
+@model SadGallery.Application.Tickets.CustomerTicket
+@{ ViewData["Title"] = "گفت‌وگوی تیکت"; }
+<partial name="_TicketConversation" model="Model" />
+<form method="post" action="/tickets/@Model.Ticket.Id/reply">
+@Html.AntiForgeryToken()
+<input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+<label for="body">پاسخ شما</label><textarea id="body" name="Body" class="form-control" maxlength="4000" rows="5" required></textarea>
+<p>پاسخ به تیکت بسته‌شده، آن را برای بررسی دوباره باز می‌کند.</p>
+<button class="btn sg-btn-gold" type="submit">ارسال پاسخ</button></form>

@@ -1,0 +1,15 @@
+@model SadGallery.Application.Tickets.CustomerTicket
+@using SadGallery.Web.Models.Tickets
+<h1>@Model.Ticket.Subject</h1>
+@if(Model.Ticket.RelatedProductId is { } productId) { <p><a href="/products/@productId">کالای مرتبط با درخواست</a></p> }
+<p>شماره پیگیری: @Model.Ticket.TrackingCode · @TicketLabels.Type(Model.Ticket.Type) · @TicketLabels.Status(Model.Ticket.Status)</p>
+<p>ثبت: @PersianDate.ToJalaliDateTimeText(Model.Ticket.CreatedAtUtc) · آخرین فعالیت: @PersianDate.ToJalaliDateTimeText(Model.Ticket.LastActivityAtUtc)</p>
+@if(Model.Ticket.FirstResponseAtUtc is { } first) { <p>اولین پاسخ: @PersianDate.ToJalaliDateTimeText(first)</p> }
+@if(Model.Ticket.ClosedAtUtc is { } closed) { <p>بسته‌شدن: @PersianDate.ToJalaliDateTimeText(closed)</p> }
+@foreach(var message in Model.Messages)
+{
+    <article class="card my-3"><div class="card-body">
+    <p>@(message.IsOperator ? "پشتیبانی" : "مشتری") · @PersianDate.ToJalaliDateTimeText(message.CreatedAtUtc)</p>
+    <div style="white-space:pre-wrap">@message.Body</div>
+    </div></article>
+}
