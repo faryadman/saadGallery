@@ -794,6 +794,27 @@ namespace SadGallery.Infrastructure.Persistence.Migrations
                     b.ToTable("TicketMessages", (string)null);
                 });
 
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.TicketMessageRead", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("OperatorView")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("MessageId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("ReadAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("UserId", "OperatorView", "MessageId");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("TicketMessageReads", (string)null);
+                });
+
             modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.TicketPhoto", b =>
                 {
                     b.Property<Guid>("Id")
@@ -955,6 +976,21 @@ namespace SadGallery.Infrastructure.Persistence.Migrations
                     b.HasOne("SadGallery.Infrastructure.Persistence.Entities.SupportTicket", null)
                         .WithMany("Messages")
                         .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.TicketMessageRead", b =>
+                {
+                    b.HasOne("SadGallery.Infrastructure.Persistence.Entities.TicketMessage", null)
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SadGallery.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

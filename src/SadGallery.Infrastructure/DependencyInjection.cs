@@ -68,6 +68,8 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<SadGallery.Application.Tickets.ITicketStore, SadGallery.Infrastructure.Tickets.TicketStore>();
         services.AddScoped<SadGallery.Application.Tickets.TicketService>();
+        services.AddScoped<SadGallery.Application.Tickets.ITicketInboxStore, SadGallery.Infrastructure.Tickets.TicketInboxStore>();
+        services.AddScoped<SadGallery.Application.Tickets.TicketInboxService>();
         services.AddScoped<SadGallery.Application.Tickets.TicketPhotoService>();
         services.AddScoped<IIdentitySeeder, IdentitySeeder>();
 

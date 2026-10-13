@@ -56,3 +56,11 @@ public sealed class TicketPhoto
     public int Height { get; set; }
     public long SizeBytes { get; set; }
 }
+
+public sealed class TicketMessageRead
+{
+    public int UserId { get; set; }
+    public bool OperatorView { get; set; }
+    public long MessageId { get; set; }
+    public DateTimeOffset ReadAtUtc { get; set; }
+}

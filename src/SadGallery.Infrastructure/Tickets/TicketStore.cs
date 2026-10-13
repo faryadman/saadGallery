@@ -44,8 +44,12 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
             var number = s.StartsWith("SG-", StringComparison.OrdinalIgnoreCase) ? s[3..] : s;
             q = long.TryParse(number, out var n) ? q.Where(x => x.Number == n) : q.Where(x => x.Subject.StartsWith(s));
         }
-        return (await q.OrderByDescending(x => x.LastActivityAtUtc).ThenBy(x => x.Id)
-            .Skip((filter.Page - 1) * 25).Take(25).ToListAsync(ct)).Select(Summary).ToArray();
+        var rows = await q.OrderByDescending(x => x.LastActivityAtUtc).ThenBy(x => x.Id)
+            .Skip((filter.Page - 1) * 25).Take(25).ToListAsync(ct);
+        var ids = rows.Select(x => x.Id).ToArray();
+        var counts = await TicketInboxStore.Unread(db, actor).Where(x => ids.Contains(x.TicketId))
+            .GroupBy(x => x.TicketId).Select(x => new { Id = x.Key, Count = x.Count() }).ToDictionaryAsync(x => x.Id, x => x.Count, ct);
+        return rows.Select(x => Summary(x) with { UnreadMessages = counts.GetValueOrDefault(x.Id) }).ToArray();
     }
     private async Task<CustomerTicket?> PublicAsync(IQueryable<SupportTicket> q, Guid id, CancellationToken ct)
     {
@@ -54,7 +58,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         var messages = await db.Set<TicketMessage>().AsNoTracking().Where(x => x.TicketId == id)
             .OrderBy(x => x.CreatedAtUtc).ThenBy(x => x.Id)
             .Select(x => new TicketMessageRecord(x.AuthorUserId, x.IsOperator, x.Body, x.CreatedAtUtc,
-                x.Photos.OrderBy(p => p.Id).Select(p => new TicketPhotoRecord(p.Id, p.Width, p.Height, p.SizeBytes)).ToList())).ToListAsync(ct);
+                x.Photos.OrderBy(p => p.Id).Select(p => new TicketPhotoRecord(p.Id, p.Width, p.Height, p.SizeBytes)).ToList(), x.Id)).ToListAsync(ct);
         return new CustomerTicket(Summary(ticket), ticket.RowVersion, messages);
     }
     public Task<CustomerTicket?> GetCustomerAsync(int userId, Guid id, CancellationToken ct) =>
@@ -81,7 +85,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         if (!ticket.RowVersion.SequenceEqual(change.RowVersion)) return TicketWriteResult.Conflict;
         var target = change.Status ?? ticket.Status;
         if (actor.IsOperator && change.Status.HasValue && !TicketWorkflow.CanTransition(ticket.Status, target)) return TicketWriteResult.Invalid;
-        if (actor.IsOperator && change.Body != null && !change.InternalNote && target is not (TicketStatus.AwaitingCustomer or TicketStatus.Answered)) return TicketWriteResult.Invalid;
+        // Sending a reply and changing status are independent actions. An omitted status keeps it unchanged.
         if (change.AssignTo.HasValue && !await (from user in db.Users
             join ur in db.UserRoles on user.Id equals ur.UserId join role in db.Roles on ur.RoleId equals role.Id
             where user.Id == change.AssignTo && user.IsActive && (role.Name == RoleNames.Operator || role.Name == RoleNames.Admin)

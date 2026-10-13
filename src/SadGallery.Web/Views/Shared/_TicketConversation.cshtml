@@ -1,29 +1,68 @@
 @model SadGallery.Application.Tickets.CustomerTicket
 @using SadGallery.Web.Models.Tickets
-<h1 class="h4 mb-3">@Model.Ticket.Subject</h1>
-@if(Model.Ticket.RelatedProductId is { } productId) { <p><a href="/products/@productId">کالای مرتبط با درخواست</a></p> }
-<p>شماره پیگیری: @Model.Ticket.TrackingCode · @TicketLabels.Type(Model.Ticket.Type) · @TicketLabels.Status(Model.Ticket.Status)</p>
-<p>ثبت: @PersianDate.ToJalaliDateTimeText(Model.Ticket.CreatedAtUtc) · آخرین فعالیت: @PersianDate.ToJalaliDateTimeText(Model.Ticket.LastActivityAtUtc)</p>
-@if(Model.Ticket.FirstResponseAtUtc is { } first) { <p>اولین پاسخ: @PersianDate.ToJalaliDateTimeText(first)</p> }
-@if(Model.Ticket.ClosedAtUtc is { } closed) { <p>بسته‌شدن: @PersianDate.ToJalaliDateTimeText(closed)</p> }
-@foreach(var message in Model.Messages)
-{
-    <article class="card my-3"><div class="card-body">
-    <p>@(message.IsOperator ? "پشتیبانی" : "مشتری") · @PersianDate.ToJalaliDateTimeText(message.CreatedAtUtc)</p>
-    <div style="white-space:pre-wrap">@message.Body</div>
-    @if(message.Photos is { Count: > 0 })
-    {
-        <div class="sg-photo-grid mt-3">
-        @foreach(var photo in message.Photos)
-        {
-            <figure class="sg-photo-tile mb-0">
-                <a href="/tickets/photos/@photo.Id" target="_blank" rel="noopener" aria-label="نمایش عکس پیوست در اندازه بزرگ">
-                    <img src="/tickets/photos/@photo.Id" alt="عکس پیوست این پیام" loading="lazy" width="@photo.Width" height="@photo.Height" />
-                </a>
-                <figcaption class="small text-muted p-2">عکس پیوست · <a href="/tickets/photos/@photo.Id" target="_blank" rel="noopener">نمایش کامل</a></figcaption>
-            </figure>
-        }
-        </div>
-    }
-    </div></article>
+@using System.Security.Claims
+@{
+    var staffView = Context.Request.Path.StartsWithSegments("/operator");
+    var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var backUrl = staffView ? "/operator/tickets" : "/tickets";
 }
+<header class="sg-card sg-ticket-header mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div class="sg-ticket-heading">
+            <div class="small text-muted mb-2">گفت‌وگو با پشتیبانی · <span dir="ltr">@Model.Ticket.TrackingCode</span></div>
+            <h1 class="h4 mb-2">@Model.Ticket.Subject</h1>
+            <span class="badge @TicketLabels.StatusBadge(Model.Ticket.Status) sg-quality">@TicketLabels.Status(Model.Ticket.Status, staffView)</span>
+            <span class="small text-muted ms-2">@TicketLabels.Type(Model.Ticket.Type)</span>
+        </div>
+        <a href="@backUrl" class="btn btn-outline-secondary sg-touch">@(staffView ? "بازگشت به صف" : "تیکت‌های من")</a>
+    </div>
+    <dl class="sg-ticket-meta mb-0 mt-4">
+        <div><dt>تاریخ ثبت</dt><dd>@PersianDate.ToJalaliDateTimeText(Model.Ticket.CreatedAtUtc)</dd></div>
+        <div><dt>آخرین فعالیت</dt><dd>@PersianDate.ToJalaliDateTimeText(Model.Ticket.LastActivityAtUtc)</dd></div>
+        @if(Model.Ticket.FirstResponseAtUtc is { } first)
+        { <div><dt>اولین پاسخ</dt><dd>@PersianDate.ToJalaliDateTimeText(first)</dd></div> }
+        @if(Model.Ticket.ClosedAtUtc is { } closed)
+        { <div><dt>زمان اتمام</dt><dd>@PersianDate.ToJalaliDateTimeText(closed)</dd></div> }
+    </dl>
+    @if(Model.Ticket.RelatedProductId is { } productId)
+    { <a href="/products/@productId" class="btn btn-sm btn-outline-primary sg-touch mt-3">مشاهده کالای مرتبط</a> }
+</header>
+<div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2" role="status"
+     data-ticket-watch="@Model.Ticket.Id" data-ticket-scope="@(staffView ? "operator" : "customer")" hidden>
+    <span>پیام تازه‌ای در این تیکت دارید. پیش از نمایش آن، متن در حال نوشتن را نگه دارید.</span>
+    <a href="@(staffView ? "/operator/tickets/" : "/tickets/")@Model.Ticket.Id" class="btn btn-outline-primary sg-touch">نمایش پیام جدید</a>
+</div>
+<section class="sg-card sg-ticket-thread" aria-labelledby="conversation-title">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-4">
+        <h2 id="conversation-title" class="h5 mb-0">پیام‌های تیکت</h2>
+        <span class="small text-muted">@PersianText.ToPersianDigits(Model.Messages.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)) پیام</span>
+    </div>
+    <div class="sg-ticket-messages">
+    @foreach(var message in Model.Messages)
+    {
+        var own = message.AuthorUserId.ToString(System.Globalization.CultureInfo.InvariantCulture) == currentUser;
+        <article class="sg-ticket-message @(own ? "sg-ticket-message--own" : "") @(message.IsOperator ? "sg-ticket-message--staff" : "")">
+            <header class="sg-ticket-message__heading">
+                <span class="sg-ticket-avatar" aria-hidden="true">@(message.IsOperator ? "ص" : "ش")</span>
+                <div><strong>@(message.IsOperator ? "پشتیبانی صاد" : "مشتری") @(own ? "(شما)" : "")</strong>
+                    <time class="small text-muted d-block" datetime="@message.CreatedAtUtc.ToString("O")">@PersianDate.ToJalaliDateTimeText(message.CreatedAtUtc)</time></div>
+            </header>
+            <div class="sg-ticket-message__body">@message.Body</div>
+            @if(message.Photos is { Count: > 0 })
+            {
+                <div class="sg-photo-grid mt-3">
+                @foreach(var photo in message.Photos)
+                {
+                    <figure class="sg-photo-tile mb-0">
+                        <a href="/tickets/photos/@photo.Id" target="_blank" rel="noopener" aria-label="نمایش عکس پیوست در اندازه بزرگ">
+                            <img src="/tickets/photos/@photo.Id" alt="عکس پیوست این پیام" loading="lazy" width="@photo.Width" height="@photo.Height" />
+                        </a>
+                        <figcaption class="small text-muted p-2">عکس پیوست · <a href="/tickets/photos/@photo.Id" target="_blank" rel="noopener">نمایش کامل</a></figcaption>
+                    </figure>
+                }
+                </div>
+            }
+        </article>
+    }
+    </div>
+</section>

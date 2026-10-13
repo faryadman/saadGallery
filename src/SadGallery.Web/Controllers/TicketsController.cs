@@ -11,8 +11,8 @@ using SadGallery.Web.Models.Tickets;
 using SadGallery.Web.Security;
 namespace SadGallery.Web.Controllers;
 
-[Authorize(Policy = Policies.MemberFeatures)]
-public sealed class TicketsController(TicketService service, TicketPhotoService photos, IMediaStore media, ILogger<TicketsController> logger) : Controller
+[Authorize(Policy = Policies.MemberFeatures), ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+public sealed class TicketsController(TicketService service, TicketPhotoService photos, TicketInboxService inbox, IMediaStore media, ILogger<TicketsController> logger) : Controller
 {
     private int? UserId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) && id > 0 ? id : null;
     [HttpGet("/tickets")]
@@ -56,7 +56,17 @@ public sealed class TicketsController(TicketService service, TicketPhotoService 
     {
         if (UserId is not { } user) return Forbid();
         var ticket = await service.GetCustomerAsync(user, id, ct);
+        if (ticket != null) await inbox.MarkReadAsync(new(user, false), id, ticket.Messages, ct);
         return ticket == null ? NotFound() : View(ticket);
+    }
+    [HttpGet("/tickets/unread"), ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> Unread(bool operatorQueue = false, [FromQuery] Guid[]? ticketIds = null, CancellationToken ct = default)
+    {
+        if (UserId is not { } user) return Forbid();
+        if (operatorQueue && !User.IsInRole(RoleNames.Operator) && !User.IsInRole(RoleNames.Admin)) return Forbid();
+        if (!ModelState.IsValid || ticketIds?.Length > 25) return BadRequest();
+        Response.Headers.CacheControl = "no-store, private";
+        return Json(await inbox.CountsAsync(new(user, operatorQueue), ticketIds ?? [], ct));
     }
     [HttpGet("/tickets/photos/{photoId:guid}")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -109,12 +119,12 @@ public sealed class TicketsController(TicketService service, TicketPhotoService 
             ModelState.AddModelError("Photos", outcome.Error);
             return View("Details", ticket);
         }
-        return outcome.Result switch
-        {
-            TicketWriteResult.Saved => RedirectToAction(nameof(Details), new { id }),
-            TicketWriteResult.NotFound => NotFound(),
-            TicketWriteResult.Conflict => Conflict("تیکت تغییر کرده است؛ صفحه را تازه کنید."),
-            _ => BadRequest("اطلاعات پیام معتبر نیست."),
-        };
+        if (outcome.Result == TicketWriteResult.Saved) return RedirectToAction(nameof(Details), new { id });
+        if (outcome.Result == TicketWriteResult.NotFound) return NotFound();
+        ModelState.AddModelError("", outcome.Result == TicketWriteResult.Conflict
+            ? "تیکت تغییر کرده است؛ گفت‌وگوی تازه را بررسی و پاسخ حفظ‌شده را دوباره ارسال کنید. عکس‌ها را دوباره انتخاب کنید."
+            : "اطلاعات پیام معتبر نیست؛ متن پاسخ را بررسی کنید.");
+        Response.StatusCode = outcome.Result == TicketWriteResult.Conflict ? 409 : 400;
+        return View("Details", await service.GetCustomerAsync(user, id, ct) ?? ticket);
     }
 }

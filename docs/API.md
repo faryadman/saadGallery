@@ -202,3 +202,6 @@ public sealed record ProviderFetchResult(
 - افزودن فیلد = مجاز؛ حذف/تغییر معنا = `v2` جدید. تغییرات در `CHANGELOG.md` مستند می‌شوند.
 - OpenAPI در فاز ۱ (کتابخانه `Microsoft.AspNetCore.OpenApi`) تولید و در `/openapi/v1.json` منتشر می‌شود؛ Swagger UI **فقط در محیط توسعه** (در Prod غیرفعال — کاهش سطح حمله).
 - محدودیت نرخ روی API عمومی: پیش‌فرض ۶۰ درخواست در دقیقه برای هر IP (قابل تنظیم).
+
+## شمارش اعلان تیکت (پیاده‌شده، 2026-10-14)
+`GET /tickets/unread?operatorQueue=false&ticketIds=<GUID>&ticketIds=<GUID>` فقط MemberFeatures فعال؛ operatorQueue=true فقط Operator/Admin فعال. حداکثر 25 شناسه تیکت. `{ "total": 2, "tickets": { "<owned-ticket-guid>": 1 } }`؛ total تعداد پیام عمومی خوانده‌نشده در نمای کاربر است، tickets فقط شمارش مثبت تیکت‌های درخواست‌شده و مجاز. هیچ متن، یادداشت یا مشخصات نویسنده برنمی‌گردد. دریافت شمارش خواندن ثبت نمی‌کند. Cache-Control: no-store, private. راهبرد خواندن/هم‌زمانی در ADR-0018.

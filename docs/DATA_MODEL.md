@@ -225,3 +225,6 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 
 ## عکس پیام تیکت — 2026-10-14
 TicketPhotos: Id uniqueidentifier PK؛ MessageId bigint FK به TicketMessages با Restrict؛ StoredFileName nvarchar(64) با ایندکس یکتا؛ Format int؛ Width/Height int؛ SizeBytes bigint. OriginalFileName یا مسیر عمومی ذخیره نمی‌شود. وجود پیوست فقط به پیام عمومی مشتری مربوط است؛ یادداشت داخلی جدا می‌ماند. Migration `20261013214044_TicketPhotos` افزودنی است و پیام‌های قبلی بدون عکس باقی می‌مانند. جزئیات امنیت/پاک‌سازی در ADR-0017.
+
+## رسید خواندن پیام تیکت — 2026-10-14
+TicketMessageReads: UserId int + OperatorView bit + MessageId bigint کلید مرکب؛ ReadAtUtc datetimeoffset؛ FKهای Restrict به AspNetUsers و TicketMessages، ایندکس MessageId. رسید دقیق پیام، بدون تغییر RowVersion تیکت؛ قابل خواندن برای کاربر/نقش مستقل. Migration `20261013222157_TicketMessageReads`؛ Down رسیدها را حذف می‌کند و تیکت/پیام/عکس باقی می‌ماند؛ با ارتقای دوباره شمارش از نو شروع می‌شود. ADR-0018 و SQL `TicketMessageReads.sql`/`TicketMessageReadsDown.sql`.

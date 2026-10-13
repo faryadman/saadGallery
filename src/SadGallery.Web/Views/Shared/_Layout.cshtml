@@ -29,6 +29,8 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sgNav"
                     aria-controls="sgNav" aria-expanded="false" aria-label="باز و بسته کردن منو">
                 <span class="navbar-toggler-icon"></span>
+                @if (User.Identity?.IsAuthenticated == true)
+                { @await Component.InvokeAsync("TicketBadge", new { operatorQueue = User.IsInRole(RoleNames.Operator) || User.IsInRole(RoleNames.Admin) }) }
             </button>
             <div class="collapse navbar-collapse" id="sgNav">
                 <ul class="navbar-nav me-auto gap-xl-1">
@@ -48,15 +50,15 @@
                     </li>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <li class="nav-item"><a class="@NavClass("/tickets")" href="/tickets" aria-current="@Current("/tickets")">تیکت‌های من</a></li>
+                        <li class="nav-item"><a class="@NavClass("/tickets")" href="/tickets" aria-current="@Current("/tickets")">تیکت‌های من @await Component.InvokeAsync("TicketBadge")</a></li>
                     }
                     @if (User.IsInRole(RoleNames.Operator) || User.IsInRole(RoleNames.Admin))
                     {
                         <li class="nav-item dropdown">
-                            <button class="nav-link dropdown-toggle @(managementActive ? "active" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">مدیریت</button>
+                            <button class="nav-link dropdown-toggle @(managementActive ? "active" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">مدیریت @await Component.InvokeAsync("TicketBadge", new { operatorQueue = true })</button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/Operator/Dashboard">داشبورد اپراتور</a></li>
-                                <li><a class="dropdown-item" href="/operator/tickets" aria-current="@Current("/operator/tickets")">صف تیکت‌ها</a></li>
+                                <li><a class="dropdown-item" href="/operator/tickets" aria-current="@Current("/operator/tickets")">صف تیکت‌ها @await Component.InvokeAsync("TicketBadge", new { operatorQueue = true })</a></li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li><a class="dropdown-item" href="/Operator/Products" aria-current="@Current("/Operator/Products")">مدیریت کالاها</a></li>
                                 <li><a class="dropdown-item" href="/Operator/Categories" aria-current="@Current("/Operator/Categories")">گروه‌بندی کالاها</a></li>
@@ -110,6 +112,8 @@
     <script src="~/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js"></script>
     <script src="~/js/offline-status.js"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    { <script src="~/js/ticket-notifications.js" asp-append-version="true"></script> }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

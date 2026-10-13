@@ -37,6 +37,13 @@ internal static class TicketModel
             e.HasIndex(x => x.StoredFileName).IsUnique();
             e.HasIndex(x => x.MessageId);
         });
+        builder.Entity<TicketMessageRead>(e =>
+        {
+            e.ToTable("TicketMessageReads");
+            e.HasKey(x => new { x.UserId, x.OperatorView, x.MessageId });
+            e.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<TicketMessage>().WithMany().HasForeignKey(x => x.MessageId).OnDelete(DeleteBehavior.Restrict);
+        });
         builder.Entity<TicketInternalNote>(e =>
         {
             e.ToTable("TicketInternalNotes"); e.Property(x => x.Body).HasMaxLength(2000).IsRequired();

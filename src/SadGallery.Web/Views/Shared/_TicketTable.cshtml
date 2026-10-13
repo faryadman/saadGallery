@@ -25,7 +25,10 @@
             var canFinish = TicketWorkflow.CanTransition(ticket.Status, TicketStatus.Closed);
             <tr>
                 <td><a href="@detailUrl" class="fw-semibold" dir="ltr">@ticket.TrackingCode</a></td>
-                <td><strong>@ticket.Subject</strong><div class="small text-muted">ثبت: @PersianDate.ToJalaliDateText(ticket.CreatedAtUtc)</div></td>
+                <td><strong>@ticket.Subject</strong>
+                    <span class="badge sg-unread-badge" data-ticket-badge data-ticket-id="@ticket.Id" data-ticket-scope="@(Model.IsOperator ? "operator" : "customer")"
+                          hidden="@(ticket.UnreadMessages == 0)" aria-live="polite">@PersianText.ToPersianDigits(ticket.UnreadMessages.ToString(CultureInfo.InvariantCulture)) پیام جدید</span>
+                    <div class="small text-muted">ثبت: @PersianDate.ToJalaliDateText(ticket.CreatedAtUtc)</div></td>
                 <td>@TicketLabels.Type(ticket.Type)</td>
                 <td><span class="badge @TicketLabels.StatusBadge(ticket.Status) sg-quality">@TicketLabels.Status(ticket.Status, Model.IsOperator)</span></td>
                 <td>

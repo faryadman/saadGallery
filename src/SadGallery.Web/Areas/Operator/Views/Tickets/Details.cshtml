@@ -1,47 +1,77 @@
 @model SadGallery.Application.Tickets.OperatorTicket
 @using SadGallery.Domain.Tickets
 @using SadGallery.Web.Models.Tickets
-@{ ViewData["Title"] = "بررسی تیکت"; }
+@{
+    ViewData["Title"] = "بررسی تیکت";
+    var form = ViewData["ChangeForm"] as ChangeTicketForm ?? new();
+}
+<div class="sg-ticket-page">
+@Html.ValidationSummary(false, "ثبت تغییر انجام نشد", new { @class = "alert alert-danger", role = "alert", tabindex = "-1" })
 <partial name="_TicketConversation" model="Model.Public" />
-<p>اپراتور مسئول: @(Model.Public.Ticket.AssignedOperatorUserId?.ToString() ?? "تعیین نشده")</p>
-<h2 class="h5 mt-4 mb-3">یادداشت‌های داخلی</h2>
-@foreach(var note in Model.InternalNotes) { <article class="card my-2"><div class="card-body"><p>@PersianDate.ToJalaliDateTimeText(note.CreatedAtUtc)</p><div style="white-space:pre-wrap">@note.Body</div></div></article> }
-<form method="post" action="/operator/tickets/@Model.Public.Ticket.Id">
-@Html.AntiForgeryToken()
-<input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.Public.RowVersion)" />
-<div class="row g-3">
-    <div class="col-12">
-        <label for="body" class="form-label">پیام یا یادداشت</label>
-        <textarea id="body" name="Body" class="form-control" rows="5" maxlength="4000" aria-describedby="operatorReplyHelp"></textarea>
-        <div id="operatorReplyHelp" class="form-text">برای پاسخ عمومی، وضعیت «پاسخ داده‌شده» یا «منتظر پاسخ مشتری» را انتخاب کنید. تیکت جدید ابتدا باید در حال بررسی شود.</div>
-    </div>
-    <div class="col-12">
-        <div class="form-check">
-            <input id="internalNote" class="form-check-input" type="checkbox" name="InternalNote" value="true" />
-            <label for="internalNote" class="form-check-label">یادداشت داخلی</label>
-        </div>
-        <div class="form-text">حداکثر ۲۰۰۰ نویسه؛ این یادداشت برای مشتری نمایش داده نمی‌شود.</div>
-    </div>
+<div class="row g-4 mt-1">
     <div class="col-12 col-lg-8">
-        <label for="status" class="form-label">وضعیت بعدی</label>
-        <select id="status" name="Status" class="form-select"><option value="">بدون تغییر</option>
-        @foreach(var status in Enum.GetValues<TicketStatus>().Where(s => TicketWorkflow.CanTransition(Model.Public.Ticket.Status,s)))
-        {
-            <option value="@((int)status)">@TicketLabels.Status(status, true)</option>
-        }
-        </select>
+        <section class="sg-card sg-compose-card h-100" aria-labelledby="operator-reply-title">
+            <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">＋</span><h2 id="operator-reply-title" class="h5 mb-0">پاسخ و رسیدگی</h2></div>
+            <form method="post" action="/operator/tickets/@Model.Public.Ticket.Id">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.Public.RowVersion)" />
+                <label for="body" class="form-label fw-semibold">متن پاسخ یا یادداشت</label>
+                <textarea id="body" name="Body" class="form-control sg-compose-message" rows="5" maxlength="4000" aria-describedby="operatorReplyHelp">@form.Body</textarea>
+                <div id="operatorReplyHelp" class="form-text mb-3">تغییر وضعیت اختیاری است؛ با «بدون تغییر»، پاسخ ثبت و وضعیت فعلی حفظ می‌شود.</div>
+                <div class="sg-ticket-note-choice mb-4">
+                    <div class="form-check">
+                        <input id="internalNote" class="form-check-input" type="checkbox" name="InternalNote" value="true" checked="@form.InternalNote" />
+                        <label for="internalNote" class="form-check-label fw-semibold">این متن یادداشت داخلی است</label>
+                    </div>
+                    <div class="form-text">فقط تیم پشتیبانی می‌بیند؛ حداکثر ۲۰۰۰ نویسه.</div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-7">
+                        <label for="status" class="form-label">وضعیت بعدی</label>
+                        <select id="status" name="Status" class="form-select">
+                            <option value="">بدون تغییر</option>
+                            @foreach(var status in Enum.GetValues<TicketStatus>().Where(s => TicketWorkflow.CanTransition(Model.Public.Ticket.Status,s)))
+                            { <option value="@((int)status)" selected="@(form.Status == status)">@TicketLabels.Status(status, true)</option> }
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-5">
+                        <label for="assign" class="form-label">ارجاع به اپراتور</label>
+                        <input id="assign" name="AssignTo" value="@form.AssignTo" type="number" min="1" class="form-control" aria-describedby="assignHelp" />
+                        <div id="assignHelp" class="form-text">شناسه حساب فعال اپراتور</div>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <button class="btn btn-primary sg-touch" type="submit">ثبت تغییر</button>
+                    <a href="/operator/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به صف</a>
+                </div>
+            </form>
+        </section>
     </div>
-    <div class="col-12 col-lg-4">
-        <label for="assign" class="form-label">شناسه اپراتور برای ارجاع</label>
-        <input id="assign" name="AssignTo" type="number" min="1" class="form-control" />
-        <div class="form-text">اپراتور باید حساب فعال داشته باشد.</div>
-    </div>
+    <aside class="col-12 col-lg-4">
+        <section class="sg-card sg-ticket-guide mb-4" aria-labelledby="ticket-team-title">
+            <h2 id="ticket-team-title" class="h6 mb-3">پیگیری درخواست</h2>
+            <p class="small mb-2">اپراتور مسئول: @(Model.Public.Ticket.AssignedOperatorUserId?.ToString() ?? "تعیین نشده")</p>
+            <p class="small text-muted mb-0">برای اتمام، ابتدا وضعیت را به «پاسخ داده‌شده» یا «منتظر پاسخ مشتری» ببرید؛ سپس «بسته‌شده» را انتخاب کنید.</p>
+        </section>
+        <section class="sg-card" aria-labelledby="internal-notes-title">
+            <h2 id="internal-notes-title" class="h6 mb-3">یادداشت‌های داخلی <span class="badge bg-secondary">@PersianText.ToPersianDigits(Model.InternalNotes.Count.ToString())</span></h2>
+            @if(Model.InternalNotes.Count == 0)
+            { <p class="small text-muted mb-0">هنوز یادداشتی ثبت نشده است. نکات رسیدگی را در این بخش برای همکاران نگه دارید.</p> }
+            @foreach(var note in Model.InternalNotes)
+            {
+                <article class="sg-ticket-note">
+                    <div class="small text-muted mb-2">@PersianDate.ToJalaliDateTimeText(note.CreatedAtUtc) · کاربر @note.AuthorUserId</div>
+                    <div class="sg-ticket-message__body">@note.Body</div>
+                </article>
+            }
+        </section>
+    </aside>
 </div>
-<div class="d-flex flex-wrap gap-2 mt-3">
-    <button class="btn btn-primary sg-touch" type="submit">ثبت تغییر</button>
-    <a href="/operator/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به صف</a>
+<details class="sg-card mt-4 sg-ticket-history">
+    <summary class="fw-semibold sg-touch">تاریخچه رسیدگی · @PersianText.ToPersianDigits(Model.History.Count.ToString()) رویداد</summary>
+    <ol class="mt-3 mb-0">
+        @foreach(var entry in Model.History)
+        { <li><span>@TicketLabels.Event(entry.Kind) · کاربر @entry.ActorUserId</span><time class="d-block small text-muted">@PersianDate.ToJalaliDateTimeText(entry.CreatedAtUtc)</time></li> }
+    </ol>
+</details>
 </div>
-</form>
-
-<h2 class="h5 mt-4 mb-3">تاریخچه تغییرات</h2>
-<ul>@foreach(var entry in Model.History) { <li>@PersianDate.ToJalaliDateTimeText(entry.CreatedAtUtc) · @TicketLabels.Event(entry.Kind) · کاربر @entry.ActorUserId</li> }</ul>

@@ -1,0 +1,3 @@
+@model int
+<span class="badge sg-unread-badge ms-1" data-ticket-badge data-ticket-scope="@ViewData["Scope"]"
+      hidden="@(Model == 0)" aria-label="@($"{Model} پیام خوانده‌نشده")" aria-live="polite">@PersianText.ToPersianDigits(Model.ToString(System.Globalization.CultureInfo.InvariantCulture))</span>

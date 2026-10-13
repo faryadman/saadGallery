@@ -511,3 +511,34 @@ body.sg-offline .sg-offline-banner {
     .sg-compose-footer > div { width: 100%; }
     .sg-compose-footer .btn { flex: 1; }
 }
+
+/* گفت‌وگوی تیکت و نشان پیام؛ همان سرمه‌ای، طلایی و کرم صفحات موجود. */
+[data-ticket-badge][hidden], [data-ticket-watch][hidden] { display: none !important; }
+.sg-unread-badge { color: var(--sg-navy); background: #f1d878; border-radius: 999px; line-height: 1.4; }
+.sg-ticket-header { border-inline-start: 4px solid var(--sg-gold); }
+.sg-ticket-heading { min-width: 0; overflow-wrap: anywhere; }
+.sg-ticket-meta { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--sg-border); }
+.sg-ticket-meta dt { font-size: .8rem; color: var(--sg-muted); font-weight: 400; margin-bottom: .35rem; }
+.sg-ticket-meta dd { font-size: .9rem; margin: 0; }
+.sg-ticket-thread { background: var(--sg-cream); padding: clamp(1rem, 3vw, 2rem); }
+.sg-ticket-messages { display: flex; flex-direction: column; gap: 1.5rem; }
+.sg-ticket-message { align-self: flex-end; width: min(85%, 56rem); background: #fff; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--sg-border); border-radius: 1rem 1rem .25rem 1rem; box-shadow: 0 .2rem .7rem rgba(16,35,63,.03); }
+.sg-ticket-message--own { align-self: flex-start; border-radius: 1rem 1rem 1rem .25rem; }
+.sg-ticket-message--staff { border-top: 3px solid var(--sg-gold); }
+.sg-ticket-message__heading { display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; font-size: .9rem; }
+.sg-ticket-avatar { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; flex-shrink: 0; background: var(--sg-cream); color: var(--sg-navy); border-radius: 50%; font-weight: 700; }
+.sg-ticket-message--staff .sg-ticket-avatar { background: var(--sg-navy); color: #fff; }
+.sg-ticket-message__body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 2; }
+.sg-ticket-note-choice { padding: 1rem; background: var(--sg-cream); border-radius: .75rem; }
+.sg-ticket-note { padding-block: 1rem; border-top: 1px solid var(--sg-border); font-size: .9rem; }
+.sg-ticket-history summary { display: flex; align-items: center; cursor: pointer; }
+.sg-ticket-history summary::before { content: '＋'; margin-inline-end: .6rem; }
+.sg-ticket-history[open] summary::before { content: '−'; }
+.sg-ticket-history li { padding: .5rem .25rem; }
+.sg-ticket-page .validation-summary-valid { display: none; }
+@media (max-width: 575.98px) {
+    .sg-ticket-message { width: 94%; }
+    .sg-ticket-message__heading { align-items: flex-start; }
+    .sg-ticket-meta { gap: 1rem; }
+    .sg-ticket-meta > div { flex: 1 1 45%; }
+}
