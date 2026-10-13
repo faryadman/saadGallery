@@ -1,18 +1,18 @@
 @model IReadOnlyList<SadGallery.Application.Tickets.TicketSummary>
 @using SadGallery.Web.Models.Tickets
 @{ ViewData["Title"] = "تیکت‌های من"; }
-<h1>تیکت‌های من</h1>
-<a class="btn sg-btn-gold" href="/tickets/new">ثبت تیکت</a>
-<table class="table"><thead><tr><th>شماره پیگیری</th><th>موضوع</th><th>وضعیت</th><th>آخرین فعالیت</th></tr></thead><tbody>
+<h1 class="h4 mb-3">تیکت‌های من</h1>
+<a class="btn btn-primary sg-touch mb-3" href="/tickets/new">ثبت تیکت</a>
+<div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>شماره پیگیری</th><th>موضوع</th><th>وضعیت</th><th>آخرین فعالیت</th></tr></thead><tbody>
 @foreach (var ticket in Model)
 {
     <tr><td><a href="/tickets/@ticket.Id">@ticket.TrackingCode</a></td><td>@ticket.Subject</td><td>@TicketLabels.Status(ticket.Status)</td><td>@PersianDate.ToJalaliDateTimeText(ticket.LastActivityAtUtc)</td></tr>
 }
-</tbody></table>
-@if (Model.Count == 0) { <p>تیکتی یافت نشد.</p> }
+</tbody></table></div>
+@if (Model.Count == 0) { <p class="text-muted">تیکتی یافت نشد.</p> }
 @{ var currentPage = int.TryParse(Context.Request.Query["page"], out var p) && p > 0 ? p : 1; }
-@if (currentPage > 1) { <a href="@PageLink(currentPage-1)">صفحه قبل</a> }
-@if (Model.Count == 25) { <a href="@PageLink(currentPage+1)">صفحه بعد</a> }
+@if (currentPage > 1) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage-1)">صفحه قبل</a> }
+@if (Model.Count == 25) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage+1)">صفحه بعد</a> }
 
 @functions {
     private string PageLink(int page)

@@ -459,3 +459,25 @@ body.sg-offline .sg-offline-banner {
         height: 2.5rem;
     }
 }
+
+/* منوی فشرده و نقش‌محور: لینک‌های مدیریت/حساب در گروه‌های مستقل. */
+.sg-header .navbar { gap: .75rem; padding: .85rem calc(var(--bs-gutter-x, 1.5rem) * .5); }
+.sg-header .nav-link { border-radius: .5rem; padding: .65rem .8rem; min-height: 44px; }
+.sg-header .nav-link.active,
+.sg-header .nav-link:hover { background-color: rgba(255,255,255,.09); }
+.sg-header .nav-link.active { color: #fff; box-shadow: inset 0 -2px 0 var(--sg-gold); }
+.sg-header .nav-link:focus-visible,
+.sg-header .dropdown-item:focus-visible { outline: 2px solid var(--sg-gold); outline-offset: 2px; }
+.sg-header .dropdown-menu { background: var(--sg-navy); border-color: #52617a; padding: .5rem; border-radius: .75rem; min-width: 13rem; }
+.sg-header .dropdown-item { color: #e9eef7; border-radius: .4rem; padding: .65rem .75rem; min-height: 44px; }
+.sg-header .dropdown-item:hover,
+.sg-header .dropdown-item:focus,
+.sg-header .dropdown-item[aria-current="page"] { color: #fff; background: var(--sg-navy-soft); }
+.sg-header .dropdown-divider { border-color: #52617a; }
+.sg-account-nav { align-items: center; gap: .5rem; }
+@media (max-width: 1199.98px) {
+    .sg-header .navbar-collapse { padding-top: .75rem; }
+    .sg-header .dropdown-menu { margin-block: .25rem .5rem; }
+    .sg-account-nav { align-items: stretch; border-top: 1px solid #52617a; margin-top: .75rem; padding-top: .75rem; }
+    .sg-account-nav .btn { display: block; }
+}

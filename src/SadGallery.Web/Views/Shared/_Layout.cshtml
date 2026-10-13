@@ -12,52 +12,82 @@
     <div class="sg-offline-banner" role="alert">
         اتصال اینترنت شما قطع است؛ نرخ‌های نمایش‌داده‌شده «ذخیره‌شده» هستند و لحظه‌ای نیستند. پس از برقراری اتصال، صفحه را تازه کنید.
     </div>
+    @{
+        var currentPath = Context.Request.Path.Value ?? "/";
+        bool OnPath(string path) => path == "/" ? currentPath == "/" : currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+        string NavClass(string path) => OnPath(path) ? "nav-link active" : "nav-link";
+        string? Current(string path) => OnPath(path) ? "page" : null;
+        var toolsActive = OnPath("/market/bubble") || OnPath("/market/gold") || OnPath("/market/advanced-bubble");
+        var managementActive = OnPath("/operator") || OnPath("/admin");
+    }
     <header class="sg-header">
-        <nav class="navbar navbar-expand-lg container">
-            <a class="navbar-brand sg-brand" asp-controller="Home" asp-action="Index">
+        <nav class="navbar navbar-expand-xl container" data-bs-theme="dark" aria-label="منوی اصلی">
+            <a class="navbar-brand sg-brand" asp-area="" asp-controller="Home" asp-action="Index">
                 <span class="sg-brand__mark">صاد</span>
                 <span class="sg-brand__text">گالری صاد</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sgNav"
-                    aria-controls="sgNav" aria-expanded="false" aria-label="نمایش منو">
+                    aria-controls="sgNav" aria-expanded="false" aria-label="باز و بسته کردن منو">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="sgNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">خانه</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Index">بازار</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Products" asp-action="Index">ویترین</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Bubble">حباب‌سنج</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="Gold">ماشین‌حساب طلا</a></li>
-
-                </ul>
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto gap-xl-1">
+                    <li class="nav-item"><a class="@NavClass("/")" href="/" aria-current="@Current("/")">خانه</a></li>
+                    <li class="nav-item"><a class="@(currentPath.Equals("/market", StringComparison.OrdinalIgnoreCase) ? "nav-link active" : "nav-link")" href="/market" aria-current="@(currentPath.Equals("/market", StringComparison.OrdinalIgnoreCase) ? "page" : null)">بازار</a></li>
+                    <li class="nav-item"><a class="@NavClass("/products")" href="/products" aria-current="@Current("/products")">ویترین</a></li>
+                    <li class="nav-item dropdown">
+                        <button class="nav-link dropdown-toggle @(toolsActive ? "active" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">ابزارهای بازار</button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/market/bubble" aria-current="@Current("/market/bubble")">حباب‌سنج</a></li>
+                            <li><a class="dropdown-item" href="/market/gold" aria-current="@Current("/market/gold")">ماشین‌حساب طلا</a></li>
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <li><a class="dropdown-item" href="/market/advanced-bubble" aria-current="@Current("/market/advanced-bubble")">مقایسه حباب</a></li>
+                            }
+                        </ul>
+                    </li>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Market" asp-action="History">تاریخچه نرخ‌ها</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/tickets">تیکت‌های من</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Member" asp-action="Index">ناحیه اعضا</a></li>
-                        @if (User.IsInRole(RoleNames.Operator) || User.IsInRole(RoleNames.Admin))
-                        {
-                            <li class="nav-item"><a class="nav-link" href="/operator/tickets">صف تیکت‌ها</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Dashboard" asp-action="Index">پنل اپراتور</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Products" asp-action="Index">مدیریت کالاها</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-area="Operator" asp-controller="Categories" asp-action="Index">گروه‌بندی کالاها</a></li>
-                        }
-                        @if (User.IsInRole(RoleNames.Admin))
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">پنل مدیر</a></li>
-                        }
-                        <li class="nav-item">
-                            <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary ms-2">خروج</button>
-                            </form>
+                        <li class="nav-item"><a class="@NavClass("/tickets")" href="/tickets" aria-current="@Current("/tickets")">تیکت‌های من</a></li>
+                    }
+                    @if (User.IsInRole(RoleNames.Operator) || User.IsInRole(RoleNames.Admin))
+                    {
+                        <li class="nav-item dropdown">
+                            <button class="nav-link dropdown-toggle @(managementActive ? "active" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">مدیریت</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/Operator/Dashboard">داشبورد اپراتور</a></li>
+                                <li><a class="dropdown-item" href="/operator/tickets" aria-current="@Current("/operator/tickets")">صف تیکت‌ها</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" href="/Operator/Products" aria-current="@Current("/Operator/Products")">مدیریت کالاها</a></li>
+                                <li><a class="dropdown-item" href="/Operator/Categories" aria-current="@Current("/Operator/Categories")">گروه‌بندی کالاها</a></li>
+                                @if (User.IsInRole(RoleNames.Admin))
+                                {
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" href="/Admin/Dashboard">پنل مدیر</a></li>
+                                }
+                            </ul>
+                        </li>
+                    }
+                </ul>
+                <ul class="navbar-nav sg-account-nav">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item dropdown">
+                            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">حساب کاربری</button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/Member">ناحیه اعضا</a></li>
+                                <li><a class="dropdown-item" href="/market/history">تاریخچه نرخ‌ها</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><form method="post" asp-area="" asp-controller="Account" asp-action="Logout">
+                                    <button type="submit" class="dropdown-item">خروج از حساب</button>
+                                </form></li>
+                            </ul>
                         </li>
                     }
                     else
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">ورود</a></li>
-                        <li class="nav-item"><a class="btn btn-sm sg-btn-gold ms-2" asp-controller="Account" asp-action="Register">ثبت‌نام</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Account/Login">ورود</a></li>
+                        <li class="nav-item"><a class="btn sg-btn-gold sg-touch" href="/Account/Register">ثبت‌نام</a></li>
                     }
                 </ul>
             </div>

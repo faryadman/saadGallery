@@ -1,6 +1,6 @@
 @model SadGallery.Application.Tickets.CustomerTicket
 @using SadGallery.Web.Models.Tickets
-<h1>@Model.Ticket.Subject</h1>
+<h1 class="h4 mb-3">@Model.Ticket.Subject</h1>
 @if(Model.Ticket.RelatedProductId is { } productId) { <p><a href="/products/@productId">کالای مرتبط با درخواست</a></p> }
 <p>شماره پیگیری: @Model.Ticket.TrackingCode · @TicketLabels.Type(Model.Ticket.Type) · @TicketLabels.Status(Model.Ticket.Status)</p>
 <p>ثبت: @PersianDate.ToJalaliDateTimeText(Model.Ticket.CreatedAtUtc) · آخرین فعالیت: @PersianDate.ToJalaliDateTimeText(Model.Ticket.LastActivityAtUtc)</p>

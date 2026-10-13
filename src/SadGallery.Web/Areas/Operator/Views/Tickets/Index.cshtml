@@ -1,24 +1,47 @@
 @model IReadOnlyList<SadGallery.Application.Tickets.TicketSummary>
 @using SadGallery.Web.Models.Tickets
 @{ ViewData["Title"] = "صف تیکت‌ها"; }
-<h1>صف تیکت‌ها</h1>
-<form method="get">
-<label for="search">موضوع یا شماره پیگیری</label><input id="search" name="search" maxlength="150" value="@Context.Request.Query["search"]" />
-<label for="status">وضعیت</label><select id="status" name="status"><option value="">همه</option>
-@foreach(var s in Enum.GetValues<SadGallery.Domain.Tickets.TicketStatus>()) { <option value="@((int)s)">@TicketLabels.Status(s)</option> }
-</select><label for="from">از تاریخ (میلادی)</label><input id="from" name="from" type="date" />
-<label for="until">تا تاریخ (بدون روز انتخاب‌شده)</label><input id="until" name="until" type="date" />
-<button type="submit">جست‌وجو</button></form>
-<table class="table"><thead><tr><th>شماره پیگیری</th><th>موضوع</th><th>وضعیت</th><th>آخرین فعالیت</th></tr></thead><tbody>
+<h1 class="h4 mb-3">صف تیکت‌ها</h1>
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <div class="col-12 col-lg-8">
+            <label for="search" class="form-label">موضوع یا شماره پیگیری</label>
+            <input id="search" name="search" class="form-control" maxlength="150" value="@Context.Request.Query["search"]" />
+        </div>
+        <div class="col-12 col-lg-4">
+            <label for="status" class="form-label">وضعیت</label>
+            <select id="status" name="status" class="form-select"><option value="">همه</option>
+            @foreach(var status in Enum.GetValues<SadGallery.Domain.Tickets.TicketStatus>())
+            {
+                <option value="@((int)status)" selected="@(Context.Request.Query["status"] == ((int)status).ToString())">@TicketLabels.Status(status)</option>
+            }
+            </select>
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="from" class="form-label">از تاریخ (میلادی)</label>
+            <input id="from" name="from" type="date" class="form-control" value="@Context.Request.Query["from"]" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="until" class="form-label">تا تاریخ (میلادی)</label>
+            <input id="until" name="until" type="date" class="form-control" value="@Context.Request.Query["until"]" aria-describedby="untilHelp" />
+            <div id="untilHelp" class="form-text">روز انتخاب‌شده در نتایج محاسبه نمی‌شود.</div>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <button type="submit" class="btn btn-primary sg-touch">جست‌وجو</button>
+        <a href="/operator/tickets" class="btn btn-outline-secondary sg-touch">پاک‌کردن فیلترها</a>
+    </div>
+</form>
+<div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>شماره پیگیری</th><th>موضوع</th><th>وضعیت</th><th>آخرین فعالیت</th></tr></thead><tbody>
 @foreach (var ticket in Model)
 {
     <tr><td><a href="/operator/tickets/@ticket.Id">@ticket.TrackingCode</a></td><td>@ticket.Subject</td><td>@TicketLabels.Status(ticket.Status)</td><td>@PersianDate.ToJalaliDateTimeText(ticket.LastActivityAtUtc)</td></tr>
 }
-</tbody></table>
-@if (Model.Count == 0) { <p>تیکتی یافت نشد.</p> }
+</tbody></table></div>
+@if (Model.Count == 0) { <p class="text-muted">تیکتی یافت نشد.</p> }
 @{ var currentPage = int.TryParse(Context.Request.Query["page"], out var p) && p > 0 ? p : 1; }
-@if (currentPage > 1) { <a href="@PageLink(currentPage-1)">صفحه قبل</a> }
-@if (Model.Count == 25) { <a href="@PageLink(currentPage+1)">صفحه بعد</a> }
+@if (currentPage > 1) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage-1)">صفحه قبل</a> }
+@if (Model.Count == 25) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage+1)">صفحه بعد</a> }
 
 @functions {
     private string PageLink(int page)

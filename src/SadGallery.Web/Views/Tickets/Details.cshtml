@@ -1,9 +1,19 @@
 @model SadGallery.Application.Tickets.CustomerTicket
 @{ ViewData["Title"] = "گفت‌وگوی تیکت"; }
 <partial name="_TicketConversation" model="Model" />
+<h2 class="h5 mt-4 mb-3">ارسال پاسخ</h2>
 <form method="post" action="/tickets/@Model.Ticket.Id/reply">
 @Html.AntiForgeryToken()
 <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-<label for="body">پاسخ شما</label><textarea id="body" name="Body" class="form-control" maxlength="4000" rows="5" required></textarea>
-<p>پاسخ به تیکت بسته‌شده، آن را برای بررسی دوباره باز می‌کند.</p>
-<button class="btn sg-btn-gold" type="submit">ارسال پاسخ</button></form>
+<div class="row g-3">
+    <div class="col-12">
+        <label for="body" class="form-label">پاسخ شما</label>
+        <textarea id="body" name="Body" class="form-control" maxlength="4000" rows="5" required aria-describedby="replyHelp"></textarea>
+        <div id="replyHelp" class="form-text">پاسخ به تیکت بسته‌شده، آن را برای بررسی دوباره باز می‌کند.</div>
+    </div>
+</div>
+<div class="d-flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary sg-touch" type="submit">ارسال پاسخ</button>
+    <a href="/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به تیکت‌ها</a>
+</div>
+</form>

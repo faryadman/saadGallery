@@ -4,19 +4,44 @@
 @{ ViewData["Title"] = "بررسی تیکت"; }
 <partial name="_TicketConversation" model="Model.Public" />
 <p>اپراتور مسئول: @(Model.Public.Ticket.AssignedOperatorUserId?.ToString() ?? "تعیین نشده")</p>
-<h2>یادداشت‌های داخلی</h2>
+<h2 class="h5 mt-4 mb-3">یادداشت‌های داخلی</h2>
 @foreach(var note in Model.InternalNotes) { <article class="card my-2"><div class="card-body"><p>@PersianDate.ToJalaliDateTimeText(note.CreatedAtUtc)</p><div style="white-space:pre-wrap">@note.Body</div></div></article> }
 <form method="post" action="/operator/tickets/@Model.Public.Ticket.Id">
 @Html.AntiForgeryToken()
 <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.Public.RowVersion)" />
-<label for="body">پیام یا یادداشت</label><textarea id="body" name="Body" class="form-control" rows="5" maxlength="4000"></textarea>
-<label><input type="checkbox" name="InternalNote" value="true" /> یادداشت داخلی (حداکثر ۲۰۰۰ نویسه؛ برای مشتری نمایش داده نمی‌شود)</label>
-<label for="status">وضعیت بعدی</label><select id="status" name="Status" class="form-select"><option value="">بدون تغییر</option>
-@foreach(var s in Enum.GetValues<TicketStatus>().Where(s => TicketWorkflow.CanTransition(Model.Public.Ticket.Status,s))) { <option value="@((int)s)">@TicketLabels.Status(s)</option> }
-</select>
-<p>برای پاسخ عمومی، وضعیت را «پاسخ داده‌شده» یا «منتظر پاسخ شما» انتخاب کنید. تیکت جدید ابتدا باید در حال بررسی شود.</p>
-<label for="assign">شناسه اپراتور فعال برای ارجاع</label><input id="assign" name="AssignTo" type="number" min="1" class="form-control" />
-<button class="btn sg-btn-gold mt-3" type="submit">ثبت تغییر</button></form>
+<div class="row g-3">
+    <div class="col-12">
+        <label for="body" class="form-label">پیام یا یادداشت</label>
+        <textarea id="body" name="Body" class="form-control" rows="5" maxlength="4000" aria-describedby="operatorReplyHelp"></textarea>
+        <div id="operatorReplyHelp" class="form-text">برای پاسخ عمومی، وضعیت «پاسخ داده‌شده» یا «منتظر پاسخ مشتری» را انتخاب کنید. تیکت جدید ابتدا باید در حال بررسی شود.</div>
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input id="internalNote" class="form-check-input" type="checkbox" name="InternalNote" value="true" />
+            <label for="internalNote" class="form-check-label">یادداشت داخلی</label>
+        </div>
+        <div class="form-text">حداکثر ۲۰۰۰ نویسه؛ این یادداشت برای مشتری نمایش داده نمی‌شود.</div>
+    </div>
+    <div class="col-12 col-lg-8">
+        <label for="status" class="form-label">وضعیت بعدی</label>
+        <select id="status" name="Status" class="form-select"><option value="">بدون تغییر</option>
+        @foreach(var status in Enum.GetValues<TicketStatus>().Where(s => TicketWorkflow.CanTransition(Model.Public.Ticket.Status,s)))
+        {
+            <option value="@((int)status)">@TicketLabels.Status(status)</option>
+        }
+        </select>
+    </div>
+    <div class="col-12 col-lg-4">
+        <label for="assign" class="form-label">شناسه اپراتور برای ارجاع</label>
+        <input id="assign" name="AssignTo" type="number" min="1" class="form-control" />
+        <div class="form-text">اپراتور باید حساب فعال داشته باشد.</div>
+    </div>
+</div>
+<div class="d-flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary sg-touch" type="submit">ثبت تغییر</button>
+    <a href="/operator/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به صف</a>
+</div>
+</form>
 
-<h2>تاریخچه تغییرات</h2>
+<h2 class="h5 mt-4 mb-3">تاریخچه تغییرات</h2>
 <ul>@foreach(var entry in Model.History) { <li>@PersianDate.ToJalaliDateTimeText(entry.CreatedAtUtc) · @TicketLabels.Event(entry.Kind) · کاربر @entry.ActorUserId</li> }</ul>
