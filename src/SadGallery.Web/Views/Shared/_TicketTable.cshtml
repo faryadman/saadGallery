@@ -1,0 +1,94 @@
+@model SadGallery.Web.Models.Tickets.TicketListViewModel
+@using SadGallery.Domain.Tickets
+@using SadGallery.Web.Models.Tickets
+@using System.Globalization
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h2 class="h5 mb-0">@(Model.IsOperator ? "فهرست درخواست‌ها" : "درخواست‌های شما")</h2>
+    <span class="small text-muted">تعداد در این صفحه: @PersianText.ToPersianDigits(Model.Rows.Count.ToString(CultureInfo.InvariantCulture))</span>
+</div>
+<div class="table-responsive">
+    <table class="table table-hover align-middle sg-table">
+        <thead>
+            <tr>
+                <th scope="col">شماره پیگیری</th><th scope="col">موضوع</th><th scope="col">نوع درخواست</th>
+                <th scope="col">وضعیت تیکت</th><th scope="col">آخرین فعالیت</th><th scope="col">زمان اتمام</th><th scope="col">عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if(Model.Rows.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted py-4">تیکتی با این شرایط یافت نشد. فیلترها را تغییر دهید یا درخواست جدیدی ثبت کنید.</td></tr>
+        }
+        @foreach(var ticket in Model.Rows)
+        {
+            var detailUrl = $"{Model.Path}/{ticket.Id}";
+            var canFinish = TicketWorkflow.CanTransition(ticket.Status, TicketStatus.Closed);
+            <tr>
+                <td><a href="@detailUrl" class="fw-semibold" dir="ltr">@ticket.TrackingCode</a></td>
+                <td><strong>@ticket.Subject</strong><div class="small text-muted">ثبت: @PersianDate.ToJalaliDateText(ticket.CreatedAtUtc)</div></td>
+                <td>@TicketLabels.Type(ticket.Type)</td>
+                <td><span class="badge @TicketLabels.StatusBadge(ticket.Status) sg-quality">@TicketLabels.Status(ticket.Status, Model.IsOperator)</span></td>
+                <td>
+                    <span>@PersianDate.ToJalaliDateTimeText(ticket.LastActivityAtUtc)</span>
+                    @if(ticket.FirstResponseAtUtc is { } responseAt)
+                    { <div class="small text-muted">اولین پاسخ: @PersianDate.ToJalaliDateTimeText(responseAt)</div> }
+                </td>
+                <td>@(ticket.ClosedAtUtc is { } closedAt ? PersianDate.ToJalaliDateTimeText(closedAt) : "—")</td>
+                <td>
+                    <div class="d-flex flex-wrap gap-1">
+                        <a href="@detailUrl" class="btn btn-sm btn-outline-primary sg-touch">@(ticket.Status == TicketStatus.Closed ? "مشاهده" : "مشاهده و پاسخ")</a>
+                        @if(Model.IsOperator)
+                        {
+                            @if(ticket.Status is TicketStatus.New or TicketStatus.Closed)
+                            {
+                                <form method="post" action="/operator/tickets/@ticket.Id/status@(Context.Request.QueryString)" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(ticket.RowVersion)" />
+                                    <input type="hidden" name="NextStatus" value="@((int)TicketStatus.InReview)" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary sg-touch">@(ticket.Status == TicketStatus.Closed ? "بازگشایی" : "شروع بررسی")</button>
+                                </form>
+                            }
+                            @if(ticket.Status != TicketStatus.Closed)
+                            {
+                                if(canFinish)
+                                {
+                                    <form method="post" action="/operator/tickets/@ticket.Id/status@(Context.Request.QueryString)" class="d-inline"
+                                          onsubmit="return confirm('اتمام این تیکت را تأیید می‌کنید؟');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(ticket.RowVersion)" />
+                                        <input type="hidden" name="NextStatus" value="@((int)TicketStatus.Closed)" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success sg-touch">اتمام تیکت</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-success sg-touch" disabled>اتمام تیکت</button>
+                                }
+                            }
+                        }
+                    </div>
+                    @if(Model.IsOperator && ticket.Status != TicketStatus.Closed && !canFinish)
+                    { <div class="small text-muted mt-1">اتمام پس از بررسی و ثبت پاسخ</div> }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+@{ var currentPage = int.TryParse(Context.Request.Query["page"], out var p) && p > 0 ? p : 1; }
+@if(currentPage > 1 || Model.Rows.Count == 25)
+{
+    <nav class="d-flex flex-wrap gap-2 mt-3" aria-label="صفحه‌بندی تیکت‌ها">
+        @if(currentPage > 1) { <a class="btn btn-outline-secondary sg-touch" href="@PageLink(currentPage - 1)">صفحه قبل</a> }
+        <span class="align-self-center small text-muted">صفحه @PersianText.ToPersianDigits(currentPage.ToString(CultureInfo.InvariantCulture))</span>
+        @if(Model.Rows.Count == 25) { <a class="btn btn-outline-secondary sg-touch" href="@PageLink(currentPage + 1)">صفحه بعد</a> }
+    </nav>
+}
+@functions {
+    private string PageLink(int page)
+    {
+        var query = Context.Request.Query.ToDictionary(x => x.Key, x => (string?)x.Value.ToString());
+        query["page"] = page.ToString(CultureInfo.InvariantCulture);
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(Context.Request.Path, query);
+    }
+}

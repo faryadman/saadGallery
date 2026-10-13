@@ -75,6 +75,22 @@ public sealed class TicketSqlTests
         Assert.Equal(1,await db.Set<TicketMessage>().CountAsync(x=>x.TicketId==id,ct));
         Assert.True(await db.Set<TicketEvent>().AnyAsync(x=>x.ActorUserId==other.Id && x.Kind=="SecurityEvent.AccessDenied",ct));
         using(var denied=await a.GetAsync("/operator/tickets",ct)) Assert.Equal(HttpStatusCode.Redirect,denied.StatusCode);
+        async Task<HttpResponseMessage> ChangeStatus(HttpClient client, Guid targetId, TicketStatus next, byte[] version)
+        {
+            var formPage=await client.GetStringAsync(client==o ? "/operator/tickets" : "/tickets/new",ct);
+            return await client.PostAsync($"/operator/tickets/{targetId}/status?status=3&search={ticket.Ticket.TrackingCode}&from=2026-01-01&until=2027-01-01&page=1",
+                new FormUrlEncodedContent(new Dictionary<string,string>
+                {
+                    ["NextStatus"]=((int)next).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["RowVersion"]=Convert.ToBase64String(version), ["__RequestVerificationToken"]=Token(formPage),
+                }),ct);
+        }
+        using(var unauthorizedStatus=await ChangeStatus(a,id.Value,TicketStatus.Closed,ticket.RowVersion))
+            Assert.Equal(HttpStatusCode.Redirect,unauthorizedStatus.StatusCode);
+        using(var illegalClose=await ChangeStatus(o,id.Value,TicketStatus.Closed,ticket.RowVersion))
+            Assert.Equal(HttpStatusCode.BadRequest,illegalClose.StatusCode);
+        using(var missingStatus=await ChangeStatus(o,Guid.NewGuid(),TicketStatus.InReview,ticket.RowVersion))
+            Assert.Equal(HttpStatusCode.NotFound,missingStatus.StatusCode);
         async Task<TicketWriteResult> Change(TicketChange change) => await svc.ChangeAsync(new(op.Id,true),id.Value,change,ct);
         Assert.Equal(TicketWriteResult.Invalid,await Change(new("reply",false,TicketStatus.Answered,null,ticket.RowVersion)));
         using(var reviewed=await o.PostAsync("/operator/tickets/"+id,new FormUrlEncodedContent(new Dictionary<string,string>
@@ -94,7 +110,19 @@ public sealed class TicketSqlTests
         Assert.Equal(TicketWriteResult.Saved,await Change(new("پاسخ پشتیبانی",false,TicketStatus.Answered,null,ticket.RowVersion)));
         ticket=await svc.GetCustomerAsync(customer.Id,id.Value,ct);Assert.NotNull(ticket);Assert.NotNull(ticket.Ticket.FirstResponseAtUtc);
         var first=ticket.Ticket.FirstResponseAtUtc;
-        Assert.Equal(TicketWriteResult.Saved,await Change(new(null,false,TicketStatus.Closed,null,ticket.RowVersion)));
+        var closeVersion=ticket.RowVersion;
+        using(var closed=await ChangeStatus(o,id.Value,TicketStatus.Closed,closeVersion))
+        {
+            Assert.Equal(HttpStatusCode.Redirect,closed.StatusCode);
+            var redirect=closed.Headers.Location!.ToString();
+            Assert.Contains("status=3",redirect,StringComparison.Ordinal);
+            Assert.Contains("from=2026-01-01",redirect,StringComparison.Ordinal);
+            Assert.Contains("until=2027-01-01",redirect,StringComparison.Ordinal);
+            using var filteredPage=await o.GetAsync(closed.Headers.Location,ct);
+            Assert.Equal(HttpStatusCode.OK,filteredPage.StatusCode);
+        }
+        using(var staleClose=await ChangeStatus(o,id.Value,TicketStatus.Closed,closeVersion))
+            Assert.Equal(HttpStatusCode.Conflict,staleClose.StatusCode);
         ticket=await svc.GetCustomerAsync(customer.Id,id.Value,ct);Assert.NotNull(ticket);Assert.NotNull(ticket.Ticket.ClosedAtUtc);
         Assert.Equal(TicketWriteResult.Saved,await svc.ChangeAsync(new(customer.Id,false),id.Value,new("پاسخ مشتری",false,null,null,ticket.RowVersion),ct));
         ticket=await svc.GetCustomerAsync(customer.Id,id.Value,ct);Assert.NotNull(ticket);
@@ -125,6 +153,12 @@ public sealed class TicketSqlTests
         Assert.Single(await svc.ListAsync(new(customer.Id,false),new(Search:"موضوع <script>"),ct));
         using(var listing=await a.GetAsync("/tickets",ct)) Assert.Equal(HttpStatusCode.OK,listing.StatusCode);
         var queue=await o.GetStringAsync("/operator/tickets?search="+ticket.Ticket.TrackingCode,ct);
+        Assert.Contains("عملیات",queue,StringComparison.Ordinal);
+        Assert.Contains("اتمام تیکت",queue,StringComparison.Ordinal);
+        Assert.Contains("sg-table",queue,StringComparison.Ordinal);
+        var customerClosedList=await a.GetStringAsync("/tickets?status=4&search="+ticket.Ticket.TrackingCode,ct);
+        Assert.DoesNotContain(ticket.Ticket.Subject,customerClosedList,StringComparison.Ordinal);
+        Assert.DoesNotContain("NextStatus",customerClosedList,StringComparison.Ordinal);
         Assert.Contains(ticket.Ticket.TrackingCode,queue,StringComparison.Ordinal);
         Assert.DoesNotContain(secret,queue,StringComparison.Ordinal);
         var list=await svc.ListAsync(new(customer.Id,false),new(Search:ticket.Ticket.TrackingCode),ct);

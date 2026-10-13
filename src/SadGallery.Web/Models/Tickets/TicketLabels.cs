@@ -9,11 +9,19 @@ public static class TicketLabels
         "Ticket.Changed" => "تغییر تیکت",
         _ => "رویداد تیکت",
     };
-    public static string Status(TicketStatus s) => s switch
+    public static string Status(TicketStatus s, bool isOperator = false) => s switch
     {
         TicketStatus.New => "جدید", TicketStatus.InReview => "در حال بررسی",
-        TicketStatus.AwaitingCustomer => "منتظر پاسخ شما", TicketStatus.Answered => "پاسخ داده‌شده",
-        TicketStatus.Closed => "بسته‌شده", _ => "نامشخص",
+        TicketStatus.AwaitingCustomer => isOperator ? "منتظر پاسخ مشتری" : "منتظر پاسخ شما", TicketStatus.Answered => "پاسخ داده‌شده",
+        TicketStatus.Closed => "اتمام‌یافته", _ => "نامشخص",
+    };
+    public static string StatusBadge(TicketStatus status) => status switch
+    {
+        TicketStatus.New => "text-bg-primary",
+        TicketStatus.InReview => "text-bg-info",
+        TicketStatus.AwaitingCustomer => "text-bg-warning",
+        TicketStatus.Answered => "text-bg-success",
+        _ => "text-bg-secondary",
     };
     public static string Type(TicketType t) => t switch
     {

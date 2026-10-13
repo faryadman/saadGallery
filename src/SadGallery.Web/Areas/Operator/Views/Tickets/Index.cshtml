@@ -1,53 +1,14 @@
 @model IReadOnlyList<SadGallery.Application.Tickets.TicketSummary>
 @using SadGallery.Web.Models.Tickets
-@{ ViewData["Title"] = "صف تیکت‌ها"; }
-<h1 class="h4 mb-3">صف تیکت‌ها</h1>
-<form method="get" class="mb-4">
-    <div class="row g-3">
-        <div class="col-12 col-lg-8">
-            <label for="search" class="form-label">موضوع یا شماره پیگیری</label>
-            <input id="search" name="search" class="form-control" maxlength="150" value="@Context.Request.Query["search"]" />
-        </div>
-        <div class="col-12 col-lg-4">
-            <label for="status" class="form-label">وضعیت</label>
-            <select id="status" name="status" class="form-select"><option value="">همه</option>
-            @foreach(var status in Enum.GetValues<SadGallery.Domain.Tickets.TicketStatus>())
-            {
-                <option value="@((int)status)" selected="@(Context.Request.Query["status"] == ((int)status).ToString())">@TicketLabels.Status(status)</option>
-            }
-            </select>
-        </div>
-        <div class="col-12 col-md-6">
-            <label for="from" class="form-label">از تاریخ (میلادی)</label>
-            <input id="from" name="from" type="date" class="form-control" value="@Context.Request.Query["from"]" />
-        </div>
-        <div class="col-12 col-md-6">
-            <label for="until" class="form-label">تا تاریخ (میلادی)</label>
-            <input id="until" name="until" type="date" class="form-control" value="@Context.Request.Query["until"]" aria-describedby="untilHelp" />
-            <div id="untilHelp" class="form-text">روز انتخاب‌شده در نتایج محاسبه نمی‌شود.</div>
-        </div>
+@{ ViewData["Title"] = "صف تیکت‌ها"; var list = new TicketListViewModel(Model, true); }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div><h1 class="h4 mb-1">صف تیکت‌ها</h1><p class="text-muted small mb-0">درخواست‌ها را بررسی کنید، پاسخ دهید و پس از رسیدگی به اتمام برسانید.</p></div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="/tickets/new" class="btn btn-primary sg-touch">تیکت جدید</a>
+        <a href="/Operator/Dashboard" class="btn btn-outline-secondary sg-touch">بازگشت به پنل</a>
     </div>
-    <div class="d-flex flex-wrap gap-2 mt-3">
-        <button type="submit" class="btn btn-primary sg-touch">جست‌وجو</button>
-        <a href="/operator/tickets" class="btn btn-outline-secondary sg-touch">پاک‌کردن فیلترها</a>
-    </div>
-</form>
-<div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>شماره پیگیری</th><th>موضوع</th><th>وضعیت</th><th>آخرین فعالیت</th></tr></thead><tbody>
-@foreach (var ticket in Model)
-{
-    <tr><td><a href="/operator/tickets/@ticket.Id">@ticket.TrackingCode</a></td><td>@ticket.Subject</td><td>@TicketLabels.Status(ticket.Status)</td><td>@PersianDate.ToJalaliDateTimeText(ticket.LastActivityAtUtc)</td></tr>
-}
-</tbody></table></div>
-@if (Model.Count == 0) { <p class="text-muted">تیکتی یافت نشد.</p> }
-@{ var currentPage = int.TryParse(Context.Request.Query["page"], out var p) && p > 0 ? p : 1; }
-@if (currentPage > 1) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage-1)">صفحه قبل</a> }
-@if (Model.Count == 25) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage+1)">صفحه بعد</a> }
-
-@functions {
-    private string PageLink(int page)
-    {
-        var query = Context.Request.Query.ToDictionary(x => x.Key, x => (string?)x.Value.ToString());
-        query["page"] = page.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(Context.Request.Path, query);
-    }
-}
+</div>
+@if(TempData["Notice"] is string notice)
+{ <div class="alert alert-success" role="status">@notice</div> }
+<partial name="_TicketFilters" model="list" />
+<partial name="_TicketTable" model="list" />

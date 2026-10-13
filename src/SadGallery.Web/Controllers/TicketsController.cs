@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SadGallery.Application.Tickets;
+using SadGallery.Domain.Tickets;
 using SadGallery.Web.Models.Tickets;
 using SadGallery.Web.Security;
 namespace SadGallery.Web.Controllers;
@@ -12,11 +13,12 @@ public sealed class TicketsController(TicketService service) : Controller
 {
     private int? UserId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) && id > 0 ? id : null;
     [HttpGet("/tickets")]
-    public async Task<IActionResult> Index(int page = 1, CancellationToken ct = default)
+    public async Task<IActionResult> Index(TicketStatus? status, string? search, DateTimeOffset? from, DateTimeOffset? until, int page = 1, CancellationToken ct = default)
     {
         if (UserId is not { } user) return Forbid();
-        if (page is < 1 or > 10000) return BadRequest();
-        return View(await service.ListAsync(new(user, false), new(Page: page), ct));
+        if (!ModelState.IsValid) return BadRequest("فیلتر جست‌وجو معتبر نیست.");
+        try { return View(await service.ListAsync(new(user, false), new(status, search, from, until, page), ct)); }
+        catch (ArgumentException) { return BadRequest("فیلتر جست‌وجو معتبر نیست."); }
     }
     [HttpGet("/tickets/new")]
     public IActionResult Create(int? productId = null) => View(new CreateTicketForm { ProductId = productId, Type = productId.HasValue ? SadGallery.Domain.Tickets.TicketType.PriceInquiry : SadGallery.Domain.Tickets.TicketType.Other });

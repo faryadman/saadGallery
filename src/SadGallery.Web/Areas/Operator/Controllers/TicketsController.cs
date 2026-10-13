@@ -16,8 +16,35 @@ public sealed class TicketsController(TicketService service) : Controller
     public async Task<IActionResult> Index(TicketStatus? status, string? search, DateTimeOffset? from, DateTimeOffset? until, int page = 1, CancellationToken ct = default)
     {
         if (UserId is not { } user) return Forbid();
+        if (!ModelState.IsValid) return BadRequest("فیلتر جست‌وجو معتبر نیست.");
         try { return View(await service.ListAsync(new(user, true), new(status, search, from, until, page), ct)); }
         catch (ArgumentException) { return BadRequest("فیلتر جست‌وجو معتبر نیست."); }
+    }
+    [HttpPost("/operator/tickets/{id:guid}/status"), EnableRateLimiting(RateLimitPolicies.Tickets)]
+    public async Task<IActionResult> UpdateStatus(Guid id, TicketStatusForm form,
+        [FromQuery] TicketStatus? status, [FromQuery] string? search,
+        [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? until,
+        [FromQuery] int page = 1, CancellationToken ct = default)
+    {
+        if (UserId is not { } user) return Forbid();
+        if (!ModelState.IsValid || form.NextStatus is not { } next || form.Version() is not { } version)
+            return BadRequest("اطلاعات تغییر وضعیت معتبر نیست.");
+        var result = await service.ChangeAsync(new(user, true), id, new(null, false, next, null, version), ct);
+        if (result == TicketWriteResult.Saved)
+        {
+            TempData["Notice"] = $"وضعیت تیکت به «{TicketLabels.Status(next, true)}» تغییر کرد.";
+            return RedirectToAction(nameof(Index), new
+            {
+                status = (int?)status, search,
+                from = Request.Query["from"].ToString(), until = Request.Query["until"].ToString(), page,
+            });
+        }
+        return result switch
+        {
+            TicketWriteResult.NotFound => NotFound(),
+            TicketWriteResult.Conflict => Conflict("تیکت توسط کاربر دیگری تغییر کرده است؛ فهرست را تازه کنید."),
+            _ => BadRequest("این تغییر وضعیت برای تیکت مجاز نیست."),
+        };
     }
     [HttpGet("/operator/tickets/{id:guid}")]
     public async Task<IActionResult> Details(Guid id, CancellationToken ct)

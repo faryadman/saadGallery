@@ -1,24 +1,12 @@
 @model IReadOnlyList<SadGallery.Application.Tickets.TicketSummary>
 @using SadGallery.Web.Models.Tickets
-@{ ViewData["Title"] = "تیکت‌های من"; }
-<h1 class="h4 mb-3">تیکت‌های من</h1>
-<a class="btn btn-primary sg-touch mb-3" href="/tickets/new">ثبت تیکت</a>
-<div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>شماره پیگیری</th><th>موضوع</th><th>وضعیت</th><th>آخرین فعالیت</th></tr></thead><tbody>
-@foreach (var ticket in Model)
-{
-    <tr><td><a href="/tickets/@ticket.Id">@ticket.TrackingCode</a></td><td>@ticket.Subject</td><td>@TicketLabels.Status(ticket.Status)</td><td>@PersianDate.ToJalaliDateTimeText(ticket.LastActivityAtUtc)</td></tr>
-}
-</tbody></table></div>
-@if (Model.Count == 0) { <p class="text-muted">تیکتی یافت نشد.</p> }
-@{ var currentPage = int.TryParse(Context.Request.Query["page"], out var p) && p > 0 ? p : 1; }
-@if (currentPage > 1) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage-1)">صفحه قبل</a> }
-@if (Model.Count == 25) { <a class="btn btn-outline-secondary sg-touch me-2" href="@PageLink(currentPage+1)">صفحه بعد</a> }
-
-@functions {
-    private string PageLink(int page)
-    {
-        var query = Context.Request.Query.ToDictionary(x => x.Key, x => (string?)x.Value.ToString());
-        query["page"] = page.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(Context.Request.Path, query);
-    }
-}
+@{ ViewData["Title"] = "تیکت‌های من"; var list = new TicketListViewModel(Model, false); }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div><h1 class="h4 mb-1">تیکت‌های من</h1><p class="text-muted small mb-0">درخواست‌ها، وضعیت رسیدگی و پاسخ‌های پشتیبانی را پیگیری کنید.</p></div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="/tickets/new" class="btn btn-primary sg-touch">تیکت جدید</a>
+        <a href="/Member" class="btn btn-outline-secondary sg-touch">بازگشت به ناحیه اعضا</a>
+    </div>
+</div>
+<partial name="_TicketFilters" model="list" />
+<partial name="_TicketTable" model="list" />

@@ -27,7 +27,7 @@
         <select id="status" name="Status" class="form-select"><option value="">بدون تغییر</option>
         @foreach(var status in Enum.GetValues<TicketStatus>().Where(s => TicketWorkflow.CanTransition(Model.Public.Ticket.Status,s)))
         {
-            <option value="@((int)status)">@TicketLabels.Status(status)</option>
+            <option value="@((int)status)">@TicketLabels.Status(status, true)</option>
         }
         </select>
     </div>

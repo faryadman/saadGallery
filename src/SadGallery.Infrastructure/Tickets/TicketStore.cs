@@ -12,7 +12,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
 {
     private static TicketSummary Summary(SupportTicket x) => new(x.Id,
         "SG-" + x.Number.ToString("D10", CultureInfo.InvariantCulture), x.Subject, x.Type, x.Status,
-        x.CreatedAtUtc, x.LastActivityAtUtc, x.FirstResponseAtUtc, x.ClosedAtUtc, x.AssignedOperatorUserId, x.RelatedProductId);
+        x.CreatedAtUtc, x.LastActivityAtUtc, x.FirstResponseAtUtc, x.ClosedAtUtc, x.AssignedOperatorUserId, x.RelatedProductId, x.RowVersion);
     private IQueryable<SupportTicket> Visible(TicketActor a) => a.IsOperator ? db.Set<SupportTicket>() :
         db.Set<SupportTicket>().Where(x => x.CustomerUserId == a.UserId);
     private void Event(Guid? id, int? actor, string kind, string? detail = null) => db.Add(new TicketEvent

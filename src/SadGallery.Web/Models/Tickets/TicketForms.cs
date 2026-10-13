@@ -21,3 +21,16 @@ public sealed class ChangeTicketForm
         catch (FormatException) { return null; }
     }
 }
+
+public sealed class TicketStatusForm
+{
+    [Required, EnumDataType(typeof(TicketStatus))]
+    public TicketStatus? NextStatus { get; set; }
+    [Required, StringLength(12, MinimumLength = 12)]
+    public string RowVersion { get; set; } = "";
+    public byte[]? Version()
+    {
+        try { return Convert.FromBase64String(RowVersion); }
+        catch (FormatException) { return null; }
+    }
+}

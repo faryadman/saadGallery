@@ -29,6 +29,7 @@ public sealed class TicketAuthorizationTests : IClassFixture<MemberWebFactory>
     [Theory]
     [InlineData("/tickets/new")] [InlineData("/tickets/11111111-1111-1111-1111-111111111111/reply")]
     [InlineData("/operator/tickets/11111111-1111-1111-1111-111111111111")]
+    [InlineData("/operator/tickets/11111111-1111-1111-1111-111111111111/status")]
     public async Task WritesWithoutCsrfNeverSucceed(string path)
     {
         using var client=_factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect=false });

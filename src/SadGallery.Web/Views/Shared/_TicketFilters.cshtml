@@ -1,0 +1,42 @@
+@model SadGallery.Web.Models.Tickets.TicketListViewModel
+@using SadGallery.Domain.Tickets
+@using SadGallery.Web.Models.Tickets
+<section class="sg-catalog-search mb-4" aria-labelledby="ticket-filter-title">
+    <div class="sg-catalog-search__heading">
+        <div>
+            <h2 id="ticket-filter-title" class="h5 mb-1">فیلتر تیکت‌ها</h2>
+            <p class="small text-muted mb-0">با شماره پیگیری، ابتدای موضوع، وضعیت یا تاریخ ثبت جست‌وجو کنید.</p>
+        </div>
+    </div>
+    <form method="get" action="@Model.Path" class="row g-3 align-items-end">
+        <div class="col-12 col-md-6">
+            <label for="search" class="form-label fw-semibold">موضوع یا شماره پیگیری</label>
+            <input id="search" name="search" class="form-control form-control-lg" maxlength="150" autocomplete="off"
+                   placeholder="شماره پیگیری یا ابتدای موضوع" value="@Context.Request.Query["search"]" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="status" class="form-label fw-semibold">وضعیت تیکت</label>
+            <select id="status" name="status" class="form-select form-select-lg"><option value="">همه وضعیت‌ها</option>
+            @foreach(var status in Enum.GetValues<TicketStatus>())
+            {
+                <option value="@((int)status)" selected="@(Context.Request.Query["status"] == ((int)status).ToString())">@TicketLabels.Status(status, Model.IsOperator)</option>
+            }
+            </select>
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="from" class="form-label fw-semibold">از تاریخ ثبت (میلادی)</label>
+            <input id="from" name="from" type="date" class="form-control form-control-lg" value="@Context.Request.Query["from"]" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="until" class="form-label fw-semibold">تا پیش از تاریخ (میلادی)</label>
+            <input id="until" name="until" type="date" class="form-control form-control-lg" value="@Context.Request.Query["until"]" />
+        </div>
+        <div class="col-12 col-md-4">
+            <button type="submit" class="btn btn-primary btn-lg w-100 sg-budget-submit">اعمال فیلتر</button>
+        </div>
+        <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="small text-muted">تاریخ انتهای بازه در نتایج محاسبه نمی‌شود.</span>
+            <a href="@Model.Path" class="small">پاک‌کردن فیلترها</a>
+        </div>
+    </form>
+</section>
