@@ -481,3 +481,33 @@ body.sg-offline .sg-offline-banner {
     .sg-account-nav { align-items: stretch; border-top: 1px solid #52617a; margin-top: .75rem; padding-top: .75rem; }
     .sg-account-nav .btn { display: block; }
 }
+
+/* فرم پشتیبانی، با کارت‌ها و پالت موجود گالری. */
+.sg-compose-card { border-top: 3px solid var(--sg-gold); }
+.sg-compose-heading { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; }
+.sg-compose-step { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 50%; color: var(--sg-navy); background: var(--sg-cream); border: 1px solid var(--sg-border); font-weight: 700; flex-shrink: 0; }
+.sg-compose-message { min-height: 10rem; line-height: 1.9; }
+.sg-compose-footer { padding-bottom: 1rem; }
+.sg-ticket-guide { background: var(--sg-cream); }
+.sg-ticket-tips { list-style: none; margin: 0; padding: 0; }
+.sg-ticket-tips li { display: grid; gap: .4rem; padding-block: 1rem; border-bottom: 1px solid var(--sg-border); }
+.sg-ticket-tips li:first-child { padding-top: 0; }
+.sg-ticket-tips li:last-child { border-bottom: 0; }
+.sg-ticket-tips span { font-size: .9rem; color: var(--sg-muted); line-height: 1.9; }
+.sg-photo-zone { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 1.5rem 1rem; border: 2px dashed var(--sg-border); border-radius: .75rem; background: var(--sg-cream); text-align: center; cursor: pointer; }
+.sg-photo-icon { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 2.75rem; height: 2.75rem; background: #fff; color: var(--sg-navy); font-size: 1.6rem; border: 1px solid var(--sg-border); }
+.sg-photo-zone:hover,
+.sg-photo-zone.is-dragging { border-color: var(--sg-gold-dark); }
+.sg-photo-picker:focus-within .sg-photo-zone { outline: 2px solid var(--sg-navy); outline-offset: 3px; }
+.sg-photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.sg-photo-tile { min-width: 0; overflow: hidden; border: 1px solid var(--sg-border); border-radius: .6rem; background: #fff; }
+.sg-photo-tile img { width: 100%; height: 9rem; object-fit: contain; background: var(--sg-cream); display: block; }
+.sg-photo-caption { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem; }
+.sg-photo-caption span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
+.sg-ticket-compose .validation-summary-valid { display: none; }
+@media (max-width: 575.98px) {
+    .sg-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sg-photo-caption { flex-wrap: wrap; }
+    .sg-compose-footer > div { width: 100%; }
+    .sg-compose-footer .btn { flex: 1; }
+}

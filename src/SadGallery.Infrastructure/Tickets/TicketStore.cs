@@ -4,12 +4,16 @@ using SadGallery.Application.Abstractions;
 using SadGallery.Application.Tickets;
 using SadGallery.Domain.Tickets;
 using SadGallery.Infrastructure.Identity;
+using SadGallery.Application.Media;
 using SadGallery.Infrastructure.Persistence;
 using SadGallery.Infrastructure.Persistence.Entities;
 namespace SadGallery.Infrastructure.Tickets;
 
 public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketStore
 {
+    private static List<TicketPhoto> PhotoEntities(IReadOnlyList<StoredTicketPhoto>? photos) =>
+        photos?.Select(x => new TicketPhoto { Id = x.Id, StoredFileName = x.StoredFileName, Format = x.Format,
+            Width = x.Width, Height = x.Height, SizeBytes = x.SizeBytes }).ToList() ?? [];
     private static TicketSummary Summary(SupportTicket x) => new(x.Id,
         "SG-" + x.Number.ToString("D10", CultureInfo.InvariantCulture), x.Subject, x.Type, x.Status,
         x.CreatedAtUtc, x.LastActivityAtUtc, x.FirstResponseAtUtc, x.ClosedAtUtc, x.AssignedOperatorUserId, x.RelatedProductId, x.RowVersion);
@@ -23,7 +27,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         var now = clock.UtcNow;
         var ticket = new SupportTicket { Id = Guid.NewGuid(), CustomerUserId = actor.UserId, Subject = input.Subject,
             Type = input.Type, RelatedProductId = input.ProductId, CreatedAtUtc = now, LastActivityAtUtc = now,
-            Messages = [new TicketMessage { AuthorUserId = actor.UserId, Body = input.Body, CreatedAtUtc = now }] };
+            Messages = [new TicketMessage { AuthorUserId = actor.UserId, Body = input.Body, CreatedAtUtc = now, Photos = PhotoEntities(input.Photos) }] };
         db.Add(ticket); Event(ticket.Id, actor.UserId, "Ticket.Created");
         await db.SaveChangesAsync(ct); // Ticket + first message + event: one atomic transaction.
         return ticket.Id;
@@ -49,7 +53,8 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         if (ticket == null) return null;
         var messages = await db.Set<TicketMessage>().AsNoTracking().Where(x => x.TicketId == id)
             .OrderBy(x => x.CreatedAtUtc).ThenBy(x => x.Id)
-            .Select(x => new TicketMessageRecord(x.AuthorUserId, x.IsOperator, x.Body, x.CreatedAtUtc)).ToListAsync(ct);
+            .Select(x => new TicketMessageRecord(x.AuthorUserId, x.IsOperator, x.Body, x.CreatedAtUtc,
+                x.Photos.OrderBy(p => p.Id).Select(p => new TicketPhotoRecord(p.Id, p.Width, p.Height, p.SizeBytes)).ToList())).ToListAsync(ct);
         return new CustomerTicket(Summary(ticket), ticket.RowVersion, messages);
     }
     public Task<CustomerTicket?> GetCustomerAsync(int userId, Guid id, CancellationToken ct) =>
@@ -87,7 +92,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
             if (change.InternalNote) db.Add(new TicketInternalNote { TicketId = id, AuthorUserId = actor.UserId, Body = change.Body, CreatedAtUtc = now });
             else
             {
-                db.Add(new TicketMessage { TicketId = id, AuthorUserId = actor.UserId, IsOperator = actor.IsOperator, Body = change.Body, CreatedAtUtc = now });
+                db.Add(new TicketMessage { TicketId = id, AuthorUserId = actor.UserId, IsOperator = actor.IsOperator, Body = change.Body, CreatedAtUtc = now, Photos = PhotoEntities(change.Photos) });
                 if (actor.IsOperator) ticket.FirstResponseAtUtc ??= now;
                 else target = TicketWorkflow.AfterCustomerReply(ticket.Status);
             }
@@ -103,6 +108,22 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         db.Entry(ticket).Property(x => x.RowVersion).OriginalValue = change.RowVersion;
         try { await db.SaveChangesAsync(ct); return TicketWriteResult.Saved; }
         catch (DbUpdateConcurrencyException) { db.ChangeTracker.Clear(); return TicketWriteResult.Conflict; }
+    }
+    public Task<bool> IsPhotoReferencedAsync(Guid photoId, CancellationToken ct) =>
+        db.Set<TicketPhoto>().AsNoTracking().AnyAsync(x => x.Id == photoId, ct);
+    public async Task<TicketPhotoFile?> GetPhotoAsync(TicketActor actor, Guid photoId, CancellationToken ct)
+    {
+        var photo = await (from p in db.Set<TicketPhoto>().AsNoTracking()
+            join message in db.Set<TicketMessage>() on p.MessageId equals message.Id
+            join ticket in Visible(actor) on message.TicketId equals ticket.Id
+            where p.Id == photoId
+            select p).SingleOrDefaultAsync(ct);
+        if (photo == null || !MediaFileNaming.IsWellFormed(photo.StoredFileName)) return null;
+        var contentType = photo.Format switch
+        {
+            ImageFormat.Jpeg => "image/jpeg", ImageFormat.Png => "image/png", ImageFormat.WebP => "image/webp", _ => null,
+        };
+        return contentType == null ? null : new(photo.StoredFileName, contentType);
     }
     public async Task RecordSecurityAsync(int? userId, string kind, CancellationToken ct)
     {

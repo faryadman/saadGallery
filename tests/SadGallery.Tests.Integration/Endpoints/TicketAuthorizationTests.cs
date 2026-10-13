@@ -9,6 +9,7 @@ public sealed class TicketAuthorizationTests : IClassFixture<MemberWebFactory>
     public TicketAuthorizationTests(MemberWebFactory factory) => _factory=factory;
     [Theory]
     [InlineData("/tickets")] [InlineData("/tickets/new")] [InlineData("/tickets/11111111-1111-1111-1111-111111111111")]
+    [InlineData("/tickets/photos/11111111-1111-1111-1111-111111111111")]
     [InlineData("/operator/tickets")] [InlineData("/operator/tickets/11111111-1111-1111-1111-111111111111")]
     public async Task GuestCannotReadTicketEndpoints(string path)
     {

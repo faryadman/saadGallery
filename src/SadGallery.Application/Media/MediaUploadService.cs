@@ -62,9 +62,13 @@ public sealed class MediaUploadService
     /// <summary>
     /// بارگذاری و ذخیرهٔ یک تصویر عمومیِ محصول.
     /// </summary>
-    public async Task<MediaUploadOutcome> SaveProductImageAsync(
-        UploadCandidate candidate,
-        CancellationToken cancellationToken)
+    public Task<MediaUploadOutcome> SaveProductImageAsync(UploadCandidate candidate, CancellationToken cancellationToken) =>
+        SaveImageAsync(candidate, false, cancellationToken);
+
+    public Task<MediaUploadOutcome> SavePrivateImageAsync(UploadCandidate candidate, CancellationToken cancellationToken) =>
+        SaveImageAsync(candidate, true, cancellationToken);
+
+    private async Task<MediaUploadOutcome> SaveImageAsync(UploadCandidate candidate, bool isPrivate, CancellationToken cancellationToken)
     {
         var validation = _validator.Validate(candidate);
 
@@ -90,10 +94,21 @@ public sealed class MediaUploadService
 
         // نام‌ها را سامانه تولید می‌کند (تصادفیِ رمزنگاری) و مخزن هم دوباره شکلِ آن‌ها را می‌سنجد.
         var storedName = MediaFileNaming.NewStoredName(processed.Format);
-        var thumbName = MediaFileNaming.NewStoredName(processed.Format);
+        var thumbName = isPrivate ? string.Empty : MediaFileNaming.NewStoredName(processed.Format);
 
-        await _store.SaveAsync(MediaKind.PublicImage, storedName, processed.Full, cancellationToken);
-        await _store.SaveAsync(MediaKind.PublicImage, thumbName, processed.Thumbnail, cancellationToken);
+        var kind = isPrivate ? MediaKind.PrivateFile : MediaKind.PublicImage;
+        var fullSaved = false;
+        try
+        {
+            await _store.SaveAsync(kind, storedName, processed.Full, cancellationToken);
+            fullSaved = true;
+            if (!isPrivate) await _store.SaveAsync(kind, thumbName, processed.Thumbnail, cancellationToken);
+        }
+        catch
+        {
+            if (fullSaved) await _store.DeleteAsync(kind, storedName, CancellationToken.None);
+            throw;
+        }
 
         return MediaUploadOutcome.Ok(new StoredImageResult(
             StoredFileName: storedName,

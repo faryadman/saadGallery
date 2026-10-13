@@ -222,3 +222,6 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 
 ## افزودهٔ اجراشدهٔ فاز ۵ (2026-10-13)
 مدل نهایی در `Persistence/TicketModel.cs` و ADR-0016 است. SupportTicket.Id یک GUID و Number یک bigint Identity یکتا است؛ TrackingCode از Number ساخته می‌شود. پیام‌ها عمومی و یادداشت‌ها جدول جدا هستند؛ BodyIsHtml/IsCustomerVisible ستون جدا ندارند چون در این نسخه هیچ پیام HTML/خصوصی وجود ندارد. نوع نقش پیام با IsOperator نشان داده می‌شود (تفکیک Admin/Operator برای رندر لازم نیست). Priority و Attachment اختیاری فعلاً اضافه نشدند. TicketEvents تاریخچه و SecurityEvent محدود به تیکت را ذخیره می‌کند. FK کاربران/محصول و RowVersion و ایندکس‌های صف/شماره/موضوع/تاریخ اعمال شدند. مهاجرت و Down روی SQL آزمایشی اجرا شدند؛ روی داده مالک اجرا نشده‌اند.
+
+## عکس پیام تیکت — 2026-10-14
+TicketPhotos: Id uniqueidentifier PK؛ MessageId bigint FK به TicketMessages با Restrict؛ StoredFileName nvarchar(64) با ایندکس یکتا؛ Format int؛ Width/Height int؛ SizeBytes bigint. OriginalFileName یا مسیر عمومی ذخیره نمی‌شود. وجود پیوست فقط به پیام عمومی مشتری مربوط است؛ یادداشت داخلی جدا می‌ماند. Migration `20261013214044_TicketPhotos` افزودنی است و پیام‌های قبلی بدون عکس باقی می‌مانند. جزئیات امنیت/پاک‌سازی در ADR-0017.

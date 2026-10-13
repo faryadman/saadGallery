@@ -26,6 +26,7 @@ public sealed class TicketMessage
     public bool IsOperator { get; set; }
     public string Body { get; set; } = "";
     public DateTimeOffset CreatedAtUtc { get; set; }
+    public List<TicketPhoto> Photos { get; set; } = [];
 }
 public sealed class TicketInternalNote
 {
@@ -43,4 +44,15 @@ public sealed class TicketEvent
     public string Kind { get; set; } = "";
     public string? Detail { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
+}
+
+public sealed class TicketPhoto
+{
+    public Guid Id { get; set; }
+    public long MessageId { get; set; }
+    public string StoredFileName { get; set; } = "";
+    public SadGallery.Application.Abstractions.ImageFormat Format { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public long SizeBytes { get; set; }
 }

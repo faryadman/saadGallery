@@ -9,7 +9,7 @@ public sealed class TicketService(ITicketStore store)
     public Task<Guid?> CreateAsync(TicketActor actor, NewTicket input, CancellationToken ct)
     {
         if (actor.UserId <= 0 || !ValidText(input.Subject, 150) || !ValidText(input.Body, 4000) ||
-            !Enum.IsDefined(input.Type) || input.ProductId is <= 0)
+            !Enum.IsDefined(input.Type) || input.ProductId is <= 0 || input.Photos?.Count > TicketPhotoService.MaxPhotos)
             return Task.FromResult<Guid?>(null);
         return store.CreateAsync(actor, input with { Subject = input.Subject.Trim(), Body = input.Body.Trim() }, ct);
     }
@@ -24,7 +24,8 @@ public sealed class TicketService(ITicketStore store)
     public Task<OperatorTicket?> GetOperatorAsync(Guid id, CancellationToken ct) => store.GetOperatorAsync(id, ct);
     public Task<TicketWriteResult> ChangeAsync(TicketActor actor, Guid id, TicketChange change, CancellationToken ct)
     {
-        if (actor.UserId <= 0 || change.RowVersion.Length != 8 ||
+        if (actor.UserId <= 0 || change.RowVersion.Length != 8 || change.Photos?.Count > TicketPhotoService.MaxPhotos ||
+            (change.Photos is { Count: > 0 } && (change.InternalNote || change.Body == null)) ||
             (change.Body != null && !ValidText(change.Body, change.InternalNote ? 2000 : 4000)) ||
             (change.Status.HasValue && !Enum.IsDefined(change.Status.Value)) || change.AssignTo is <= 0 ||
             (change.Body == null && change.Status == null && change.AssignTo == null) ||

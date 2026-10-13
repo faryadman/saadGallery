@@ -26,8 +26,16 @@ internal static class TicketModel
         builder.Entity<TicketMessage>(e =>
         {
             e.ToTable("TicketMessages"); e.Property(x => x.Body).HasMaxLength(4000).IsRequired();
+            e.HasMany(x => x.Photos).WithOne().HasForeignKey(x => x.MessageId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => new { x.TicketId, x.CreatedAtUtc });
             e.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.AuthorUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+        builder.Entity<TicketPhoto>(e =>
+        {
+            e.ToTable("TicketPhotos"); e.HasKey(x => x.Id);
+            e.Property(x => x.StoredFileName).HasMaxLength(64).IsRequired();
+            e.HasIndex(x => x.StoredFileName).IsUnique();
+            e.HasIndex(x => x.MessageId);
         });
         builder.Entity<TicketInternalNote>(e =>
         {

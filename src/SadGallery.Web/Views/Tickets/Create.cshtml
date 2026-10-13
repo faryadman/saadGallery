@@ -2,35 +2,75 @@
 @using SadGallery.Domain.Tickets
 @using SadGallery.Web.Models.Tickets
 @{ ViewData["Title"] = "ثبت تیکت و استعلام قیمت"; }
-<h1 class="h4 mb-3">ثبت تیکت و استعلام قیمت</h1>
-<form method="post" action="/tickets/new">
-    @Html.AntiForgeryToken()
-    <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
-    <input asp-for="ProductId" type="hidden" />
-    <div class="row g-3">
-        <div class="col-12 col-lg-8">
-            <label asp-for="Subject" class="form-label">موضوع</label>
-            <input asp-for="Subject" class="form-control" maxlength="150" required autocomplete="off" />
-            <span asp-validation-for="Subject" class="text-danger small"></span>
-        </div>
-        <div class="col-12 col-lg-4">
-            <label asp-for="Type" class="form-label">نوع درخواست</label>
-            <select asp-for="Type" class="form-select">
-                @foreach (var type in Enum.GetValues<TicketType>())
-                {
-                    <option value="@((int)type)">@TicketLabels.Type(type)</option>
-                }
-            </select>
-        </div>
-        <div class="col-12">
-            <label asp-for="Body" class="form-label">پیام</label>
-            <textarea asp-for="Body" class="form-control" maxlength="4000" rows="6" required aria-describedby="messageHelp"></textarea>
-            <div id="messageHelp" class="form-text">رمز عبور، کد ورود یا اطلاعات بانکی نفرستید. حداکثر ۴۰۰۰ نویسه.</div>
-            <span asp-validation-for="Body" class="text-danger small"></span>
-        </div>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <span class="sg-eyebrow">پشتیبانی گالری صاد</span>
+        <h1 class="h4 mt-1 mb-2">ثبت تیکت و استعلام قیمت</h1>
+        <p class="text-muted mb-0">سؤال یا درخواستتان را بنویسید؛ با چند عکس، موضوع را بهتر به ما نشان دهید.</p>
     </div>
-    <div class="d-flex flex-wrap gap-2 mt-3">
-        <button type="submit" class="btn btn-primary sg-touch">ثبت درخواست</button>
-        <a href="/tickets" class="btn btn-outline-secondary sg-touch">انصراف</a>
+    <a href="/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به تیکت‌ها</a>
+</div>
+<div class="row g-4 sg-ticket-compose">
+    <div class="col-12 col-lg-8">
+        <form method="post" action="/tickets/new" enctype="multipart/form-data" data-ticket-compose>
+            @Html.AntiForgeryToken()
+            <input asp-for="ProductId" type="hidden" />
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+            <section class="sg-card sg-compose-card mb-4" aria-labelledby="request-details-title">
+                <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">۱</span><h2 id="request-details-title" class="h5 mb-0">جزئیات درخواست</h2></div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-8">
+                        <label asp-for="Subject" class="form-label fw-semibold">موضوع</label>
+                        <input asp-for="Subject" class="form-control" maxlength="150" required autocomplete="off" placeholder="مثلاً استعلام قیمت یا پرسش درباره یک محصول" />
+                        <span asp-validation-for="Subject" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="Type" class="form-label fw-semibold">نوع درخواست</label>
+                        <select asp-for="Type" class="form-select">
+                            @foreach (var type in Enum.GetValues<TicketType>())
+                            { <option value="@((int)type)">@TicketLabels.Type(type)</option> }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between gap-2 mb-2">
+                            <label asp-for="Body" class="form-label fw-semibold mb-0">متن پیام</label>
+                            <span id="messageCounter" class="small text-muted" data-message-counter aria-live="polite">حداکثر ۴۰۰۰ نویسه</span>
+                        </div>
+                        <textarea asp-for="Body" class="form-control sg-compose-message" maxlength="4000" rows="7" required
+                                  placeholder="جزئیات درخواستتان را بنویسید؛ اگر درباره محصولی سؤال دارید، نام و ویژگی آن را هم ذکر کنید."
+                                  aria-describedby="messageHelp messageCounter" data-message-input></textarea>
+                        <div id="messageHelp" class="form-text">رمز عبور، کد ورود یا اطلاعات بانکی نفرستید.</div>
+                        <span asp-validation-for="Body" class="text-danger small"></span>
+                    </div>
+                </div>
+                @if(Model.ProductId.HasValue)
+                { <div class="alert alert-info mt-3 mb-0">این درخواست به کالای انتخاب‌شده مرتبط است. <a href="/products/@Model.ProductId">مشاهده کالا</a></div> }
+            </section>
+            <section class="sg-card sg-compose-card mb-4" aria-label="پیوست عکس">
+                <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">۲</span><h2 class="h5 mb-0">عکس‌های مرتبط</h2></div>
+                <partial name="_TicketPhotoPicker" />
+            </section>
+            <div class="sg-compose-footer d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <p class="small text-muted mb-0">پس از ارسال، شماره پیگیری و پاسخ‌ها را در تیکت‌های من می‌بینید.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary sg-touch">ثبت درخواست</button>
+                    <a href="/tickets" class="btn btn-outline-secondary sg-touch">انصراف</a>
+                </div>
+            </div>
+        </form>
     </div>
-</form>
+    <aside class="col-12 col-lg-4" aria-labelledby="ticket-guide-title">
+        <div class="sg-card sg-ticket-guide">
+            <span class="sg-eyebrow">یک گفت‌وگوی روشن‌تر</span>
+            <h2 id="ticket-guide-title" class="h5 mt-2 mb-3">برای پاسخ دقیق‌تر</h2>
+            <ul class="sg-ticket-tips">
+                <li><strong>موضوع را مشخص کنید</strong><span>عنوان کوتاه و نوع مناسب کمک می‌کند درخواست سریع‌تر پیدا شود.</span></li>
+                <li><strong>جزئیات را بنویسید</strong><span>سؤال، نام محصول و توضیحی که برای بررسی لازم است را ذکر کنید.</span></li>
+                <li><strong>عکس مرتبط بفرستید</strong><span>عکس واضح از محصول یا موضوع درخواست انتخاب کنید؛ پیش از ارسال می‌توانید آن را حذف کنید.</span></li>
+            </ul>
+            <hr />
+            <p class="small text-muted mb-0">پاسخ پشتیبانی در همین گفت‌وگو نمایش داده می‌شود و می‌توانید توضیح یا عکس تازه‌ای اضافه کنید.</p>
+        </div>
+    </aside>
+</div>
+@section Scripts { <script src="~/js/ticket-compose.js" asp-append-version="true"></script> }

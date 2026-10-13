@@ -40,10 +40,14 @@ public sealed class LocalMediaStore : IMediaStore
         _privateRoot = Path.GetFullPath(Path.Combine(root, options.PrivateSubPath));
         _publicRequestPath = options.PublicRequestPath.TrimEnd('/');
 
-        if (string.Equals(_publicRoot, _privateRoot, StringComparison.Ordinal))
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        var publicPrefix = _publicRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var privatePrefix = _privateRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        if (string.Equals(_publicRoot, _privateRoot, comparison) ||
+            _privateRoot.StartsWith(publicPrefix, comparison) || _publicRoot.StartsWith(privatePrefix, comparison))
         {
             throw new InvalidOperationException(
-                "پوشهٔ فایل‌های عمومی و خصوصی نمی‌تواند یکی باشد (تفکیک یک الزام امنیتی است).");
+                "پوشهٔ فایل‌های عمومی و خصوصی باید جدا و بدون هم‌پوشانی باشند (تفکیک یک الزام امنیتی است).");
         }
 
         // ساختِ پوشه‌ها در آغاز: اگر ممکن نباشد، برنامه همان ابتدا با پیامی روشن
@@ -111,7 +115,18 @@ public sealed class LocalMediaStore : IMediaStore
                 BufferSize = 81920,
             });
 
-        await stream.WriteAsync(content, cancellationToken);
+        try
+        {
+            await stream.WriteAsync(content, cancellationToken);
+        }
+        catch
+        {
+            // The CreateNew constructor succeeded, so only this write owns this file.
+            // Dispose first for Windows, then remove the incomplete file; collisions never reach here.
+            await stream.DisposeAsync();
+            File.Delete(path);
+            throw;
+        }
     }
 
     public Task DeleteAsync(MediaKind kind, string storedFileName, CancellationToken cancellationToken)

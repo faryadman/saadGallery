@@ -794,6 +794,42 @@ namespace SadGallery.Infrastructure.Persistence.Migrations
                     b.ToTable("TicketMessages", (string)null);
                 });
 
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.TicketPhoto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Format")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<long>("MessageId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId");
+
+                    b.HasIndex("StoredFileName")
+                        .IsUnique();
+
+                    b.ToTable("TicketPhotos", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
@@ -923,6 +959,15 @@ namespace SadGallery.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.TicketPhoto", b =>
+                {
+                    b.HasOne("SadGallery.Infrastructure.Persistence.Entities.TicketMessage", null)
+                        .WithMany("Photos")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.Product", b =>
                 {
                     b.Navigation("Images");
@@ -936,6 +981,11 @@ namespace SadGallery.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.SupportTicket", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.TicketMessage", b =>
+                {
+                    b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618
         }

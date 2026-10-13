@@ -1,19 +1,24 @@
 @model SadGallery.Application.Tickets.CustomerTicket
 @{ ViewData["Title"] = "گفت‌وگوی تیکت"; }
 <partial name="_TicketConversation" model="Model" />
-<h2 class="h5 mt-4 mb-3">ارسال پاسخ</h2>
-<form method="post" action="/tickets/@Model.Ticket.Id/reply">
-@Html.AntiForgeryToken()
-<input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-<div class="row g-3">
-    <div class="col-12">
-        <label for="body" class="form-label">پاسخ شما</label>
-        <textarea id="body" name="Body" class="form-control" maxlength="4000" rows="5" required aria-describedby="replyHelp"></textarea>
-        <div id="replyHelp" class="form-text">پاسخ به تیکت بسته‌شده، آن را برای بررسی دوباره باز می‌کند.</div>
-    </div>
-</div>
-<div class="d-flex flex-wrap gap-2 mt-3">
-    <button class="btn btn-primary sg-touch" type="submit">ارسال پاسخ</button>
-    <a href="/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به تیکت‌ها</a>
-</div>
-</form>
+<section class="sg-card sg-compose-card mt-4 sg-ticket-compose" aria-labelledby="reply-title">
+    <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">＋</span><h2 id="reply-title" class="h5 mb-0">ارسال پاسخ</h2></div>
+    <form method="post" action="/tickets/@Model.Ticket.Id/reply" enctype="multipart/form-data" data-ticket-compose>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger", role = "alert" })
+        <label for="Body" class="form-label fw-semibold">پاسخ شما</label>
+        <textarea id="Body" name="Body" class="form-control sg-compose-message" maxlength="4000" rows="5" required
+                  aria-describedby="replyHelp messageCounter" data-message-input>@ViewData["ReplyBody"]</textarea>
+        <div class="d-flex justify-content-between gap-2 mt-2 mb-4">
+            <span id="replyHelp" class="form-text">پاسخ به تیکت بسته‌شده، آن را برای بررسی دوباره باز می‌کند.</span>
+            <span id="messageCounter" class="small text-muted" data-message-counter aria-live="polite">حداکثر ۴۰۰۰ نویسه</span>
+        </div>
+        <partial name="_TicketPhotoPicker" />
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <button class="btn btn-primary sg-touch" type="submit">ارسال پاسخ</button>
+            <a href="/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به تیکت‌ها</a>
+        </div>
+    </form>
+</section>
+@section Scripts { <script src="~/js/ticket-compose.js" asp-append-version="true"></script> }

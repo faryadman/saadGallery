@@ -11,5 +11,19 @@
     <article class="card my-3"><div class="card-body">
     <p>@(message.IsOperator ? "پشتیبانی" : "مشتری") · @PersianDate.ToJalaliDateTimeText(message.CreatedAtUtc)</p>
     <div style="white-space:pre-wrap">@message.Body</div>
+    @if(message.Photos is { Count: > 0 })
+    {
+        <div class="sg-photo-grid mt-3">
+        @foreach(var photo in message.Photos)
+        {
+            <figure class="sg-photo-tile mb-0">
+                <a href="/tickets/photos/@photo.Id" target="_blank" rel="noopener" aria-label="نمایش عکس پیوست در اندازه بزرگ">
+                    <img src="/tickets/photos/@photo.Id" alt="عکس پیوست این پیام" loading="lazy" width="@photo.Width" height="@photo.Height" />
+                </a>
+                <figcaption class="small text-muted p-2">عکس پیوست · <a href="/tickets/photos/@photo.Id" target="_blank" rel="noopener">نمایش کامل</a></figcaption>
+            </figure>
+        }
+        </div>
+    }
     </div></article>
 }

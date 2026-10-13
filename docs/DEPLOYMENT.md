@@ -551,3 +551,10 @@ dotnet run --project src/SadGallery.Web --no-launch-profile -- --fetch-rates-onc
 - [ ] Health Check + هشدار فعال.
 - [ ] `docs/DEPLOYMENT.md` با مقادیر واقعی محیط (بدون راز) تکمیل‌شده.
 - [ ] آموزش کوتاه مالک: اجرای Job، مشاهده لاگ، چرخش کلید، بازیابی پشتیبان.
+
+## به‌روزرسانی عکس تیکت — 2026-10-14
+قبل از استفاده از نسخه عکس تیکت روی دیتابیس هدف، backup بگیرید و Migration `TicketPhotos` را اعمال کنید. از ریشه مخزن پس از `dotnet tool restore`:
+```bash
+dotnet ef database update --project src/SadGallery.Infrastructure --startup-project src/SadGallery.Web
+```
+SADGALLERY_CONNECTION برای ابزار EF و ConnectionStrings__SadGallery برای برنامه باید از تنظیمات امن همان محیط بیایند؛ مقدار را در فرمان/چت/Git چاپ نکنید. این کار در cloud توسعه/تست اجرا شد؛ اجرا روی سرور مالک هنوز لازم است. StorageOptions:UploadsRoot بیرون wwwroot و ریشه PrivateSubPath مستقل از PublicSubPath باشد؛ هم‌پوشانی اکنون خطا است. حساب سرویس باید به ریشه خصوصی دسترسی خواندن/نوشتن داشته باشد. فایل‌های خصوصی همراه backup دیتابیس نگهداری شوند. Down پیوست‌ها را از DB حذف می‌کند و عکس دیسک را باقی می‌گذارد؛ فقط با برنامه بازگشت و backup. اگر CSP در proxy تنظیم شده، پیش‌نمایش محلی تصاویر به img-src blob: در کنار self نیاز دارد؛ script فقط self-host است. فایل‌های بی‌ارجاع ناشی از crash یا نتیجه commit نامشخص را فقط پس از تطبیق نام ذخیره با TicketPhotos و بدون حذف فایل دارای مرجع پاک کنید.
