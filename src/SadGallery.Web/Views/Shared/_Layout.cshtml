@@ -9,9 +9,6 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="sg-offline-banner" role="alert">
-        اتصال اینترنت شما قطع است؛ نرخ‌های نمایش‌داده‌شده «ذخیره‌شده» هستند و لحظه‌ای نیستند. پس از برقراری اتصال، صفحه را تازه کنید.
-    </div>
     @{
         var currentPath = Context.Request.Path.Value ?? "/";
         bool OnPath(string path) => path == "/" ? currentPath == "/" : currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
@@ -107,6 +104,19 @@
         </nav>
     </header>
     <div class="sg-nav-backdrop" data-nav-backdrop aria-hidden="true" hidden></div>
+    <aside id="sg-connection-notice" class="sg-offline-banner" data-state="offline" role="status" aria-live="polite" aria-atomic="true" hidden>
+        <span class="sg-connection-icon" aria-hidden="true">
+            <svg class="sg-connection-icon--offline" viewBox="0 0 24 24"><path d="m3 3 18 18M8.5 8.5A8 8 0 0 1 20 10M4 10a8 8 0 0 1 1.5-1.5M7 14a7 7 0 0 1 5-2M10 18a3 3 0 0 1 4 0M12 21h.01" /></svg>
+            <svg class="sg-connection-icon--online" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+        </span>
+        <div class="sg-connection-copy">
+            <strong data-connection-title>اتصال اینترنت قطع است</strong>
+            <p data-connection-description>اطلاعات صفحه به‌روز نمی‌شود؛ نرخ‌های ذخیره‌شده لحظه‌ای نیستند.</p>
+        </div>
+        <button class="sg-connection-close sg-touch" type="button" data-connection-dismiss aria-label="بستن اعلان وضعیت اتصال">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6" /></svg>
+        </button>
+    </aside>
 
     <main class="container py-4">
         @RenderBody()
@@ -124,7 +134,7 @@
     <script src="~/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/mobile-navigation.js" asp-append-version="true"></script>
-    <script src="~/js/offline-status.js"></script>
+    <script src="~/js/offline-status.js" asp-append-version="true"></script>
     @if (User.Identity?.IsAuthenticated == true)
     { <script src="~/js/ticket-notifications.js" asp-append-version="true"></script> }
     @await RenderSectionAsync("Scripts", required: false)
