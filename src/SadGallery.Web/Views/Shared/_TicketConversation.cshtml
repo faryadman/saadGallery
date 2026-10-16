@@ -50,6 +50,12 @@
             <div class="sg-ticket-message__body">@message.Body</div>
             @if(message.Photos is { Count: > 0 })
             {
+                <details class="sg-ticket-attachments mt-3">
+                    <summary class="sg-touch">
+                        <span class="sg-ticket-attachments__show">نمایش پیوست‌ها</span>
+                        <span class="sg-ticket-attachments__hide">بستن پیوست‌ها</span>
+                        <span class="small text-muted">(@PersianText.ToPersianDigits(message.Photos.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)) عکس)</span>
+                    </summary>
                 <div class="sg-photo-grid mt-3">
                 @foreach(var photo in message.Photos)
                 {
@@ -61,6 +67,7 @@
                     </figure>
                 }
                 </div>
+                </details>
             }
         </article>
     }

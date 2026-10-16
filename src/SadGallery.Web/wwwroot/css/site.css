@@ -529,6 +529,14 @@ body.sg-offline .sg-offline-banner {
 .sg-ticket-avatar { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; flex-shrink: 0; background: var(--sg-cream); color: var(--sg-navy); border-radius: 50%; font-weight: 700; }
 .sg-ticket-message--staff .sg-ticket-avatar { background: var(--sg-navy); color: #fff; }
 .sg-ticket-message__body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 2; }
+.sg-ticket-attachments { border-top: 1px solid var(--sg-border); padding-top: .5rem; }
+.sg-ticket-attachments summary { width: fit-content; max-width: 100%; gap: .5rem; padding: .5rem; border-radius: .5rem; color: var(--sg-navy); cursor: pointer; }
+.sg-ticket-attachments summary::before { content: '＋'; }
+.sg-ticket-attachments[open] summary::before { content: '−'; }
+.sg-ticket-attachments summary:hover { background: var(--sg-cream); }
+.sg-ticket-attachments summary:focus-visible { outline: 2px solid var(--sg-navy); outline-offset: 2px; }
+.sg-ticket-attachments__hide, .sg-ticket-attachments[open] .sg-ticket-attachments__show { display: none; }
+.sg-ticket-attachments[open] .sg-ticket-attachments__hide { display: inline; }
 .sg-ticket-note-choice { padding: 1rem; background: var(--sg-cream); border-radius: .75rem; }
 .sg-ticket-note { padding-block: 1rem; border-top: 1px solid var(--sg-border); font-size: .9rem; }
 .sg-ticket-history summary { display: flex; align-items: center; cursor: pointer; }
