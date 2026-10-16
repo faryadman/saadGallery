@@ -45,6 +45,7 @@ public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
         base.OnModelCreating(builder);
         TicketModel.Configure(builder);
+        ConnectionNoticeModel.Configure(builder);
 
         builder.Entity<ApplicationUser>(entity =>
         {

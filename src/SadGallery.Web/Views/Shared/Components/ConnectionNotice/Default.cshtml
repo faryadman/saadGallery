@@ -1,0 +1,15 @@
+@model SadGallery.Application.Settings.ConnectionNoticeText
+    <aside id="sg-connection-notice" class="sg-offline-banner" data-state="offline" data-offline-title="@Model.OfflineTitle" data-offline-description="@Model.OfflineDescription"
+           data-online-title="@Model.OnlineTitle" data-online-description="@Model.OnlineDescription" role="status" aria-live="polite" aria-atomic="true" hidden>
+        <span class="sg-connection-icon" aria-hidden="true">
+            <svg class="sg-connection-icon--offline" viewBox="0 0 24 24"><path d="m3 3 18 18M8.5 8.5A8 8 0 0 1 20 10M4 10a8 8 0 0 1 1.5-1.5M7 14a7 7 0 0 1 5-2M10 18a3 3 0 0 1 4 0M12 21h.01" /></svg>
+            <svg class="sg-connection-icon--online" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+        </span>
+        <div class="sg-connection-copy">
+            <strong data-connection-title>@Model.OfflineTitle</strong>
+            <p data-connection-description>@Model.OfflineDescription</p>
+        </div>
+        <button class="sg-connection-close sg-touch" type="button" data-connection-dismiss aria-label="بستن اعلان وضعیت اتصال">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6" /></svg>
+        </button>
+    </aside>

@@ -6,6 +6,7 @@
     const title = notice?.querySelector('[data-connection-title]');
     const description = notice?.querySelector('[data-connection-description]');
     const dismiss = notice?.querySelector('[data-connection-dismiss]');
+    const messages = notice?.dataset;
     let wasOffline = false;
     let hideTimer;
 
@@ -30,10 +31,10 @@
         document.body.classList.toggle('sg-offline', offline);
         if (offline) {
             markRatesStored();
-            if (!wasOffline) show('offline', 'اتصال اینترنت قطع است', 'اطلاعات صفحه به‌روز نمی‌شود؛ نرخ‌های ذخیره‌شده لحظه‌ای نیستند.');
-        } else if (wasOffline) {
+            if (!wasOffline && messages) show('offline', messages.offlineTitle, messages.offlineDescription);
+        } else if (wasOffline && messages) {
             // Do not label old values live merely because the browser reconnected.
-            show('online', 'اتصال شبکه برگشت', 'برای دریافت اطلاعات تازه، صفحه را به‌روز کنید.');
+            show('online', messages.onlineTitle, messages.onlineDescription);
             hideTimer = setTimeout(() => {
                 if (notice && !notice.contains(document.activeElement)) notice.hidden = true;
             }, 5000);

@@ -206,6 +206,10 @@ code {
     background: var(--sg-navy);
     color: #fff;
     box-shadow: 0 10px 32px rgba(16,35,63,.22);
+    max-height: calc(100vh - 112px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100dvh - 112px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 .sg-offline-banner[hidden] { display: none; }
 .sg-connection-icon { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 36px; color: #f1d878; }
@@ -218,7 +222,7 @@ code {
 .sg-connection-copy { min-width: 0; padding-top: .25rem; overflow-wrap: anywhere; }
 .sg-connection-copy strong { display: block; font-size: .9rem; margin-bottom: .25rem; }
 .sg-connection-copy p { color: #cfd8e6; font-size: .78rem; line-height: 1.85; margin: 0; }
-.sg-connection-close { border: 1px solid rgba(255,255,255,.16); border-radius: 12px; background: transparent; color: #fff; padding: .5rem; }
+.sg-connection-close { position: sticky; top: 0; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; background: transparent; color: #fff; padding: .5rem; }
 .sg-connection-close:hover { background: rgba(255,255,255,.08); }
 .sg-connection-close:focus-visible { outline: 2px solid var(--sg-gold); outline-offset: 2px; }
 

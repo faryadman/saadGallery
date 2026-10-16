@@ -114,6 +114,8 @@ builder.Services.AddAuthorizationBuilder()
         .RequireClaim(AppClaims.IsActive, "true"));
 
 // ---- MVC ----
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<SadGallery.Web.Services.ConnectionNoticeDisplay>();
 builder.Services.AddControllersWithViews(options =>
 {
     // همه درخواست‌های تغییردهنده (POST) به‌صورت پیش‌فرض نیازمند توکن ضدجعل هستند (CSRF)

@@ -240,6 +240,91 @@ namespace SadGallery.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.ConnectionNoticeEdit", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("ActorUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Fields")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("ConnectionNoticeEdits", (string)null);
+                });
+
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.ConnectionNoticeSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OfflineDescription")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("OfflineTitle")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("OnlineDescription")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("OnlineTitle")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("ConnectionNoticeSettings", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ConnectionNoticeSettings_Singleton", "[Id] = 1");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            OfflineDescription = "اطلاعات صفحه به‌روز نمی‌شود؛ نرخ‌های ذخیره‌شده لحظه‌ای نیستند.",
+                            OfflineTitle = "اتصال اینترنت قطع است",
+                            OnlineDescription = "برای دریافت اطلاعات تازه، صفحه را به‌روز کنید.",
+                            OnlineTitle = "اتصال شبکه برگشت"
+                        });
+                });
+
             modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.MarketFetchLease", b =>
                 {
                     b.Property<int>("Id")
@@ -900,6 +985,23 @@ namespace SadGallery.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.ConnectionNoticeEdit", b =>
+                {
+                    b.HasOne("SadGallery.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.ConnectionNoticeSetting", b =>
+                {
+                    b.HasOne("SadGallery.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("SadGallery.Infrastructure.Persistence.Entities.MarketRateSnapshot", b =>

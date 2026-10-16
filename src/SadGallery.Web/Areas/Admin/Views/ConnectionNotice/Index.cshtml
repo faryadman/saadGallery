@@ -1,0 +1,43 @@
+@model SadGallery.Web.Models.ConnectionNoticeForm
+@{ ViewData["Title"] = "متن اعلان اتصال"; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div><h1 class="h4 mb-2">متن اعلان اتصال</h1><p class="small text-muted mb-0">متن قطع و بازگشت اتصال را برای کاربران برنامه تنظیم کنید.</p></div>
+    <a href="/Admin/Dashboard" class="btn btn-outline-secondary sg-touch">پنل مدیر</a>
+</div>
+@if(TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+@if(!ViewData.ModelState.IsValid) { @Html.ValidationSummary(false, "ذخیره انجام نشد", new { @class = "alert alert-danger", role = "alert" }) }
+<form method="post" action="/admin/connection-notice">
+    @Html.AntiForgeryToken()
+    <input name="RowVersion" type="hidden" value="@Model.RowVersion" />
+    <div class="row g-4">
+        <div class="col-12 col-lg-6">
+            <section class="sg-card sg-compose-card h-100" aria-labelledby="offline-settings-title">
+                <h2 id="offline-settings-title" class="h5 mb-4">هنگام قطع اینترنت</h2>
+                <label asp-for="OfflineTitle" class="form-label">عنوان اعلان</label>
+                <input asp-for="OfflineTitle" class="form-control mb-3" maxlength="80" required aria-describedby="notice-title-help" />
+                <label asp-for="OfflineDescription" class="form-label">توضیح اعلان</label>
+                <textarea asp-for="OfflineDescription" class="form-control" rows="4" maxlength="200" required aria-describedby="notice-description-help"></textarea>
+            </section>
+        </div>
+        <div class="col-12 col-lg-6">
+            <section class="sg-card sg-compose-card h-100" aria-labelledby="online-settings-title">
+                <h2 id="online-settings-title" class="h5 mb-4">هنگام بازگشت اتصال</h2>
+                <label asp-for="OnlineTitle" class="form-label">عنوان اعلان</label>
+                <input asp-for="OnlineTitle" class="form-control mb-3" maxlength="80" required aria-describedby="notice-title-help" />
+                <label asp-for="OnlineDescription" class="form-label">توضیح اعلان</label>
+                <textarea asp-for="OnlineDescription" class="form-control" rows="4" maxlength="200" required aria-describedby="notice-description-help"></textarea>
+            </section>
+        </div>
+    </div>
+    <div class="sg-card mt-4">
+        <p id="notice-title-help" class="small text-muted mb-1">عنوان حداکثر ۸۰ و توضیح حداکثر ۲۰۰ نویسه؛ متن ساده وارد کنید.</p>
+        <p id="notice-description-help" class="small text-muted mb-2">متن جدید در صفحه‌هایی که پس از ذخیره باز یا تازه می‌شوند نمایش داده می‌شود؛ صفحه‌های باز متن قبلی را دارند. اطلاعات محرمانه در اعلان ننویسید.</p>
+        <p class="small text-muted mb-3">برچسب نرخ‌های قدیمی و رفتار قطع اتصال مستقل از متن اعلان حفظ می‌شوند.</p>
+        @if(Model.UpdatedAtUtc is { } updated)
+        { <p class="small mb-3">آخرین ذخیره: @PersianDate.ToJalaliDateTimeText(updated) · مدیر @Model.UpdatedByUserId</p> }
+        <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary sg-touch" disabled="@(!Model.Available)">ذخیره متن‌ها</button>
+            <a href="/admin/connection-notice" class="btn btn-outline-secondary sg-touch">نمایش نسخه ذخیره‌شده</a>
+        </div>
+    </div>
+</form>

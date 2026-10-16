@@ -228,3 +228,9 @@ TicketPhotos: Id uniqueidentifier PK؛ MessageId bigint FK به TicketMessages �
 
 ## رسید خواندن پیام تیکت — 2026-10-14
 TicketMessageReads: UserId int + OperatorView bit + MessageId bigint کلید مرکب؛ ReadAtUtc datetimeoffset؛ FKهای Restrict به AspNetUsers و TicketMessages، ایندکس MessageId. رسید دقیق پیام، بدون تغییر RowVersion تیکت؛ قابل خواندن برای کاربر/نقش مستقل. Migration `20261013222157_TicketMessageReads`؛ Down رسیدها را حذف می‌کند و تیکت/پیام/عکس باقی می‌ماند؛ با ارتقای دوباره شمارش از نو شروع می‌شود. ADR-0018 و SQL `TicketMessageReads.sql`/`TicketMessageReadsDown.sql`.
+
+## تنظیم متن اعلان اتصال — 2026-10-16
+بخش محدود مدیر، طبق ADR-0019؛ StoreSettings عمومی هنوز پیاده نشده است.
+- ConnectionNoticeSettings: تک‌ردیف Id=1 با ValueGeneratedNever و CHECK؛ OfflineTitle/OnlineTitle nvarchar(80)، OfflineDescription/OnlineDescription nvarchar(200)، UpdatedAtUtc datetimeoffset nullable، UpdatedByUserId int nullable FK Restrict و RowVersion. Seed فقط چهار متن پیش‌فرض فعلی؛ Actor/زمان قبل از نخستین ذخیره null.
+- ConnectionNoticeEdits: Id bigint Identity، ActorUserId int FK Restrict، CreatedAtUtc datetimeoffset، Fields nvarchar(100)؛ ایندکس Actor و زمان. متن و راز در رویداد ثبت نمی‌شود، فقط نام فیلدهای تغییرکرده. ثبت متن/metadata/رویداد با یک SaveChanges اتمیک.
+- Migration 20261016003908_ConnectionNoticeSettings افزودنی؛ Down دو جدول تازه و ویرایش‌ها را حذف می‌کند و به تیکت/پیام/عکس/کاربر دست نمی‌زند. قبل از بازگشت از متن‌های سفارشی/تاریخچه backup گرفته شود؛ ارتقای دوباره پیش‌فرض‌ها را برمی‌گرداند.
