@@ -14,7 +14,7 @@ namespace SadGallery.Web.Controllers;
 
 /// <summary>
 /// ورود/ثبت‌نام با رمز عبور (روش دوم از ADR-0004).
-/// ورود با رمز یک‌بارمصرف (OTP) در فاز ۶ با همان حساب کاربری افزوده می‌شود.
+/// ورود OTP هنوز فعال نیست؛ الگوی sms.ir و سیاست ورود باید توسط مالک تعیین شوند.
 /// </summary>
 public sealed class AccountController : Controller
 {

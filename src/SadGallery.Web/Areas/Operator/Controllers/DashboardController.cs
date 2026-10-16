@@ -1,16 +1,22 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SadGallery.Application.Administration;
 using SadGallery.Web.Security;
 
 namespace SadGallery.Web.Areas.Operator.Controllers;
 
-/// <summary>
-/// پنل اپراتور. کنترل دسترسی سمت سرور با Policy «OperatorArea» (نقش Operator یا Admin + حساب فعال).
-/// محتوای واقعی (محصولات، صف تیکت، گزارش عملیاتی) در فازهای ۴ و ۵ ساخته می‌شود.
-/// </summary>
-[Area("Operator")]
-[Authorize(Policy = Policies.OperatorArea)]
-public sealed class DashboardController : Controller
+[Area("Operator"), Authorize(Policy = Policies.OperatorArea), ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+public sealed class DashboardController(IAdministrationStore store, ILogger<DashboardController> logger) : Controller
 {
-    public IActionResult Index() => View();
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken ct)
+    {
+        try { return View(await store.DashboardAsync(ct)); }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning("Dashboard unavailable ({ErrorType})", ex.GetType().Name);
+            Response.StatusCode = 503;
+            return View("~/Views/Shared/ManagementUnavailable.cshtml");
+        }
+    }
 }

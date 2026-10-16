@@ -8,15 +8,30 @@ namespace SadGallery.Infrastructure.Persistence;
 
 /// <summary>
 /// DbContext واحد سامانه.
-/// تصمیم (ADR-0003): بدون لایه Repository عمومی؛ سرویس‌های Application مستقیماً از این DbContext
-/// استفاده می‌کنند. Controllerها هرگز به آن دسترسی ندارند.
+/// تصمیم (ADR-0003): بدون لایه Repository عمومی؛ مخزن‌های تخصصی Infrastructure از DbContext
+/// استفاده می‌کنند. Controllerها و سرویس‌های Application به EF وابسته نیستند.
 /// جدول‌های بازار/محصول/تیکت در فازهای ۲، ۴ و ۵ با Migration افزوده می‌شوند.
 /// </summary>
 public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
 {
-    public SadGalleryDbContext(DbContextOptions<SadGalleryDbContext> options)
+    private readonly SadGallery.Application.Administration.IAuditContext? auditContext;
+
+    public SadGalleryDbContext(DbContextOptions<SadGalleryDbContext> options, SadGallery.Application.Administration.IAuditContext? auditContext = null)
         : base(options)
     {
+        this.auditContext = auditContext;
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        AdministrationAudit.Capture(this, auditContext?.Actor);
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        AdministrationAudit.Capture(this, auditContext?.Actor);
+        return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
     /// <summary>تاریخچه نرخ‌های بازار (فاز ۲ — افزودنی و تغییرناپذیر).</summary>
@@ -46,6 +61,7 @@ public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         base.OnModelCreating(builder);
         TicketModel.Configure(builder);
         ConnectionNoticeModel.Configure(builder);
+        AdministrationModel.Configure(builder);
 
         builder.Entity<ApplicationUser>(entity =>
         {

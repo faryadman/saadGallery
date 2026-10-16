@@ -66,6 +66,7 @@
                             <button class="nav-link dropdown-toggle @(managementActive ? "active" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">مدیریت @await Component.InvokeAsync("TicketBadge", new { operatorQueue = true })</button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/Operator/Dashboard">داشبورد اپراتور</a></li>
+                                <li><a class="dropdown-item" href="/operator/reports">گزارش عملیاتی</a></li>
                                 <li><a class="dropdown-item" href="/operator/tickets" aria-current="@Current("/operator/tickets")">صف تیکت‌ها @await Component.InvokeAsync("TicketBadge", new { operatorQueue = true })</a></li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li><a class="dropdown-item" href="/Operator/Products" aria-current="@Current("/Operator/Products")">مدیریت کالاها</a></li>
@@ -74,6 +75,9 @@
                                 {
                                     <li><hr class="dropdown-divider" /></li>
                                     <li><a class="dropdown-item" href="/Admin/Dashboard">پنل مدیر</a></li>
+                                    <li><a class="dropdown-item" href="/admin/users">کاربران و نقش‌ها</a></li>
+                                    <li><a class="dropdown-item" href="/admin/settings">تنظیمات دریافت نرخ</a></li>
+                                    <li><a class="dropdown-item" href="/admin/audit">سابقه عملیات</a></li>
                                     <li><a class="dropdown-item" href="/admin/connection-notice" aria-current="@Current("/admin/connection-notice")">متن اعلان اتصال</a></li>
                                 }
                             </ul>

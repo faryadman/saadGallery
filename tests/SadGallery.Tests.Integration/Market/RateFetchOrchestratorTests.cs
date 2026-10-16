@@ -224,9 +224,16 @@ public sealed class RateFetchOrchestratorTests
             {
                 ArgumentNullException.ThrowIfNull(serviceType);
 
+                if (serviceType == typeof(SadGallery.Application.Administration.IRuntimeRateSettings)) return new EnabledSettings();
                 return serviceType == typeof(IRateStore) ? store : null;
             }
         }
+    }
+
+    private sealed class EnabledSettings : SadGallery.Application.Administration.IRuntimeRateSettings
+    {
+        public Task<SadGallery.Application.Administration.RuntimeRateSettings?> GetAsync(CancellationToken ct) =>
+            Task.FromResult<SadGallery.Application.Administration.RuntimeRateSettings?>(new(false, 60, [], null, null));
     }
 
     internal sealed class TestClock(DateTimeOffset now) : IClock

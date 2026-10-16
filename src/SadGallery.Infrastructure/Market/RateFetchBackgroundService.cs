@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SadGallery.Application.Abstractions;
 using SadGallery.Application.Market;
@@ -16,13 +17,14 @@ public sealed class RateFetchBackgroundService : BackgroundService
     private readonly IRateProvider _provider;
     private readonly RateOptions _options;
     private readonly ILogger<RateFetchBackgroundService> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     /// <summary>ساخت Job.</summary>
     public RateFetchBackgroundService(
         RateFetchOrchestrator orchestrator,
         IRateProvider provider,
         RateOptions options,
-        ILogger<RateFetchBackgroundService> logger)
+        ILogger<RateFetchBackgroundService> logger, IServiceScopeFactory scopeFactory)
     {
         ArgumentNullException.ThrowIfNull(orchestrator);
         ArgumentNullException.ThrowIfNull(provider);
@@ -33,6 +35,7 @@ public sealed class RateFetchBackgroundService : BackgroundService
         _provider = provider;
         _options = options;
         _logger = logger;
+        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
     }
 
     /// <inheritdoc />
@@ -74,6 +77,13 @@ public sealed class RateFetchBackgroundService : BackgroundService
 
             try
             {
+                {
+                    using var scope = _scopeFactory.CreateScope();
+                    var settings = await scope.ServiceProvider.GetRequiredService<SadGallery.Application.Administration.IRuntimeRateSettings>().GetAsync(stoppingToken);
+                    if (settings == null) { nextDelay = TimeSpan.FromSeconds(30); continue; }
+                    baseInterval = TimeSpan.FromSeconds(settings.IntervalSeconds);
+                    if (settings.Paused) { nextDelay = TimeSpan.FromSeconds(10); continue; }
+                }
                 var report = await _orchestrator.RunOnceAsync(RunTriggers.Scheduled, stoppingToken).ConfigureAwait(false);
 
                 consecutiveFailures = RateBackoffPolicy.IsFailure(report.Status) ? consecutiveFailures + 1 : 0;
@@ -93,7 +103,7 @@ public sealed class RateFetchBackgroundService : BackgroundService
             catch (Exception exception)
             {
                 consecutiveFailures++;
-                _logger.LogError(exception, "خطای پیش‌بینی‌نشده در Job نرخ.");
+                _logger.LogError("خطای پیش‌بینی‌نشده در Job نرخ ({ErrorType}).", exception.GetType().Name);
             }
 
             nextDelay = RateBackoffPolicy.NextDelay(consecutiveFailures, baseInterval, maxBackoff);

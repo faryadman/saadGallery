@@ -1,0 +1,12 @@
+@model UserAccessForm
+@{ ViewData["Title"] = "ویرایش دسترسی کاربر"; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"><div><h1 class="h4 mb-2">ویرایش دسترسی کاربر</h1><p class="small text-muted mb-0">@Model.DisplayName · شناسه @PersianText.ToPersianDigits(Model.Id.ToString())</p></div><a href="/admin/users" class="btn btn-outline-secondary sg-touch">فهرست کاربران</a></div>
+@if(!ViewData.ModelState.IsValid) { @Html.ValidationSummary(false, "ذخیره انجام نشد", new { @class = "alert alert-danger", role = "alert" }) }
+@if(ViewData["CurrentAccess"] is string current) { <div class="alert alert-info">@current</div> }
+<form method="post" action="/admin/users/@Model.Id" class="sg-card sg-compose-card">
+    @Html.AntiForgeryToken()<input type="hidden" name="Version" value="@Model.Version" />
+    <h2 class="h5 mb-4">نقش و وضعیت حساب</h2>
+    <div class="row g-4"><div class="col-12 col-md-6"><label asp-for="Role" class="form-label">نقش کاربر</label><select asp-for="Role" class="form-select">@if(Model.Role == "Multiple") { <option value="">نقش جدید را انتخاب کنید</option> }<option value="Customer">مشتری</option><option value="Operator">اپراتور</option><option value="Admin">مدیر</option></select></div><div class="col-12 col-md-6 d-flex align-items-end"><div class="form-check mb-2"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label">حساب فعال باشد</label></div></div></div>
+    <p class="small text-muted mt-4">نقش انتخاب‌شده جایگزین نقش‌های فعلی می‌شود. با تغییر دسترسی، نشست قبلی کاربر باطل می‌شود و باید دوباره وارد شود. تغییر دسترسی حساب خودتان مجاز نیست.</p>
+    <button type="submit" class="btn btn-primary sg-touch">ذخیره دسترسی</button>
+</form>

@@ -1,0 +1,45 @@
+@model SadGallery.Application.Administration.OperationsDashboard
+@using SadGallery.Domain.Enums
+@using SadGallery.Application.Market
+@using SadGallery.Application.Administration
+@{ var attention = Model.Rates.Count(x => x.Flagged || x.Quality is RateQuality.Stale or RateQuality.Invalid); }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div><h1 class="h4 mb-2">@(ViewData["Title"])</h1><p class="small text-muted mb-0">نمای کلی کارهای فروشگاه و وضعیت دریافت نرخ</p></div>
+    <a href="/operator/reports" class="btn btn-outline-primary sg-touch">گزارش عملیاتی</a>
+</div>
+<div class="row g-3 mb-4">
+    @foreach(var stat in new[] { ("تیکت باز", Model.OpenTickets, "/operator/tickets"), ("منتظر پاسخ مشتری", Model.AwaitingCustomer, "/operator/tickets?status=AwaitingCustomer"), ("کالای منتشرشده", Model.PublishedProducts, "/Operator/Products"), ("پیش‌نویس کالا", Model.DraftProducts, "/Operator/Products") })
+    {
+        <div class="col-6 col-lg-3"><a href="@stat.Item3" class="sg-card sg-admin-stat text-decoration-none h-100 d-block"><span class="small text-muted">@stat.Item1</span><strong class="d-block fs-3 mt-2">@PersianText.ToPersianDigits(stat.Item2.ToString())</strong></a></div>
+    }
+</div>
+<nav aria-label="دسترسی سریع مدیریت" class="sg-card d-flex flex-wrap gap-2 mb-4">
+    <a href="/operator/tickets" class="btn btn-primary sg-touch">صف تیکت‌ها</a>
+    <a href="/Operator/Products" class="btn btn-outline-primary sg-touch">کالاها</a>
+    <a href="/Operator/Categories" class="btn btn-outline-primary sg-touch">گروه‌بندی‌ها</a>
+    @if(User.IsInRole(RoleNames.Admin))
+    {
+        <a href="/admin/users" class="btn btn-outline-primary sg-touch">کاربران و نقش‌ها</a>
+        <a href="/admin/settings" class="btn btn-outline-primary sg-touch">تنظیمات نرخ</a>
+        <a href="/admin/connection-notice" class="btn btn-outline-primary sg-touch">متن اعلان اتصال</a>
+        <a href="/admin/audit" class="btn btn-outline-primary sg-touch">سابقه عملیات</a>
+    }
+</nav>
+<section class="sg-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><h2 class="h5 mb-0">سلامت منبع نرخ</h2><span class="badge @(attention > 0 ? "text-bg-warning" : "text-bg-secondary")">@PersianText.ToPersianDigits(attention.ToString()) نرخ نیازمند بررسی</span></div>
+    <p class="small text-muted d-lg-none mb-2">برای دیدن همه ستون‌ها، جدول را افقی جابه‌جا کنید.</p><div class="table-responsive" tabindex="0" role="region" aria-label="جدول پایش نرخ"><table class="table align-middle sg-table sg-admin-table mb-0"><thead><tr><th scope="col">منبع</th><th scope="col">وضعیت دریافت</th><th scope="col">سلامت</th><th scope="col">آخرین دریافت ثبت‌شده</th><th scope="col">آخرین اجرا</th></tr></thead>
+        <tbody><tr><td>@Model.Source</td><td>@(!Model.Configured ? "پیکربندی نشده / غیرفعال" : Model.Paused ? "متوقف توسط مدیر" : "فعال")</td><td>@Model.HealthLabel</td><td>@(Model.LastFetchUtc is {} fetched ? PersianDate.ToJalaliDateTimeText(fetched) : "هنوز نرخی ثبت نشده")</td><td>@(Model.LastJob == null ? "هنوز اجرایی ثبت نشده" : Model.LastJob.FinishedAtUtc == null ? "ناتمام / در حال اجرا" : Model.LastJob.Outcome == 1 ? "موفق" : Model.LastJob.Outcome == 2 ? "موفق با موارد نیازمند بررسی" : "ناموفق / انجام‌نشده")</td></tr></tbody></table></div>
+    @if(Model.LastJob is {} job)
+    { <p class="small text-muted mt-3 mb-0">شروع: @PersianDate.ToJalaliDateTimeText(job.StartedAtUtc) · پایان: @(job.FinishedAtUtc is {} end ? PersianDate.ToJalaliDateTimeText(end) : "—") · پذیرفته: @PersianText.ToPersianDigits(job.Accepted.ToString()) · علامت‌دار: @PersianText.ToPersianDigits(job.Flagged.ToString()) · ردشده: @PersianText.ToPersianDigits(job.Rejected.ToString())</p> }
+</section>
+<section class="sg-card">
+    <h2 class="h5 mb-2">پایش تازگی نرخ‌ها</h2><p class="small text-muted">وضعیت بر اساس زمان اعلام منبع سنجیده می‌شود. نمونه جهش‌دار برای نمایش عمومی پذیرفته نمی‌شود.</p>
+    @if(Model.Rates.Count == 0) { <p class="mb-0 text-muted">هنوز داده‌ای برای پایش ثبت نشده است.</p> }
+    else
+    {
+        <p class="small text-muted d-lg-none mb-2">برای دیدن همه ستون‌ها، جدول را افقی جابه‌جا کنید.</p><div class="table-responsive" tabindex="0" role="region" aria-label="جدول پایش نرخ"><table class="table table-hover align-middle sg-table sg-admin-table mb-0"><thead><tr><th scope="col">دارایی</th><th scope="col">وضعیت</th><th scope="col">زمان اعلام</th><th scope="col">زمان دریافت</th></tr></thead><tbody>
+        @foreach(var rate in Model.Rates)
+        { <tr><td><bdi>@(SadGallery.Domain.Market.AssetCatalog.FindByCode(rate.AssetCode)?.Title ?? "دارایی ناشناخته")</bdi></td><td><span class="badge @(rate.Quality is RateQuality.Stale or RateQuality.Invalid ? "text-bg-warning" : "text-bg-light")">@(rate.Flagged ? "جهش مشکوک؛ بررسی لازم" : RateFormat.QualityLabel(rate.Quality))</span></td><td>@PersianDate.ToJalaliDateTimeText(rate.QuotedAtUtc)</td><td>@PersianDate.ToJalaliDateTimeText(rate.FetchedAtUtc)</td></tr> }
+        </tbody></table></div>
+    }
+</section>

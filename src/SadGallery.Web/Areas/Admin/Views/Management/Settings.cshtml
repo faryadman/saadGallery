@@ -1,0 +1,13 @@
+@model RateSettingsForm
+@{ ViewData["Title"] = "تنظیمات دریافت نرخ"; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"><div><h1 class="h4 mb-2">تنظیمات دریافت نرخ</h1><p class="small text-muted mb-0">کنترل دریافت از منبع پیکربندی‌شده فروشگاه</p></div><a href="/Admin/Dashboard" class="btn btn-outline-secondary sg-touch">پنل مدیر</a></div>
+@if(TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+@if(!ViewData.ModelState.IsValid) { @Html.ValidationSummary(false, "ذخیره انجام نشد", new { @class = "alert alert-danger", role = "alert" }) }
+@if(ViewData["CurrentSettings"] is string current) { <div class="alert alert-info">@current</div> }
+<form method="post" action="/admin/settings" class="sg-card sg-compose-card">
+    @Html.AntiForgeryToken()<input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+    <h2 class="h5 mb-4">زمان‌بندی دریافت</h2>
+    <div class="row g-4"><div class="col-12 col-md-6"><label asp-for="IntervalSeconds" class="form-label">فاصله دریافت (ثانیه)</label><input asp-for="IntervalSeconds" class="form-control" type="number" min="@ViewData["MinimumSeconds"]" max="3600" required aria-describedby="interval-help" /><p id="interval-help" class="small text-muted mt-2 mb-0">حداقل @PersianText.ToPersianDigits(ViewData["MinimumSeconds"]?.ToString() ?? "۱۰") ثانیه؛ حداکثر یک ساعت.</p></div><div class="col-12 col-md-6 d-flex align-items-center"><div class="form-check"><input asp-for="RatesPaused" class="form-check-input" /><label asp-for="RatesPaused" class="form-check-label">دریافت نرخ موقتاً متوقف شود</label></div></div></div>
+    <p class="small text-muted mt-4">تغییر در نوبت بعدی زمان‌بند اعمال می‌شود؛ درخواست در حال اجرا ممکن است کامل شود. هنگام توقف، آخرین نرخ‌ها با برچسب تازگی واقعی باقی می‌مانند. ادامه دریافت فقط برای منبعی ممکن است که روی سرور پیکربندی شده باشد.</p>
+    <div class="d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary sg-touch">ذخیره تنظیمات</button><a href="/admin/settings" class="btn btn-outline-secondary sg-touch">نمایش نسخه ذخیره‌شده</a><a href="/admin/connection-notice" class="btn btn-outline-primary sg-touch">متن اعلان اتصال</a></div>
+</form>

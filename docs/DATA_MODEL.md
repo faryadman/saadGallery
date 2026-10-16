@@ -170,14 +170,16 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 **TicketAttachment** (اختیاری، فاز ۵) — با همان قواعد سخت آپلود تصویر؛ نوع فایل محدود، اسکن محتوا، سقف حجم/تعداد.
 
 ### ۳.۶ تنظیمات، Audit، امنیت
-**StoreSettings** (تک‌ردیفی؛ `Id int PK = 1 CHECK`)
-- `StoreName` · `Phone` · `Address` · `WebsiteUrl` · `InstagramUrl` · `WorkingHours` · `AboutText` · `DefaultFetchIntervalSeconds int` · `StaleThresholdMinutes int` · `PublicHistoryDays int` (تاریخچه عمومی) · `MemberHistoryDays int` · `AllowRegistration bit` · `RequirePhoneConfirmation bit` · `QuoteOnlyNoticeText` · `UpdatedAtUtc` · `UpdatedByUserId` · `RowVersion`.
-- **قاعده:** فقط کلیدهای «مجاز» اینجا هستند. Secret هیچ‌گاه در این جدول نیست.
+**StoreSettings** — واقعی، فاز ۶ (`AdministrationSettingsAudit`)
+- تک‌ردیفی `Id int PK=1 CHECK`؛ `RatesPaused bit`؛ `FetchIntervalSeconds int? CHECK NULL OR 10..3600`؛ `UpdatedAtUtc datetimeoffset?`؛ `UpdatedByUserId int? FK Restrict`؛ `RowVersion rowversion`.
+- Seed: دریافت متوقف نیست و فاصله NULL است (از RateOptions استقرار پیروی می‌کند). پنل حداقل فاصله پیکربندی‌شده را کاهش نمی‌دهد؛ Secret و URL در جدول نیست. فیلدهای تماس/معرفی/سیاست ثبت‌نام طرح اولیه هنوز پیاده نشده‌اند.
 
-**AuditEvent**
-- `Id long PK` · `OccurredAtUtc` · `ActorUserId int?` · `ActorRole nvarchar(50)?` · `Action nvarchar(80)` (مثل `Ticket.StatusChanged`) · `EntityType nvarchar(80)` · `EntityId nvarchar(64)` · `ChangesJson nvarchar(2000)?` (فقط فیلدهای غیرحساس؛ مقادیر حساس Redact) · `IpHash char(64)?` · `UserAgentHash char(64)?` · `CorrelationId nvarchar(64)?`.
-- **Index:** `IX_Audit_Occurred (OccurredAtUtc DESC)` · `IX_Audit_Actor (ActorUserId, OccurredAtUtc DESC)`.
-- **بازداشت حداکثر ۱۸۰ روز** (قابل تنظیم) — سیاست پاک‌سازی Job مستند.
+**AuditEvent** — واقعی، جدول `AuditEvents`، فاز ۶
+- `Id long PK` · `OccurredAtUtc datetimeoffset` · `ActorUserId int?` · `Action nvarchar(80)` · `EntityType nvarchar(80)` · `EntityId nvarchar(64)` · `Fields nvarchar(1000)` فقط نام فیلدها · `IpAddress nvarchar(45)?` · `CorrelationId nvarchar(64)`.
+- Index زمان و `(ActorUserId, OccurredAtUtc)`؛ Actor عمداً FK حذف‌شونده ندارد تا شواهد باقی بمانند. IP واقعی اتصال سرور است؛ خواندن سرآیند دلخواه Forwarded انجام نمی‌شود.
+- در SaveChanges همان تراکنش EF افزوده می‌شود و تغییر/حذف در برنامه ممنوع است؛ نقش، فعال‌بودن، تنظیمات نرخ/اعلان، حذف/ویرایش محصول، حذف تصویر، ویرایش گروه، وضعیت/ارجاع تیکت را پوشش می‌دهد. هیچ مقدار فیلد، متن پیام، مسیر فایل، رمز یا کلید ذخیره نمی‌شود.
+- فقط درخواست دارای هویت HTTP؛ Seed/مهاجرت/CLI به کاربر جعلی نسبت داده نمی‌شود. شروع ایجاد محصول/گروه/تصویر با شناسه موقت در Audit عمومی ثبت نمی‌شود؛ ستون‌های Actor/time آن موجودیت‌ها و رویدادهای تیکت حفظ‌اند.
+- سیاست نگهداری ۱۸۰ روز و مجوز SQL محدود/backup در استقرار لازم است؛ Job حذف خودکار هنوز پیاده نیست. CSV حداکثر ۵۰۰ ردیف و بدون IP/CorrelationId؛ صفحه مدیر این دو را برای پیگیری نمایش می‌دهد.
 
 **SecurityEvent**
 - `Id long PK` · `OccurredAtUtc` · `Kind` enum `LoginFailed`/`AccountLocked`/`OtpRequestedTooOften`/`OtpInvalidAttempts`/`AccessDenied`/`UploadRejected`/`RateLimitHit`/`SecretAccess`/`ProviderFetchFailed` · `Severity` enum `Info`/`Warning`/`Critical` · `UserId int?` · `IdentifierMasked nvarchar(120)?` (مثل `09******123` — **ماسک‌شده**) · `IpHash char(64)?` · `Details nvarchar(500)?` (بدون Secret/OTP) · `CorrelationId`.
@@ -204,7 +206,7 @@ Settings:  StoreSettings (تک‌ردیفی، با RowVersion)
 | `MarketSchema` | ۲ | `PriceProvider`, `AssetDefinition`, `MarketPrice`, `PriceHistory`, `PriceFetchRun` | Down migration؛ داده قابل بازسازی از منبع |
 | `CatalogSchema` | ۴ | `ProductCategory`, `Product`, `ProductImage` | Down + پاک‌سازی فایل‌های یتیم با اسکریپت مستند |
 | `TicketsSchema` | ۵ | `SupportTicket`, `TicketMessage`, `TicketInternalNote` (+`TicketAttachment`) | Down (فقط در محیط غیرتولیدی) |
-| `SettingsAuditSecurity` | ۶ | `StoreSettings`, `AuditEvent`, `SecurityEvent`, `OtpChallenge` | Down |
+| `AdministrationSettingsAudit` ✅ | ۶ | `StoreSettings`, `AuditEvents`؛ SecurityEvent تیکت موجود است؛ OTP هنوز پیاده نیست | `AdministrationSettingsAuditDown.sql`؛ حذف فقط دو جدول جدید |
 | `CoinAndBubble` | ۳ | `CoinDefinition`, `BubbleCalculation` | Down |
 
 **رویه هر Migration (الزامی):**
@@ -230,7 +232,7 @@ TicketPhotos: Id uniqueidentifier PK؛ MessageId bigint FK به TicketMessages �
 TicketMessageReads: UserId int + OperatorView bit + MessageId bigint کلید مرکب؛ ReadAtUtc datetimeoffset؛ FKهای Restrict به AspNetUsers و TicketMessages، ایندکس MessageId. رسید دقیق پیام، بدون تغییر RowVersion تیکت؛ قابل خواندن برای کاربر/نقش مستقل. Migration `20261013222157_TicketMessageReads`؛ Down رسیدها را حذف می‌کند و تیکت/پیام/عکس باقی می‌ماند؛ با ارتقای دوباره شمارش از نو شروع می‌شود. ADR-0018 و SQL `TicketMessageReads.sql`/`TicketMessageReadsDown.sql`.
 
 ## تنظیم متن اعلان اتصال — 2026-10-16
-بخش محدود مدیر، طبق ADR-0019؛ StoreSettings عمومی هنوز پیاده نشده است.
+بخش محدود مدیر، طبق ADR-0019؛ StoreSettings مجاز نیز در فاز ۶ اضافه شد؛ متن‌های اعلان همچنان در جدول تخصصی خود هستند و ویرایش HTTP آن‌ها علاوه بر ConnectionNoticeEdits، Audit عمومی دارد.
 - ConnectionNoticeSettings: تک‌ردیف Id=1 با ValueGeneratedNever و CHECK؛ OfflineTitle/OnlineTitle nvarchar(80)، OfflineDescription/OnlineDescription nvarchar(200)، UpdatedAtUtc datetimeoffset nullable، UpdatedByUserId int nullable FK Restrict و RowVersion. Seed فقط چهار متن پیش‌فرض فعلی؛ Actor/زمان قبل از نخستین ذخیره null.
 - ConnectionNoticeEdits: Id bigint Identity، ActorUserId int FK Restrict، CreatedAtUtc datetimeoffset، Fields nvarchar(100)؛ ایندکس Actor و زمان. متن و راز در رویداد ثبت نمی‌شود، فقط نام فیلدهای تغییرکرده. ثبت متن/metadata/رویداد با یک SaveChanges اتمیک.
 - Migration 20261016003908_ConnectionNoticeSettings افزودنی؛ Down دو جدول تازه و ویرایش‌ها را حذف می‌کند و به تیکت/پیام/عکس/کاربر دست نمی‌زند. قبل از بازگشت از متن‌های سفارشی/تاریخچه backup گرفته شود؛ ارتقای دوباره پیش‌فرض‌ها را برمی‌گرداند.

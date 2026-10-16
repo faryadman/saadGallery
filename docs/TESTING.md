@@ -206,3 +206,10 @@ SDK 10.0.401، dotnet-ef 10.0.12 و SQL Server 2022 Developer در Docker؛ مت
 
 ## تست عکس تیکت — 2026-10-14
 کل مجموعه: 557 موفق، صفر شکست/Skip، 419 واحد و 138 یکپارچه با SQL واقعی. TicketPhotoSqlTests مسیر واقعی multipart/Identity/دیسک/SQL/GET خصوصی و ردها/تعارض/خطای DB را می‌سنجد. TicketPhotoCleanupTests نتیجه commit نامشخص را پوشش می‌دهد؛ PrivatePhotoFileTests cancellation/نام تصادم و هم‌پوشانی ریشه‌ها را می‌سنجد. تست قبلی AccessDenied ابتدا regression را یافت؛ ثبت رخداد در مسیر جدید پاسخ برگردانده شد و assertionها حفظ شدند. Chromium در 1440 و 390px، انتخاب/پیش‌نمایش/حذف/drag-drop/حد تعداد، ارسال اولیه 3 عکس و پاسخ بعدی، no-store و ارسال بدون JavaScript را تأیید کرد. تمام عکس/حساب/پیام‌ها fixture آزمایشی محلی بودند.
+
+## پنل فاز ۶ — شواهد 2026-10-16
+`dotnet build --no-restore -warnaserror -m:4` با SDK10.0.401 و `dotnet test --no-build` با تزریق امن SADGALLERY_TEST_SQL: **598 موفق، ۰ شکست، ۰ Skip**. از scripts/test.sh برای چاپ اتصال واقعی استفاده نشد.
+
+آزمون‌های `Administration/`: ماتریس خودکار همه actionهای دو Area و POST با CSRF معتبر، منع نوشتن بدون توکن، کوکی/Identity واقعی، انقضای مدیر/اپراتور، ابطال بعد از تغییر نقش/تعلیق، نسخه stale و حفظ انتخاب، منع تغییر خود، رقابت دو مدیر و حفظ حداقل یکی، Audit اتمیک/افزودنی، canary اسرار در HTML/CSV، تازگی مجدد داده ذخیره‌شده، محدودیت/فرمول CSV، توقف در نبود/خطای تنظیمات و pause/resume روی همان orchestrator بدون restart. رقابت مدیران و Audit اتمیک دیتابیس یکتا می‌سازند و در finally حذف می‌کنند.
+
+مهاجرت Up/Down روی SQL جدا با تیکت/پیام و اعلان قبلی انجام شد؛ Down داده قبلی را حفظ کرد و Up دوبار seed/history را تکرار نکرد. Chromium واقعی حساب‌های مصنوعی Dev را با نقش‌های مختلف، جست‌وجو/تغییر دسترسی/ابطال نشست، فرم stale/نامعتبر، منوی موبایل و همه صفحه‌های جدید در ۳۹۰px بدون overflow صفحه بررسی کرد. تنظیمات آزمایشی در finally بازگردانده شد. اسکریپت موجود `python3 scripts/accessibility-check.py` همه ۲۴ جفت‌رنگ و حضور هدف لمسی را قبول کرد؛ جایگزین ممیزی کامل نیست.

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
@@ -28,6 +29,8 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 // ---- لایه‌های پروژه ----
 builder.Services.AddSadGalleryApplication();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SadGallery.Application.Administration.IAuditContext, HttpAuditContext>();
 builder.Services.AddSadGalleryInfrastructure(builder.Configuration);
 
 // ---- فاز ۴: کاتالوگ محصول و خطِ لولهٔ تصویر ----
@@ -87,6 +90,7 @@ builder.Services
     .AddClaimsPrincipalFactory<AppUserClaimsPrincipalFactory>()
     .AddDefaultTokenProviders();
 
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "SadGallery.Auth";
@@ -99,6 +103,24 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
+    options.Events.OnValidatePrincipal = async context =>
+    {
+        try { await SecurityStampValidator.ValidatePrincipalAsync(context); }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // Identity cannot prove that this session is still authorized: reject it safely.
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("SessionValidation")
+                .LogWarning("Session validation unavailable ({ErrorType})", exception.GetType().Name);
+        }
+    };
+    options.Events.OnSigningIn = context =>
+    {
+        if (context.Principal?.IsInRole(RoleNames.Admin) == true || context.Principal?.IsInRole(RoleNames.Operator) == true)
+            context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30);
+        return Task.CompletedTask;
+    };
 });
 
 // ---- کنترل دسترسی (سرور-محور) ----

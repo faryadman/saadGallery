@@ -132,6 +132,21 @@ public sealed class RateFetchOrchestrator
             };
         }
 
+        // Resolve per run so other instances observe a saved pause, including CLI/manual fetches.
+        try
+        {
+            using var policyScope = _scopeFactory.CreateScope();
+            var reader = policyScope.ServiceProvider.GetRequiredService<SadGallery.Application.Administration.IRuntimeRateSettings>();
+            var settings = await reader.GetAsync(cancellationToken);
+            if (settings == null || settings.Paused)
+                return new RateFetchReport { Status = RateFetchStatus.NotConfigured, ProviderId = _provider.ProviderId, Message = "دریافت نرخ متوقف است یا تنظیمات در دسترس نیست." };
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning("Runtime rate settings unavailable ({ErrorType})", ex.GetType().Name);
+            return new RateFetchReport { Status = RateFetchStatus.NotConfigured, ProviderId = _provider.ProviderId, Message = "تنظیمات دریافت نرخ در دسترس نیست." };
+        }
+
         var isManual = string.Equals(trigger, RunTriggers.Manual, StringComparison.OrdinalIgnoreCase);
 
         // حداقل فاصله بین درخواست‌های خروجی (احترام به محدودیت منبع) — اجرای دستی مستثناست.

@@ -72,6 +72,8 @@ public static class DependencyInjection
         services.AddScoped<SadGallery.Application.Tickets.TicketInboxService>();
         services.AddScoped<SadGallery.Application.Tickets.TicketPhotoService>();
         services.AddScoped<IIdentitySeeder, IdentitySeeder>();
+        services.AddScoped<SadGallery.Application.Administration.IAdministrationStore, SadGallery.Infrastructure.Administration.AdministrationStore>();
+        services.AddScoped<SadGallery.Application.Administration.IRuntimeRateSettings>(sp => sp.GetRequiredService<SadGallery.Application.Administration.IAdministrationStore>());
         services.AddScoped<SadGallery.Application.Settings.IConnectionNoticeStore, SadGallery.Infrastructure.Settings.ConnectionNoticeStore>();
         services.AddScoped<SadGallery.Application.Settings.ConnectionNoticeService>();
 

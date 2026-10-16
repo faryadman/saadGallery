@@ -624,3 +624,12 @@ code {
     .sg-ticket-meta { gap: 1rem; }
     .sg-ticket-meta > div { flex: 1 1 45%; }
 }
+
+/* پنل مدیریت: هم‌خانواده با جدول‌ها و فرم‌های کاتالوگ و تیکت */
+.sg-admin-stat { border-inline-start: 3px solid var(--sg-gold, #b9975b); }
+.sg-admin-stat strong { color: var(--sg-navy, #172b4d); }
+.sg-audit-table td { max-width: 22rem; overflow-wrap: anywhere; }
+.sg-audit-table small { margin-top: .35rem; }
+
+.sg-admin-table { min-width: 660px; }
+.sg-admin-table th, .sg-admin-table td { padding-block: .75rem; }

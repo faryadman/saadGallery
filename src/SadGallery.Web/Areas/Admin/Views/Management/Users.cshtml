@@ -1,0 +1,17 @@
+@model SadGallery.Application.Administration.Page<SadGallery.Application.Administration.ManagedUser>
+@using SadGallery.Application.Administration
+@{ ViewData["Title"] = "کاربران و نقش‌ها"; var search = ViewData["Search"] as string; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"><div><h1 class="h4 mb-2">کاربران و نقش‌ها</h1><p class="small text-muted mb-0">مدیریت دسترسی و فعال‌بودن حساب‌ها</p></div><a href="/Admin/Dashboard" class="btn btn-outline-secondary sg-touch">پنل مدیر</a></div>
+@if(TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+<form method="get" action="/admin/users" class="sg-card sg-catalog-search mb-4"><div class="row g-3 align-items-end"><div class="col-12 col-md-8"><label for="user-search" class="form-label">نام نمایشی یا شناسه کاربر</label><input id="user-search" name="search" value="@search" class="form-control" maxlength="100" /></div><div class="col-12 col-md-4 d-flex gap-2"><button class="btn btn-primary sg-touch">جست‌وجو</button><a href="/admin/users" class="btn btn-outline-secondary sg-touch">پاک‌کردن</a></div></div></form>
+<section class="sg-card"><h2 class="h6 mb-3">@PersianText.ToPersianDigits(Model.Total.ToString()) حساب</h2>
+@if(Model.Items.Count == 0) { <p class="text-muted mb-0">کاربری با این مشخصات پیدا نشد.</p> }
+else {
+<p class="small text-muted d-lg-none mb-2">برای دیدن همه ستون‌ها، جدول را افقی جابه‌جا کنید.</p><div class="table-responsive" tabindex="0" role="region" aria-label="جدول کاربران"><table class="table table-hover align-middle sg-table sg-admin-table"><thead><tr><th scope="col">شناسه و نام</th><th scope="col">نقش</th><th scope="col">وضعیت</th><th scope="col">آخرین ورود</th><th scope="col">عملیات</th></tr></thead><tbody>
+@foreach(var user in Model.Items) { <tr><td><strong>@(string.IsNullOrWhiteSpace(user.DisplayName) ? "بدون نام نمایشی" : user.DisplayName)</strong><span class="d-block small text-muted">شناسه @PersianText.ToPersianDigits(user.Id.ToString())</span></td><td>@AdminRules.RoleTitle(user.Role)</td><td><span class="badge @(user.IsActive ? "text-bg-success" : "text-bg-secondary")">@(user.IsActive ? "فعال" : "غیرفعال")</span></td><td>@(user.LastLoginAtUtc is {} date ? PersianDate.ToJalaliDateTimeText(date) : "بدون ورود ثبت‌شده")</td><td><a href="/admin/users/@user.Id" class="btn btn-sm btn-outline-primary sg-touch">ویرایش دسترسی</a></td></tr> }
+</tbody></table></div> }
+<nav aria-label="صفحات کاربران" class="d-flex flex-wrap gap-2 mt-3">
+@if(Model.Number > 1) { <a href="/admin/users?page=@(Model.Number-1)&amp;search=@Uri.EscapeDataString(search ?? "")" class="btn btn-outline-secondary sg-touch">قبلی</a> }
+<span class="align-self-center small">صفحه @PersianText.ToPersianDigits(Model.Number.ToString())</span>
+@if(Model.HasNext) { <a href="/admin/users?page=@(Model.Number+1)&amp;search=@Uri.EscapeDataString(search ?? "")" class="btn btn-outline-secondary sg-touch">بعدی</a> }
+</nav></section>
