@@ -524,6 +524,7 @@ body.sg-offline .sg-offline-banner {
     .sg-account-nav .nav-link, .sg-account-nav .btn { justify-content: center; min-height: 48px; }
     .sg-account-nav .dropdown-toggle { justify-content: flex-start; }
     .sg-account-nav .btn { display: block; }
+    .sg-header .sg-account-nav .sg-auth-link { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 48px; padding: .65rem .75rem; border: 1px solid var(--sg-gold); border-radius: 14px; font-size: .9rem; font-weight: 500; line-height: 1.5; }
 }
 @media (min-width: 1200px) { .sg-nav-backdrop { display: none; } }
 @media (prefers-reduced-motion: reduce) {
