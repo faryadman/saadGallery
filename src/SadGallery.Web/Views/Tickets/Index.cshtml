@@ -9,6 +9,7 @@
     </div>
 </div>
 @if (TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
-@Html.ValidationSummary(false, "عملیات انجام نشد", new { @class = "alert alert-danger", role = "alert" })
+@if (!ViewData.ModelState.IsValid)
+{ @Html.ValidationSummary(false, "عملیات انجام نشد", new { @class = "alert alert-danger", role = "alert" }) }
 <partial name="_TicketFilters" model="list" />
 <partial name="_TicketTable" model="list" />

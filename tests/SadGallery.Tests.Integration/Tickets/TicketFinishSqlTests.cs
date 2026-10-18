@@ -40,6 +40,7 @@ public sealed class TicketFinishSqlTests
                 Assert.Equal(HttpStatusCode.Redirect, login.StatusCode); return (u.Id, client);
             }
             var owner = await User(RoleNames.Customer); var other = await User(RoleNames.Customer); var op = await User(RoleNames.Operator); var admin = await User(RoleNames.Admin);
+            Assert.DoesNotContain("عملیات انجام نشد", await owner.Client.GetStringAsync("/tickets", ct), StringComparison.Ordinal);
             var service = scope.ServiceProvider.GetRequiredService<TicketService>();
             async Task<CustomerTicket> Ticket(TicketStatus status)
             {
@@ -56,7 +57,9 @@ public sealed class TicketFinishSqlTests
             foreach (var status in Enum.GetValues<TicketStatus>().Where(TicketWorkflow.CanFinish))
             {
                 var ticket = await Ticket(status); var root = actor.Staff ? "/operator/tickets" : "/tickets";
-                Assert.Contains($"/{ticket.Ticket.Id}/finish", await actor.Client.GetStringAsync(root + "/" + ticket.Ticket.Id, ct), StringComparison.Ordinal);
+                var initialDetails = await actor.Client.GetStringAsync(root + "/" + ticket.Ticket.Id, ct);
+                Assert.Contains($"/{ticket.Ticket.Id}/finish", initialDetails, StringComparison.Ordinal);
+                Assert.DoesNotContain(actor.Staff ? "ثبت تغییر انجام نشد" : "عملیات انجام نشد", initialDetails, StringComparison.Ordinal);
                 using var finished = await Finish(actor.Client, ticket, actor.Staff, list: true);
                 Assert.Equal(HttpStatusCode.Redirect, finished.StatusCode); Assert.Contains("search=SG-", finished.Headers.Location!.ToString(), StringComparison.Ordinal);
                 var closed = (await service.GetCustomerAsync(owner.Id, ticket.Ticket.Id, ct))!;
@@ -69,7 +72,7 @@ public sealed class TicketFinishSqlTests
             using (var denied = await Finish(other.Client, target, false)) Assert.Equal(HttpStatusCode.NotFound, denied.StatusCode);
             using (var noCsrf = await owner.Client.PostAsync($"/tickets/{target.Ticket.Id}/finish", new FormUrlEncodedContent(new Dictionary<string,string> { ["RowVersion"] = Convert.ToBase64String(target.RowVersion) }), ct)) Assert.Equal(HttpStatusCode.BadRequest, noCsrf.StatusCode);
             using (var conflict = await Finish(owner.Client, target, false, Convert.ToBase64String(new byte[8])))
-            { Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode); Assert.Contains("تیکت تغییر کرده", await conflict.Content.ReadAsStringAsync(ct), StringComparison.Ordinal); }
+            { Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode); var html = await conflict.Content.ReadAsStringAsync(ct); Assert.Contains("تیکت تغییر کرده", html, StringComparison.Ordinal); Assert.Contains("عملیات انجام نشد", html, StringComparison.Ordinal); }
             Assert.Equal(TicketStatus.New, (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!.Ticket.Status);
             using (var finished = await Finish(owner.Client, target, false)) Assert.Equal(HttpStatusCode.Redirect, finished.StatusCode);
             var closedTarget = (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!;
