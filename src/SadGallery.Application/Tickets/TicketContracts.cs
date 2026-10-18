@@ -29,6 +29,7 @@ public interface ITicketStore
     Task<CustomerTicket?> GetCustomerAsync(int userId, Guid id, CancellationToken ct);
     Task<OperatorTicket?> GetOperatorAsync(Guid id, CancellationToken ct);
     Task<TicketWriteResult> ChangeAsync(TicketActor actor, Guid id, TicketChange change, CancellationToken ct);
+    Task<TicketWriteResult> FinishAsync(TicketActor actor, Guid id, byte[] rowVersion, CancellationToken ct);
     Task<bool> IsPhotoReferencedAsync(Guid photoId, CancellationToken ct);
     Task<TicketPhotoFile?> GetPhotoAsync(TicketActor actor, Guid photoId, CancellationToken ct);
     Task RecordSecurityAsync(int? userId, string kind, CancellationToken ct);

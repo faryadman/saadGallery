@@ -22,6 +22,8 @@ public sealed class TicketService(ITicketStore store)
     }
     public Task<CustomerTicket?> GetCustomerAsync(int userId, Guid id, CancellationToken ct) => store.GetCustomerAsync(userId, id, ct);
     public Task<OperatorTicket?> GetOperatorAsync(Guid id, CancellationToken ct) => store.GetOperatorAsync(id, ct);
+    public Task<TicketWriteResult> FinishAsync(TicketActor actor, Guid id, byte[] rowVersion, CancellationToken ct) =>
+        actor.UserId <= 0 || rowVersion.Length != 8 ? Task.FromResult(TicketWriteResult.Invalid) : store.FinishAsync(actor, id, rowVersion, ct);
     public Task<TicketWriteResult> ChangeAsync(TicketActor actor, Guid id, TicketChange change, CancellationToken ct)
     {
         if (actor.UserId <= 0 || change.RowVersion.Length != 8 || change.Photos?.Count > TicketPhotoService.MaxPhotos ||

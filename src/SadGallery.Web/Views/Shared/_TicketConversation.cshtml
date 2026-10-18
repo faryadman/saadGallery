@@ -14,7 +14,10 @@
             <span class="badge @TicketLabels.StatusBadge(Model.Ticket.Status) sg-quality">@TicketLabels.Status(Model.Ticket.Status, staffView)</span>
             <span class="small text-muted ms-2">@TicketLabels.Type(Model.Ticket.Type)</span>
         </div>
-        <a href="@backUrl" class="btn btn-outline-secondary sg-touch">@(staffView ? "بازگشت به صف" : "تیکت‌های من")</a>
+        <div class="d-flex flex-wrap gap-2">
+            <partial name="_TicketFinishButton" model="new TicketFinishButtonModel(Model.Ticket, staffView, false)" />
+            <a href="@backUrl" class="btn btn-outline-secondary sg-touch">@(staffView ? "بازگشت به صف" : "تیکت‌های من")</a>
+        </div>
     </div>
     <dl class="sg-ticket-meta mb-0 mt-4">
         <div><dt>تاریخ ثبت</dt><dd>@PersianDate.ToJalaliDateTimeText(Model.Ticket.CreatedAtUtc)</dd></div>

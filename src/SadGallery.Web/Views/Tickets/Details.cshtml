@@ -1,7 +1,8 @@
 @model SadGallery.Application.Tickets.CustomerTicket
 @{ ViewData["Title"] = "گفت‌وگوی تیکت"; }
 <div class="sg-ticket-page">
-@Html.ValidationSummary(false, "ارسال پاسخ انجام نشد", new { @class = "alert alert-danger", role = "alert" })
+@if (TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+@Html.ValidationSummary(false, "عملیات انجام نشد", new { @class = "alert alert-danger", role = "alert" })
 <partial name="_TicketConversation" model="Model" />
 <section class="sg-card sg-compose-card mt-4 sg-ticket-compose" aria-labelledby="reply-title">
     <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">＋</span><h2 id="reply-title" class="h5 mb-0">ارسال پاسخ</h2></div>

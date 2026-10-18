@@ -25,6 +25,41 @@ public sealed class TicketsController(TicketService service, TicketPhotoService 
     }
     [HttpGet("/tickets/new")]
     public IActionResult Create(int? productId = null) => View(new CreateTicketForm { ProductId = productId, Type = productId.HasValue ? SadGallery.Domain.Tickets.TicketType.PriceInquiry : SadGallery.Domain.Tickets.TicketType.Other });
+    [HttpPost("/tickets/{id:guid}/finish"), EnableRateLimiting(RateLimitPolicies.Tickets)]
+    public async Task<IActionResult> Finish(Guid id, TicketFinishForm form, [FromQuery] TicketStatus? status, [FromQuery] string? search,
+        [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? until, [FromQuery] int page = 1, CancellationToken ct = default)
+    {
+        if (UserId is not { } user) return Forbid();
+        var ticket = await service.GetCustomerAsync(user, id, ct);
+        if (ticket == null) return NotFound();
+        var result = TicketWriteResult.Invalid;
+        try
+        {
+            if (ModelState.IsValid && form.Version() is {} version) result = await service.FinishAsync(new(user, false), id, version, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning("Ticket finish failed ({ErrorType})", ex.GetType().Name);
+            Response.StatusCode = 503; ModelState.AddModelError("", "اتمام تیکت ثبت نشد؛ وضعیت را بررسی و دوباره تلاش کنید.");
+            return View("Details", ticket);
+        }
+        if (result == TicketWriteResult.NotFound) return NotFound();
+        if (result == TicketWriteResult.Saved)
+        {
+            TempData["Notice"] = "تیکت با موفقیت اتمام یافت.";
+            return form.ReturnToList ? RedirectToAction(nameof(Index), new { status = (int?)status, search, from = Request.Query["from"].ToString(), until = Request.Query["until"].ToString(), page }) : RedirectToAction(nameof(Details), new { id });
+        }
+        Response.StatusCode = result == TicketWriteResult.Conflict ? 409 : 400;
+        ModelState.AddModelError("", result == TicketWriteResult.Conflict ? "تیکت تغییر کرده است؛ اطلاعات تازه را بررسی و دوباره اقدام کنید." : "اتمام تیکت ممکن نیست؛ نسخه و وضعیت تیکت را بررسی کنید.");
+        if (form.ReturnToList)
+        {
+            IReadOnlyList<TicketSummary> rows;
+            try { rows = await service.ListAsync(new(user, false), new(status, search, from, until, page), ct); }
+            catch (ArgumentException) { rows = await service.ListAsync(new(user, false), new(), ct); }
+            return View("Index", rows);
+        }
+        return View("Details", await service.GetCustomerAsync(user, id, ct) ?? ticket);
+    }
     [HttpPost("/tickets/new"), EnableRateLimiting(RateLimitPolicies.Tickets)]
     [RequestSizeLimit(TicketPhotoService.MaxRequestBytes), RequestFormLimits(MultipartBodyLengthLimit = TicketPhotoService.MaxRequestBytes)]
     public async Task<IActionResult> Create(CreateTicketForm form, CancellationToken ct)

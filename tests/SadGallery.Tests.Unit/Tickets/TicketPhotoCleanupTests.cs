@@ -33,6 +33,7 @@ public sealed class TicketPhotoCleanupTests
         public Task<CustomerTicket?> GetCustomerAsync(int user,Guid id,CancellationToken ct) => throw new NotSupportedException();
         public Task<OperatorTicket?> GetOperatorAsync(Guid id,CancellationToken ct) => throw new NotSupportedException();
         public Task<TicketWriteResult> ChangeAsync(TicketActor a,Guid id,TicketChange c,CancellationToken ct) => throw new NotSupportedException();
+        public Task<TicketWriteResult> FinishAsync(TicketActor a,Guid id,byte[] version,CancellationToken ct) => throw new NotSupportedException();
         public Task<TicketPhotoFile?> GetPhotoAsync(TicketActor a,Guid id,CancellationToken ct) => throw new NotSupportedException();
         public Task RecordSecurityAsync(int? user,string kind,CancellationToken ct) => Task.CompletedTask;
     }

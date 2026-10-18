@@ -16,6 +16,8 @@
         const previews = picker.querySelector("[data-photo-previews]");
         const summary = picker.querySelector("[data-photo-summary]");
         const error = picker.querySelector("[data-photo-error]");
+        const disclosure = picker.closest("[data-photo-disclosure]");
+        const count = disclosure?.querySelector("[data-photo-count]");
         zone.hidden = false;
         input.classList.add("visually-hidden");
         const maxCount = Number(picker.dataset.maxCount);
@@ -23,7 +25,7 @@
         let files = [];
         let urls = [];
         const supportsTransfer = typeof DataTransfer === "function";
-        const showError = text => { error.textContent = text; error.hidden = !text; };
+        const showError = text => { error.textContent = text; error.hidden = !text; if (text && disclosure) disclosure.open = true; };
         const syncInput = () => {
             if (!supportsTransfer) return;
             const transfer = new DataTransfer();
@@ -36,6 +38,7 @@
             previews.replaceChildren();
             previews.hidden = files.length === 0;
             summary.textContent = files.length ? `${number.format(files.length)} عکس از ${number.format(maxCount)} عکس انتخاب شده است.` : "هنوز عکسی انتخاب نشده است.";
+            if (count) count.textContent = files.length ? ` · ${number.format(files.length)} عکس انتخاب‌شده` : "";
             files.forEach((file, index) => {
                 const tile = document.createElement("figure");
                 tile.className = "sg-photo-tile mb-0";

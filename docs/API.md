@@ -221,3 +221,6 @@ public sealed record ProviderFetchResult(
 | /admin/gold/wallets/{int}/enable | POST | فقط مدیر، Enabled/Version |
 | /admin/gold/wallets/{int}/credit | POST | فقط مدیر، OperationId/Kind=TomanCredit یا GoldCredit/Amount/Reason |
 همه POSTها ضدجعل دارند؛ موفقیت redirect، ورودی نامعتبر۴۰۰، تعارض۴۰۹، عدم دسترسی Policy/Identity، شناسه بیگانه۴۰۴، سرویس/نرخ unavailable۵۰۳. عملیات مالی idempotent با همان شناسه است؛ تکرار کلید شارژ با محتوای متفاوت۴۰۹ است. پاسخ خصوصی no-store؛ API عمومی/آفلاین مالی ایجاد نشده است.
+
+## اتمام صریح تیکت — 2026-10-19
+`POST /tickets/{guid}/finish` برای مالک و `POST /operator/tickets/{guid}/finish` برای Operator/Admin فعال اضافه شدند. فرم: RowVersion اجباری هشت‌بایتی Base64، ReturnToList اختیاری؛ وضعیت هدف Closed و Actor از سرور است. همه تیکت‌های باز شناخته‌شده مجازند؛ بسته‌شده دوباره بسته نمی‌شود. موفقیت redirect به جزئیات/فهرست با حفظ فیلتر، نسخه قدیمی409، اطلاعات نامعتبر400، شناسه بیگانه404؛ CSRF و limiter تیکت برقرارند. endpoint عمومی تغییر وضعیت مشتری ایجاد نشده است.

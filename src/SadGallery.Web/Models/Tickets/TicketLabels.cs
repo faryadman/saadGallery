@@ -7,6 +7,7 @@ public static class TicketLabels
         "Ticket.Created" => "ثبت درخواست",
         "Ticket.InternalNoteAdded" => "افزودن یادداشت داخلی",
         "Ticket.Changed" => "تغییر تیکت",
+        "Ticket.Finished" => "اتمام تیکت",
         _ => "رویداد تیکت",
     };
     public static string Status(TicketStatus s, bool isOperator = false) => s switch

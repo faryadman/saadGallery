@@ -75,7 +75,10 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
             .Select(x => new TicketHistoryRecord(x.Kind, x.Detail, x.ActorUserId, x.CreatedAtUtc)).ToListAsync(ct);
         return new OperatorTicket(ticket, notes, history);
     }
-    public async Task<TicketWriteResult> ChangeAsync(TicketActor actor, Guid id, TicketChange change, CancellationToken ct)
+    public Task<TicketWriteResult> ChangeAsync(TicketActor actor, Guid id, TicketChange change, CancellationToken ct) => ChangeCoreAsync(actor, id, change, false, ct);
+    public Task<TicketWriteResult> FinishAsync(TicketActor actor, Guid id, byte[] rowVersion, CancellationToken ct) =>
+        ChangeCoreAsync(actor, id, new(null, false, TicketStatus.Closed, null, rowVersion), true, ct);
+    private async Task<TicketWriteResult> ChangeCoreAsync(TicketActor actor, Guid id, TicketChange change, bool finish, CancellationToken ct)
     {
         var ticket = await Visible(actor).SingleOrDefaultAsync(x => x.Id == id, ct);
         if (ticket == null) { await RecordSecurityAsync(actor.UserId, "AccessDenied", ct); return TicketWriteResult.NotFound; }
@@ -84,7 +87,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         if (db.Entry(ticket).State == EntityState.Detached) return TicketWriteResult.NotFound;
         if (!ticket.RowVersion.SequenceEqual(change.RowVersion)) return TicketWriteResult.Conflict;
         var target = change.Status ?? ticket.Status;
-        if (actor.IsOperator && change.Status.HasValue && !TicketWorkflow.CanTransition(ticket.Status, target)) return TicketWriteResult.Invalid;
+        if (finish ? !TicketWorkflow.CanFinish(ticket.Status) : actor.IsOperator && change.Status.HasValue && !TicketWorkflow.CanTransition(ticket.Status, target)) return TicketWriteResult.Invalid;
         // Sending a reply and changing status are independent actions. An omitted status keeps it unchanged.
         if (change.AssignTo.HasValue && !await (from user in db.Users
             join ur in db.UserRoles on user.Id equals ur.UserId join role in db.Roles on ur.RoleId equals role.Id
@@ -102,7 +105,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
             }
         }
         if (change.AssignTo.HasValue) ticket.AssignedOperatorUserId = change.AssignTo;
-        Event(id, actor.UserId, change.InternalNote ? "Ticket.InternalNoteAdded" : "Ticket.Changed",
+        Event(id, actor.UserId, finish ? "Ticket.Finished" : change.InternalNote ? "Ticket.InternalNoteAdded" : "Ticket.Changed",
             $"Status:{ticket.Status}->{target};Assigned:{ticket.AssignedOperatorUserId}");
         ticket.Status = target; ticket.ClosedAtUtc = target == TicketStatus.Closed ? now : null;
         ticket.LastActivityAtUtc = now;

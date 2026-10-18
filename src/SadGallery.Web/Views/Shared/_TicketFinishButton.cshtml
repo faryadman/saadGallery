@@ -1,0 +1,12 @@
+@model SadGallery.Web.Models.Tickets.TicketFinishButtonModel
+@using SadGallery.Domain.Tickets
+@if (TicketWorkflow.CanFinish(Model.Ticket.Status))
+{
+    <form method="post" action="@(Model.IsOperator ? "/operator/tickets" : "/tickets")/@Model.Ticket.Id/finish@(Context.Request.QueryString)" class="d-inline"
+          onsubmit="return confirm('اتمام این تیکت را تأیید می‌کنید؟ متن یا عکس ارسال‌نشده ثبت نمی‌شود.');">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.Ticket.RowVersion)" />
+        <input type="hidden" name="ReturnToList" value="@Model.ReturnToList.ToString().ToLowerInvariant()" />
+        <button type="submit" class="btn btn-outline-success sg-touch">اتمام تیکت</button>
+    </form>
+}

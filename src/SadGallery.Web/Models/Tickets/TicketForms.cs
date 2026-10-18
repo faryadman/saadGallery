@@ -38,3 +38,11 @@ public sealed class TicketStatusForm
         catch (FormatException) { return null; }
     }
 }
+
+public sealed class TicketFinishForm
+{
+    [Required(ErrorMessage = "نسخه تیکت مشخص نیست؛ صفحه را تازه کنید."), StringLength(12, MinimumLength = 12, ErrorMessage = "نسخه تیکت معتبر نیست؛ صفحه را تازه کنید.")]
+    public string RowVersion { get; set; } = "";
+    public bool ReturnToList { get; set; }
+    public byte[]? Version() { try { var bytes = Convert.FromBase64String(RowVersion ?? ""); return bytes.Length == 8 ? bytes : null; } catch (FormatException) { return null; } }
+}

@@ -1,4 +1,6 @@
 @using SadGallery.Application.Tickets
+<details class="sg-ticket-attachments sg-photo-disclosure" data-photo-disclosure open="@(ViewData.ModelState.TryGetValue("Photos", out var photoState) && photoState.Errors.Count > 0)">
+<summary class="sg-touch fw-semibold">افزودن عکس <span class="small text-muted">(اختیاری)</span><span class="small text-muted" data-photo-count aria-live="polite"></span></summary>
 <div class="sg-photo-picker" data-photo-picker data-max-count="@TicketPhotoService.MaxPhotos" data-max-bytes="@TicketPhotoService.MaxFileBytes">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <label for="Photos" class="form-label fw-semibold mb-0">عکس‌های پیوست <span class="text-muted fw-normal small">(اختیاری)</span></label>
@@ -20,3 +22,4 @@
     @if(Context.Request.Method == "POST")
     { <p class="small text-muted mt-2 mb-0">اگر ارسال ناموفق بود، عکس‌ها را دوباره انتخاب کنید؛ متن درخواست شما حفظ شده است.</p> }
 </div>
+</details>

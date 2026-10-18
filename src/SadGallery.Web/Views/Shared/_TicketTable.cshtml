@@ -22,7 +22,6 @@
         @foreach(var ticket in Model.Rows)
         {
             var detailUrl = $"{Model.Path}/{ticket.Id}";
-            var canFinish = TicketWorkflow.CanTransition(ticket.Status, TicketStatus.Closed);
             <tr>
                 <td><a href="@detailUrl" class="fw-semibold" dir="ltr">@ticket.TrackingCode</a></td>
                 <td><strong>@ticket.Subject</strong>
@@ -51,27 +50,9 @@
                                     <button type="submit" class="btn btn-sm btn-outline-secondary sg-touch">@(ticket.Status == TicketStatus.Closed ? "بازگشایی" : "شروع بررسی")</button>
                                 </form>
                             }
-                            @if(ticket.Status != TicketStatus.Closed)
-                            {
-                                if(canFinish)
-                                {
-                                    <form method="post" action="/operator/tickets/@ticket.Id/status@(Context.Request.QueryString)" class="d-inline"
-                                          onsubmit="return confirm('اتمام این تیکت را تأیید می‌کنید؟');">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(ticket.RowVersion)" />
-                                        <input type="hidden" name="NextStatus" value="@((int)TicketStatus.Closed)" />
-                                        <button type="submit" class="btn btn-sm btn-outline-success sg-touch">اتمام تیکت</button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-success sg-touch" disabled>اتمام تیکت</button>
-                                }
-                            }
                         }
+                        <partial name="_TicketFinishButton" model="new TicketFinishButtonModel(ticket, Model.IsOperator, true)" />
                     </div>
-                    @if(Model.IsOperator && ticket.Status != TicketStatus.Closed && !canFinish)
-                    { <div class="small text-muted mt-1">اتمام پس از بررسی و ثبت پاسخ</div> }
                 </td>
             </tr>
         }

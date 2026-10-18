@@ -5,6 +5,7 @@ public enum TicketType { PriceInquiry, ProductQuestion, StockAndWeight, OrderFol
 
 public static class TicketWorkflow
 {
+    public static bool CanFinish(TicketStatus status) => Enum.IsDefined(status) && status != TicketStatus.Closed;
     public static bool CanTransition(TicketStatus from, TicketStatus to) => (from, to) switch
     {
         (TicketStatus.New, TicketStatus.InReview) => true,

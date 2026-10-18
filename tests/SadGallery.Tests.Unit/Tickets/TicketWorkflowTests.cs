@@ -4,6 +4,11 @@ using Xunit;
 namespace SadGallery.Tests.Unit.Tickets;
 public sealed class TicketWorkflowTests
 {
+    [Theory]
+    [InlineData(TicketStatus.New, true)] [InlineData(TicketStatus.InReview, true)]
+    [InlineData(TicketStatus.AwaitingCustomer, true)] [InlineData(TicketStatus.Answered, true)]
+    [InlineData(TicketStatus.Closed, false)] [InlineData((TicketStatus)99, false)]
+    public void ExplicitFinishIsAvailableForEveryKnownOpenStatus(TicketStatus status, bool allowed) => Assert.Equal(allowed, TicketWorkflow.CanFinish(status));
     [Fact]
     public void EveryTransitionMatchesDocumentedStateMachine()
     {

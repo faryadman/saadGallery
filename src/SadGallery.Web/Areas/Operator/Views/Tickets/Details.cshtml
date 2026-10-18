@@ -6,6 +6,7 @@
     var form = ViewData["ChangeForm"] as ChangeTicketForm ?? new();
 }
 <div class="sg-ticket-page">
+@if (TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
 @Html.ValidationSummary(false, "ثبت تغییر انجام نشد", new { @class = "alert alert-danger", role = "alert", tabindex = "-1" })
 <partial name="_TicketConversation" model="Model.Public" />
 <div class="row g-4 mt-1">
@@ -51,7 +52,7 @@
         <section class="sg-card sg-ticket-guide mb-4" aria-labelledby="ticket-team-title">
             <h2 id="ticket-team-title" class="h6 mb-3">پیگیری درخواست</h2>
             <p class="small mb-2">اپراتور مسئول: @(Model.Public.Ticket.AssignedOperatorUserId?.ToString() ?? "تعیین نشده")</p>
-            <p class="small text-muted mb-0">برای اتمام، ابتدا وضعیت را به «پاسخ داده‌شده» یا «منتظر پاسخ مشتری» ببرید؛ سپس «بسته‌شده» را انتخاب کنید.</p>
+            <p class="small text-muted mb-0">مشتری و تیم پشتیبانی می‌توانند با دکمه «اتمام تیکت» گفت‌وگوی باز را ببندند؛ ارسال پاسخ مشتری، تیکت بسته را دوباره باز می‌کند.</p>
         </section>
         <section class="sg-card" aria-labelledby="internal-notes-title">
             <h2 id="internal-notes-title" class="h6 mb-3">یادداشت‌های داخلی <span class="badge bg-secondary">@PersianText.ToPersianDigits(Model.InternalNotes.Count.ToString())</span></h2>

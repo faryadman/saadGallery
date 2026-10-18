@@ -44,6 +44,28 @@ public sealed class TicketsController(TicketService service, TicketInboxService 
             ? "تیکت توسط کاربر دیگری تغییر کرده است؛ فهرست تازه را بررسی و دوباره اقدام کنید."
             : "این تغییر وضعیت برای تیکت مجاز نیست.", result == TicketWriteResult.Conflict ? 409 : 400, ct);
     }
+    [HttpPost("/operator/tickets/{id:guid}/finish"), EnableRateLimiting(RateLimitPolicies.Tickets)]
+    public async Task<IActionResult> Finish(Guid id, TicketFinishForm form, [FromQuery] TicketStatus? status, [FromQuery] string? search,
+        [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? until, [FromQuery] int page = 1, CancellationToken ct = default)
+    {
+        if (UserId is not { } user) return Forbid();
+        TicketWriteResult result;
+        try { result = ModelState.IsValid && form.Version() is {} version ? await service.FinishAsync(new(user, true), id, version, ct) : TicketWriteResult.Invalid; }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning("Ticket finish failed ({ErrorType})", ex.GetType().Name);
+            return await FormError(id, new(), "اتمام تیکت ثبت نشد؛ وضعیت را بررسی و دوباره تلاش کنید.", 503, ct);
+        }
+        if (result == TicketWriteResult.Saved)
+        {
+            TempData["Notice"] = "تیکت با موفقیت اتمام یافت.";
+            return form.ReturnToList ? RedirectToAction(nameof(Index), new { status = (int?)status, search, from = Request.Query["from"].ToString(), until = Request.Query["until"].ToString(), page }) : RedirectToAction(nameof(Details), new { id });
+        }
+        if (result == TicketWriteResult.NotFound) return NotFound();
+        var error = result == TicketWriteResult.Conflict ? "تیکت تغییر کرده است؛ اطلاعات تازه را بررسی و دوباره اقدام کنید." : "اتمام تیکت ممکن نیست؛ نسخه و وضعیت تیکت را بررسی کنید.";
+        var code = result == TicketWriteResult.Conflict ? 409 : 400;
+        return form.ReturnToList ? await QueueError(new(user, true), new(status, search, from, until, page), error, code, ct) : await FormError(id, new(), error, code, ct);
+    }
     private async Task<IActionResult> QueueError(TicketActor actor, TicketFilter filter, string error, int status, CancellationToken ct)
     {
         ModelState.AddModelError("", error);
