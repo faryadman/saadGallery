@@ -1,0 +1,7 @@
+@model SadGallery.Application.Administration.Page<GoldLedgerView>
+<section class="sg-card mt-4"><h2 class="h5 mb-3">گردش ثبت قطعی کیف</h2><p class="small text-muted">تومان و طلا فقط پس از شارژ مدیر یا تأیید خرید در این دفتر ثبت می‌شوند.</p>
+@if (Model.Items.Count == 0) { <p class="text-muted mb-0">هنوز گردش قطعی ثبت نشده است.</p> }
+else { <div class="table-responsive" tabindex="0" role="region" aria-label="گردش کیف طلا"><table class="table align-middle sg-table sg-gold-table"><thead><tr><th scope="col">زمان و نوع</th><th scope="col">تغییر تومان</th><th scope="col">تغییر طلا</th><th scope="col">شرح و عامل</th></tr></thead><tbody>
+@foreach (var entry in Model.Items) { <tr><td>@GoldTradingLabels.Kind(entry.Kind)<span class="d-block small text-muted">@PersianDate.ToJalaliDateTimeText(entry.AtUtc)</span>@if (entry.OrderId is {} id) { <a href="/gold/orders/@id" class="small">رسید خرید</a> }</td><td dir="ltr">@GoldNumber.Money(entry.CashDeltaIrt) <span dir="rtl">تومان</span></td><td dir="ltr">@GoldNumber.Grams(entry.GoldDeltaGrams) <span dir="rtl">گرم ۷۵۰</span></td><td class="sg-gold-note">@entry.Reason<span class="d-block small text-muted">شناسه عامل @PersianText.ToPersianDigits(entry.ActorId.ToString())</span></td></tr> }
+</tbody></table></div> }
+</section>

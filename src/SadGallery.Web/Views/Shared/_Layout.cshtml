@@ -74,6 +74,7 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/Operator/Dashboard">داشبورد اپراتور</a></li>
                                 <li><a class="dropdown-item" href="/operator/reports">گزارش عملیاتی</a></li>
+                                <li><a class="dropdown-item" href="/operator/gold">خرید طلای آب‌شده</a></li>
                                 <li><a class="dropdown-item" href="/operator/tickets" aria-current="@Current("/operator/tickets")">صف تیکت‌ها @await Component.InvokeAsync("TicketBadge", new { operatorQueue = true })</a></li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li><a class="dropdown-item" href="/Operator/Products" aria-current="@Current("/Operator/Products")">مدیریت کالاها</a></li>
@@ -84,6 +85,7 @@
                                     <li><a class="dropdown-item" href="/Admin/Dashboard">پنل مدیر</a></li>
                                     <li><a class="dropdown-item" href="/admin/users">کاربران و نقش‌ها</a></li>
                                     <li><a class="dropdown-item" href="/admin/settings">تنظیمات دریافت نرخ</a></li>
+                                    <li><a class="dropdown-item" href="/admin/gold/settings">کارمزد و خرید آب‌شده</a></li>
                                     <li><a class="dropdown-item" href="/admin/audit">سابقه عملیات</a></li>
                                     <li><a class="dropdown-item" href="/admin/connection-notice" aria-current="@Current("/admin/connection-notice")">متن اعلان اتصال</a></li>
                                 }
@@ -98,6 +100,7 @@
                             <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">حساب کاربری</button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="/Member">ناحیه اعضا</a></li>
+                                <li><a class="dropdown-item" href="/gold">کیف طلا و خرید آب‌شده</a></li>
                                 <li><a class="dropdown-item" href="/market/history">تاریخچه نرخ‌ها</a></li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li><form method="post" asp-area="" asp-controller="Account" asp-action="Logout">

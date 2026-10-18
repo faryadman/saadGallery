@@ -1,0 +1,26 @@
+@model GoldOrderModel
+@{ ViewData["Title"] = "رسید و وضعیت خرید طلا"; var order = Model.Order; var quote = order.Status == GoldOrderStatus.Quote; var expired = quote && order.ExpiresAtUtc <= Model.Now; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"><div><span class="sg-ticket-eyebrow">خرید آب‌شده · معادل عیار ۷۵۰</span><h1 class="h4 mt-2">@(quote ? "پیش‌نمایش خرید طلا" : "رسید و وضعیت خرید طلا")</h1></div><a href="@(Model.Staff ? "/operator/gold" : "/gold")" class="btn btn-outline-secondary sg-touch">@(Model.Staff ? "صف خریدها" : "بازگشت به کیف")</a></div>
+@if (TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+<div asp-validation-summary="All" class="alert alert-danger sg-validation-summary" role="alert"></div>
+<div class="row g-4"><div class="col-12 col-lg-8"><section class="sg-card sg-compose-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-4"><h2 class="h5 mb-0">جزئیات خرید</h2><span class="badge text-bg-@(order.Status == GoldOrderStatus.Approved ? "success" : "secondary")">@(expired ? "پیش‌نمایش منقضی شده" : GoldTradingLabels.Status(order.Status))</span></div>
+<dl class="sg-gold-receipt"><dt>مشتری</dt><dd>@(string.IsNullOrWhiteSpace(order.CustomerName) ? "مشتری" : order.CustomerName) · @PersianText.ToPersianDigits(order.UserId.ToString())</dd><dt>وزن خرید</dt><dd><strong>@GoldNumber.Grams(order.Grams) گرم معادل عیار ۷۵۰</strong></dd><dt>نرخ هر گرم</dt><dd>@GoldNumber.Rate(order.RateIrt) تومان</dd><dt>ارزش طلا</dt><dd>@GoldNumber.Money(order.PrincipalIrt) تومان</dd><dt>کارمزد (@GoldNumber.Grams(order.FeePercent)٪)</dt><dd>@GoldNumber.Money(order.FeeIrt) تومان</dd><dt class="sg-gold-total">مبلغ نهایی</dt><dd class="sg-gold-total"><strong>@GoldNumber.Money(order.TotalIrt) تومان</strong></dd><dt>زمان اعلام نرخ</dt><dd>@PersianDate.ToJalaliDateTimeText(order.QuotedAtUtc)</dd>
+@if (order.RequestedAtUtc is {} requested) { <dt>زمان ثبت درخواست</dt><dd>@PersianDate.ToJalaliDateTimeText(requested)</dd> }
+@if (order.ReviewedAtUtc is {} reviewed) { <dt>زمان نهایی‌سازی</dt><dd>@PersianDate.ToJalaliDateTimeText(reviewed) · عامل @PersianText.ToPersianDigits(order.ReviewerId.ToString() ?? "")</dd> }
+</dl><p class="small text-muted sg-gold-id">شناسه پیگیری: <bdi>@order.Id</bdi></p>
+@if (!string.IsNullOrWhiteSpace(order.Note)) { <div class="sg-gold-note alert alert-light mb-0"><strong>توضیح بررسی:</strong> @order.Note</div> }
+</section></div><div class="col-12 col-lg-4"><section class="sg-card h-100"><h2 class="h5 mb-3">عملیات خرید</h2>
+@if (quote) {
+    <p class="small text-muted">این پیش‌نمایش ثبت خرید نیست و هیچ مبلغی رزرو نشده است. اعتبار پیش‌نمایش تا @PersianDate.ToJalaliDateTimeText(order.ExpiresAtUtc) است؛ خرید فقط با اتصال به سرور ثبت می‌شود.</p>
+    @if (!expired && !Model.Staff) { <form method="post" action="/gold/orders/@order.Id/submit">@Html.AntiForgeryToken()<button class="btn sg-btn-gold sg-touch w-100">تأیید مبلغ و ثبت درخواست خرید</button></form><p class="small text-muted mt-3 mb-0">با ثبت، @GoldNumber.Money(order.TotalIrt) تومان تا زمان بررسی رزرو می‌شود. وزن و مبلغ پس از ثبت تغییر نمی‌کنند.</p> }
+    else { <a href="/gold" class="btn btn-primary sg-touch">دریافت پیش‌نمایش تازه</a> }
+} else if (order.Status == GoldOrderStatus.Pending && Model.Staff) {
+    <p class="small text-muted">تأیید، تومان رزروشده را کسر و طلا را به کیف اضافه می‌کند. رد، رزرو را آزاد می‌کند.</p>
+    <form method="post" action="/operator/gold/@order.Id/review">@Html.AntiForgeryToken()<input type="hidden" name="Version" value="@Convert.ToBase64String(order.Version)" />
+    <label for="gold-decision" class="form-label">نتیجه بررسی</label><select id="gold-decision" name="Decision" class="form-select mb-3" required><option value="">انتخاب کنید</option><option value="Approved" selected="@(Model.Review.Decision == GoldOrderStatus.Approved)">تأیید و ثبت نهایی</option><option value="Rejected" selected="@(Model.Review.Decision == GoldOrderStatus.Rejected)">رد خرید و آزادسازی اعتبار</option></select>
+    <label for="gold-review-note" class="form-label">توضیح بررسی (برای رد الزامی)</label><textarea id="gold-review-note" name="Note" class="form-control mb-3" maxlength="300" rows="4">@Model.Review.Note</textarea><button class="btn btn-primary sg-touch w-100">ثبت نتیجه بررسی</button></form>
+} else if (order.Status == GoldOrderStatus.Pending) {
+    <p class="small text-muted">در انتظار بررسی مدیر یا اپراتور است. مبلغ رزرو شده؛ طلا پس از تأیید به کیف اضافه می‌شود.</p>
+    <form method="post" action="/gold/orders/@order.Id/cancel">@Html.AntiForgeryToken()<input type="hidden" name="Version" value="@Convert.ToBase64String(order.Version)" /><button class="btn btn-outline-danger sg-touch w-100">لغو درخواست و آزادسازی اعتبار</button></form>
+} else { <p class="text-muted mb-0">بررسی این درخواست پایان یافته است. نتیجه در گردش کیف ثبت شده یا رزرو آزاد شده است.</p> }
+</section></div></div>

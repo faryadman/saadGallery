@@ -1,0 +1,8 @@
+@model GoldSettingsForm
+@{ ViewData["Title"] = "تنظیمات خرید طلای آب‌شده"; }
+<div class="d-flex flex-wrap justify-content-between gap-2 mb-4"><h1 class="h4">تنظیمات خرید طلای آب‌شده</h1><a href="/operator/gold" class="btn btn-outline-secondary sg-touch">صف خریدها</a></div>
+@if (TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+<form method="post" action="/admin/gold/settings" class="sg-card sg-compose-card">@Html.AntiForgeryToken()<input asp-for="Version" type="hidden" /><div asp-validation-summary="All" class="alert alert-danger sg-validation-summary" role="alert"></div>
+<h2 class="h5 mb-3">کارمزد و دسترسی خرید</h2><p class="small text-muted">نرخ فقط از آخرین نرخ آنلاین معتبر طلای ۱۸ عیار سایت خوانده می‌شود. کارمزد روی ارزش طلا اضافه می‌شود؛ به خریدهای ثبت‌شده قبلی اعمال نمی‌شود. پیش‌نمایش تا دو دقیقه اعتبار دارد.</p>
+<div class="row g-3"><div class="col-12 col-md-6"><label asp-for="Fee" class="form-label">کارمزد خرید (درصد)</label><input asp-for="Fee" class="form-control" inputmode="decimal" maxlength="40" /><span asp-validation-for="Fee" class="text-danger small"></span><p class="small text-muted mt-2">صفر تا ۱۰۰ درصد، حداکثر سه رقم اعشار؛ مقدار اولیه عمداً خالی است.</p></div><div class="col-12 col-md-6 align-self-center"><div class="form-check"><input asp-for="Enabled" class="form-check-input" /><label asp-for="Enabled" class="form-check-label">ثبت درخواست خرید فعال باشد</label></div></div></div>
+<div class="alert alert-light mt-3">توقف خرید، درخواست‌های قبلاً ثبت‌شده را لغو نمی‌کند؛ مدیر یا اپراتور می‌تواند آن‌ها را با مبلغ و وزن ثابت تأیید یا رد کند.</div><button class="btn btn-primary sg-touch">ذخیره تنظیمات</button></form>

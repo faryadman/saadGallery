@@ -1,0 +1,6 @@
+@model GoldWalletView
+<div class="row g-3 mb-4 sg-gold-balances">
+    <div class="col-12 col-md-4"><section class="sg-card h-100"><span class="small text-muted">اعتبار قابل خرید</span><p class="sg-gold-value mt-2 mb-1">@GoldNumber.Money(Model.AvailableIrt) <small>تومان</small></p><span class="small text-muted">از کل @GoldNumber.Money(Model.CashIrt) تومان</span></section></div>
+    <div class="col-12 col-md-4"><section class="sg-card h-100"><span class="small text-muted">در انتظار تأیید</span><p class="sg-gold-value mt-2 mb-1">@GoldNumber.Money(Model.ReservedIrt) <small>تومان</small></p><span class="small text-muted">رزرو برای خریدهای ثبت‌شده</span></section></div>
+    <div class="col-12 col-md-4"><section class="sg-card sg-gold-savings h-100"><span class="small">کیف پس‌انداز طلا</span><p class="sg-gold-value mt-2 mb-1">@GoldNumber.Grams(Model.Grams) <small>گرم</small></p><span class="small">معادل عیار ۷۵۰ · موجودی ثبت قطعی</span></section></div>
+</div>

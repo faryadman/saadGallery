@@ -6,6 +6,7 @@ namespace SadGallery.Web.Security;
 /// </summary>
 public static class RateLimitPolicies
 {
+    public const string GoldTrading = "sg-gold-trading";
     /// <summary>ورود، ثبت‌نام و بازیابی رمز.</summary>
     public const string Tickets = "sg-tickets";
 

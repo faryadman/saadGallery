@@ -151,7 +151,7 @@ dotnet test                        # یا: bash scripts/test.sh
 | باگ‌های شناخته‌شده | `docs/BUGS.md` |
 | تاریخ تغییرات | `docs/CHANGELOG.md` |
 | محدودیت‌های صادقانه (سندباکس/PWA/…) | `docs/KNOWN_LIMITATIONS.md` |
-| تصمیم‌های معماری (ADR) | `docs/DECISIONS/` (آخرین: ADR-0021) |
+| تصمیم‌های معماری (ADR) | `docs/DECISIONS/` (آخرین: ADR-0022) |
 | سؤالات باز از مالک | `docs/OPEN_QUESTIONS.md` |
 | اسکریپت‌های محیط/تست | `scripts/` (از جمله `ef.sh` برای EF و `test.sh` برای تست) |
 
@@ -187,3 +187,6 @@ cloud فعلی Docker دارد؛ SQL Server 2022 Developer روی loopback، SDK
 
 ### شواهد فاز ۷ — 2026-10-19
 601 تست .NET و 7 تست مستقل Node موفق، صفر Skip؛ Build صفر هشدار/خطا. هیچ HTML زنده/داده خصوصی/POST کش نشود؛ تنها allowlist استاتیک و DTO نرخ عمومی بدون cookie. تغییر release باید شامل restart یکپارچه و حفظ integrity باشد. به‌روزرسانی فقط با انتخاب کاربر؛ برای rollback از worker پاک‌سازی و DEPLOYMENT استفاده شود. نصب فیزیکی Android/iOS انجام نشده و تکمیل نهایی فاز به آن وابسته است.
+
+### شواهد کیف ویژه — 2026-10-19
+افزوده مشتری ویژه در ADR-0022 و GOLD_WALLET_REPORT مستند است: تومان و گرم۷۵۰، نرخ آنلاین معتبر و کارمزد مدیر، رزرو تا تأیید، idempotency و دفتر SQL فقط افزودنی. Migration GoldTradingWallets قبل از اجرای نسخه جدید اعمال شود؛ خرید اولیه خاموش و درصد خالی است. Fixture/نرخ کهنه برای معامله ممنوع؛ هیچ کیف/مانده واقعی seed نکنید. 633 تست .NET و7 تست SW موفق و Chromium با حساب مصنوعی بررسی شد. تغییر مالی فقط با حفظ اتمیک‌بودن، نسخه فرمول و دفتر/رزرو و تست SQL هم‌زمانی مجاز است.

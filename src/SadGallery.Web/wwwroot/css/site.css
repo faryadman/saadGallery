@@ -681,3 +681,17 @@ code {
 .sg-pwa-recall { border: 0; background: none; color: #f1d36c; min-height: 44px; padding: .35rem .5rem; text-decoration: underline; text-underline-offset: .2em; font: inherit; }
 .sg-pwa-recall:hover, .sg-pwa-recall:focus { color: #fff; }
 body[data-pwa-offline] { padding-top: env(safe-area-inset-top, 0px); }
+
+/* کیف مشتری ویژه؛ هماهنگ با کارت‌ها و جدول‌های پنل */
+.sg-gold-value { font-size: clamp(1.25rem, 4vw, 1.8rem); font-weight: 750; overflow-wrap: anywhere; }
+.sg-gold-value small { font-size: .8rem; font-weight: 400; }
+.sg-gold-savings { background: #10233f; color: #f2d897; }
+.sg-gold-table { min-width: 660px; }
+.sg-gold-receipt { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(0, 2fr); gap: .9rem 1rem; }
+.sg-gold-receipt dt { font-weight: 500; color: #596372; }
+.sg-gold-receipt dd { margin: 0; overflow-wrap: anywhere; }
+.sg-gold-total { border-top: 1px solid #d9c99e; padding-top: 1rem; color: #10233f; }
+.sg-gold-note, .sg-gold-id { overflow-wrap: anywhere; white-space: pre-wrap; }
+.sg-gold-note { max-width: 350px; }
+.sg-validation-summary.validation-summary-valid { display: none; }
+@media (max-width: 575.98px) { .sg-gold-receipt { grid-template-columns: 1fr; gap: .3rem; } .sg-gold-receipt dd { margin-bottom: .65rem; } .sg-gold-receipt dt.sg-gold-total { padding-top: .7rem; } .sg-gold-receipt dd.sg-gold-total { border: 0; padding-top: 0; } }

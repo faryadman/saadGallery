@@ -24,12 +24,14 @@ public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        GoldTradingModel.Guard(this);
         AdministrationAudit.Capture(this, auditContext?.Actor);
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        GoldTradingModel.Guard(this);
         AdministrationAudit.Capture(this, auditContext?.Actor);
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
@@ -62,6 +64,7 @@ public class SadGalleryDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         TicketModel.Configure(builder);
         ConnectionNoticeModel.Configure(builder);
         AdministrationModel.Configure(builder);
+        GoldTradingModel.Configure(builder);
 
         builder.Entity<ApplicationUser>(entity =>
         {

@@ -31,7 +31,9 @@ const snapshot = () => ({ schema: 1, capturedAtUtc: '2026-10-19T10:00:00Z', fetc
 test('POST, cross-origin, private API and images never enter worker cache handling', () => {
     const h = harness();
     for (const request of [{ method: 'POST', url: origin + '/tickets' }, { method: 'GET', url: origin + '/tickets/private.png' },
-        { method: 'GET', url: origin + '/api/rates/GOLD_GRAM_18/history' }, { method: 'GET', url: 'https://elsewhere.example/css/site.css' }])
+        { method: 'GET', url: origin + '/api/rates/GOLD_GRAM_18/history' }, { method: 'POST', url: origin + '/gold/orders/private/submit' },
+        { method: 'POST', url: origin + '/admin/gold/wallets/1/credit' }, { method: 'GET', url: origin + '/gold/orders/private' },
+        { method: 'GET', url: 'https://elsewhere.example/css/site.css' }])
         h.events.fetch({ request, respondWith() { assert.fail('Private request intercepted for caching'); } });
     assert.equal(h.data.size, 0);
 });
@@ -42,6 +44,11 @@ test('live private HTML is network-only and a failed navigation uses only the in
     await (await unavailable.caches.open('sadgallery-static-test-build')).put('/offline.html', new Response('public offline shell'));
     assert.equal(await (await unavailable.navigate('/admin/users')).text(), 'public offline shell');
     assert.equal(unavailable.data.get('sadgallery-static-test-build').size, 1);
+    for (const path of ['/gold', '/gold/orders/private', '/operator/gold', '/admin/gold/settings']) {
+        assert.equal(await (await h.navigate(path)).text(), 'PrivateCanary-token-123');
+        assert.equal(h.data.size, 0);
+        assert.equal(await (await unavailable.navigate(path)).text(), 'public offline shell');
+    }
 });
 test('public snapshot uses no cookie and strips extra properties and original response headers', async () => {
     const h = harness(async () => new Response(JSON.stringify({ ...snapshot(), email: 'PrivateCanary@example.invalid', token: 'PrivateCanary-token' }),

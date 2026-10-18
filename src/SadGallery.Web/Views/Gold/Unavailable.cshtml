@@ -1,0 +1,2 @@
+@{ ViewData["Title"] = "کیف موقتاً در دسترس نیست"; }
+<section class="sg-card sg-compose-card"><h1 class="h4 mb-3">ارتباط با کیف برقرار نشد</h1><p class="text-muted">نتیجه عملیات را از موجودی و سوابق بررسی کنید. برای ارسال مجدد از همان صفحه و همان درخواست استفاده کنید تا عملیات دوبار ثبت نشود.</p><a href="/gold" class="btn btn-primary sg-touch">بررسی کیف و سوابق</a>@if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Operator)) { <a href="/operator/gold" class="btn btn-outline-secondary sg-touch">صف خریدها</a> }</section>

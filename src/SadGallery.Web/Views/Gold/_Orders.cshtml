@@ -1,0 +1,8 @@
+@model SadGallery.Application.Administration.Page<GoldOrderView>
+@if (Model.Items.Count == 0) { <p class="text-muted mb-0">خریدی با این وضعیت ثبت نشده است.</p> }
+else {
+<p class="small text-muted d-lg-none">برای دیدن همه ستون‌ها، جدول را افقی جابه‌جا کنید.</p>
+<div class="table-responsive" tabindex="0" role="region" aria-label="جدول خریدهای طلا"><table class="table table-hover align-middle sg-table sg-gold-table"><thead><tr><th scope="col">مشتری و زمان ثبت</th><th scope="col">وزن عیار ۷۵۰</th><th scope="col">مبلغ با کارمزد</th><th scope="col">وضعیت</th><th scope="col">عملیات</th></tr></thead><tbody>
+@foreach (var order in Model.Items) { <tr><td><strong>@(string.IsNullOrWhiteSpace(order.CustomerName) ? "مشتری" : order.CustomerName)</strong><span class="d-block small text-muted">@(order.RequestedAtUtc is {} at ? PersianDate.ToJalaliDateTimeText(at) : "ثبت نشده")</span></td><td>@GoldNumber.Grams(order.Grams) گرم</td><td>@GoldNumber.Money(order.TotalIrt) تومان<span class="d-block small text-muted">کارمزد @GoldNumber.Grams(order.FeePercent)٪</span></td><td><span class="badge @(order.Status == GoldOrderStatus.Pending ? "text-bg-warning" : order.Status == GoldOrderStatus.Approved ? "text-bg-success" : "text-bg-secondary")">@GoldTradingLabels.Status(order.Status)</span></td><td><a href="/gold/orders/@order.Id" class="btn btn-sm btn-outline-primary sg-touch">جزئیات و عملیات</a></td></tr> }
+</tbody></table></div>
+}

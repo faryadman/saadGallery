@@ -41,6 +41,8 @@ public static class AdminRules
 {
     public static string ActionTitle(string action) => action switch
     {
+        "Gold.SettingsChanged" => "تنظیم کارمزد و خرید طلا", "Gold.WalletChanged" => "تغییر کیف مشتری ویژه",
+        "Gold.OrderChanged" => "تغییر وضعیت خرید طلا", "Gold.LedgerPosted" => "ثبت قطعی دفتر کیف طلا",
         "Settings.Changed" => "تغییر تنظیمات نرخ", "ConnectionNotice.Changed" => "ویرایش متن اعلان اتصال",
         "User.AccessChanged" => "تغییر وضعیت حساب", "User.RoleChanged" => "تغییر نقش کاربر",
         "Product.Deleted" => "حذف کالا", "Product.Changed" => "ویرایش کالا", "ProductImage.Deleted" => "حذف تصویر کالا",

@@ -1,0 +1,23 @@
+@model GoldCustomerModel
+@{ ViewData["Title"] = "کیف طلا و خرید آب‌شده"; var wallet = Model.Data.Wallet; var canBuy = wallet?.Enabled == true && Model.Data.Settings.Enabled && Model.Data.Settings.FeePercent.HasValue && Model.Data.Rate != null; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"><div><span class="sg-ticket-eyebrow">مشتریان ویژه صاد</span><h1 class="h4 mt-2 mb-2">کیف طلا و خرید آب‌شده</h1><p class="small text-muted mb-0">خرید از اعتبار تومانی؛ افزایش پس‌انداز طلا پس از تأیید</p></div><a href="/Member" class="btn btn-outline-secondary sg-touch">حساب کاربری</a></div>
+<div asp-validation-summary="All" class="alert alert-danger sg-validation-summary" role="alert"></div>
+@if (wallet == null) {
+    <section class="sg-card sg-compose-card"><h2 class="h5">کیف مشتری ویژه هنوز فعال نشده است</h2><p class="text-muted">برای فعال‌سازی دسترسی و شارژ اعتبار، با مدیریت گالری در ارتباط باشید.</p><a href="/tickets/new" class="btn btn-primary sg-touch">درخواست از پشتیبانی</a></section>
+} else {
+<partial name="_Balances" model="wallet" />
+@if (!wallet.Enabled) { <div class="alert alert-warning" role="status">خرید برای این کیف غیرفعال است. موجودی و سوابق حفظ شده‌اند؛ درخواست در انتظار را می‌توانید لغو کنید.</div> }
+<div class="row g-4 mb-4"><div class="col-12 col-lg-7"><section class="sg-card sg-compose-card h-100"><h2 class="h5 mb-3">خرید طلای آب‌شده</h2>
+<p class="text-muted small">وزن را به گرم معادل عیار ۷۵۰ وارد کنید. ابتدا مبلغ دقیق را می‌بینید، سپس درخواست را ثبت می‌کنید.</p>
+@if (!canBuy) { <div class="alert alert-warning" role="status">خرید موقتاً در دسترس نیست؛ فعال‌بودن کیف، تنظیم کارمزد و نرخ آنلاین تازه لازم است. نرخ آزمایشی برای معامله استفاده نمی‌شود.</div> }
+<form method="post" action="/gold/quote">@Html.AntiForgeryToken()<input type="hidden" name="OperationId" value="@Model.Buy.OperationId" />
+<label for="gold-weight" class="form-label">وزن خرید (گرم عیار ۷۵۰)</label><div class="input-group mb-2"><input id="gold-weight" name="Weight" value="@Model.Buy.Weight" class="form-control" inputmode="decimal" maxlength="40" placeholder="مثلاً ۰٫۵۰۰" aria-describedby="gold-weight-help" required /><span class="input-group-text">گرم</span></div><p id="gold-weight-help" class="small text-muted mb-3">حداقل ۰٫۰۰۱ گرم، با دقت یک سوت؛ ارقام فارسی و انگلیسی پذیرفته می‌شوند.</p><button class="btn sg-btn-gold sg-touch" disabled="@(!canBuy)">مشاهده مبلغ و پیش‌نمایش خرید</button></form>
+</section></div><div class="col-12 col-lg-5"><section class="sg-card h-100"><h2 class="h5 mb-3">مبنای خرید</h2>
+@if (Model.Data.Rate is {} rate) { <p class="small text-muted mb-1">نرخ آنلاین هر گرم طلای ۱۸ عیار (۷۵۰)</p><p class="h5">@GoldNumber.Rate(rate.AmountIrt) <small>تومان</small></p><p class="small text-muted">اعلام نرخ: @PersianDate.ToJalaliDateTimeText(rate.QuotedAtUtc)</p> }
+else { <p class="text-muted">نرخ آنلاین قابل معامله در دسترس نیست.</p> }
+<p>کارمزد خرید: <strong>@(Model.Data.Settings.FeePercent is {} fee ? GoldNumber.Grams(fee) + "٪" : "تعیین نشده")</strong></p><p class="small text-muted mb-0">کارمزد به ارزش طلا اضافه می‌شود. مبلغ درخواست رزرو می‌شود؛ تأیید مدیر یا اپراتور همان مبلغ و وزن ثبت‌شده را نهایی می‌کند. رد یا لغو، رزرو را آزاد می‌کند.</p>
+</section></div></div>
+<section class="sg-card"><h2 class="h5 mb-3">خریدهای من</h2><partial name="_Orders" model="Model.Data.Orders" /></section>
+<partial name="_Ledger" model="Model.Data.Ledger" />
+<nav aria-label="صفحات کیف" class="d-flex flex-wrap gap-2 mt-3">@if (Model.Data.Orders.Number > 1) { <a href="/gold?page=@(Model.Data.Orders.Number - 1)" class="btn btn-outline-secondary sg-touch">قبلی</a> }<span class="align-self-center">صفحه @PersianText.ToPersianDigits(Model.Data.Orders.Number.ToString())</span>@if (Model.Data.Orders.HasNext || Model.Data.Ledger.HasNext) { <a href="/gold?page=@(Model.Data.Orders.Number + 1)" class="btn btn-outline-secondary sg-touch">بعدی</a> }</nav>
+}

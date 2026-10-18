@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-19",
+  "build": {
+    "warnings": 0,
+    "errors": 0
+  },
+  "dotnetTests": {
+    "passed": 633,
+    "failed": 0,
+    "skipped": 0
+  },
+  "serviceWorkerTests": {
+    "passed": 7,
+    "privateFinancialDataCached": false
+  },
+  "sqlServer": {
+    "migrationUpDown": true,
+    "generatedSqlUpTwiceDownReapplyTwice": true,
+    "postingFailureRollsBack": true,
+    "concurrentReservePreventsOverspend": true,
+    "ledgerAppendOnlyEfAndSql": true
+  },
+  "browser": {
+    "passed": true,
+    "widths": [
+      320,
+      390,
+      1440
+    ],
+    "offlineMutationBlocked": true,
+    "missingDecisionPreserved": true,
+    "settingsConflictPreserved": true,
+    "jsErrors": []
+  },
+  "realMarketProviderCalled": false,
+  "realCustomerFundsSeeded": false,
+  "physicalDeviceTested": false
+}

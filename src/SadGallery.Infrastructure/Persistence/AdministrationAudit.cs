@@ -20,6 +20,10 @@ internal static class AdministrationAudit
             string? action = null; string[] allowed = [];
             switch (e.Entity)
             {
+                case GoldTradingSetting: action = "Gold.SettingsChanged"; allowed = ["Enabled", "FeePercent"]; break;
+                case GoldWallet: action = "Gold.WalletChanged"; allowed = ["Enabled", "CashIrt", "ReservedIrt", "Grams750"]; break;
+                case GoldOrder: action = "Gold.OrderChanged"; allowed = ["Status", "RequestedAtUtc", "ReviewedAtUtc", "ReviewerId"]; break;
+                case GoldLedgerEntry: action = "Gold.LedgerPosted"; allowed = ["UserId", "ActorId", "OrderId", "Kind"]; break;
                 case StoreSettings: action = "Settings.Changed"; allowed = ["RatesPaused", "FetchIntervalSeconds"]; break;
                 case ConnectionNoticeSetting: action = "ConnectionNotice.Changed"; allowed = ["OfflineTitle", "OfflineDescription", "OnlineTitle", "OnlineDescription"]; break;
                 case ApplicationUser: action = "User.AccessChanged"; allowed = ["IsActive"]; break;

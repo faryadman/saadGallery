@@ -205,3 +205,19 @@ public sealed record ProviderFetchResult(
 
 ## شمارش اعلان تیکت (پیاده‌شده، 2026-10-14)
 `GET /tickets/unread?operatorQueue=false&ticketIds=<GUID>&ticketIds=<GUID>` فقط MemberFeatures فعال؛ operatorQueue=true فقط Operator/Admin فعال. حداکثر 25 شناسه تیکت. `{ "total": 2, "tickets": { "<owned-ticket-guid>": 1 } }`؛ total تعداد پیام عمومی خوانده‌نشده در نمای کاربر است، tickets فقط شمارش مثبت تیکت‌های درخواست‌شده و مجاز. هیچ متن، یادداشت یا مشخصات نویسنده برنمی‌گردد. دریافت شمارش خواندن ثبت نمی‌کند. Cache-Control: no-store, private. راهبرد خواندن/هم‌زمانی در ADR-0018.
+
+## مسیرهای MVC کیف طلا — 2026-10-19
+| مسیر | روش | مجوز/عملیات |
+| --- | --- | --- |
+| /gold | GET | عضو فعال، کیف و سوابق خودش |
+| /gold/quote | POST | مشتری ویژه، پیش‌نمایش وزن و مبلغ سمت سرور |
+| /gold/orders/{guid} | GET | مالک یا مدیر/اپراتور، رسید |
+| /gold/orders/{guid}/submit | POST | مالک، رزرو درخواست از پیش‌نمایش معتبر |
+| /gold/orders/{guid}/cancel | POST | مالک، لغو Pending با Version |
+| /operator/gold | GET | مدیر/اپراتور، فیلتر status/customerId/page؛ نبود status یعنی Pending، status خالی یعنی همه |
+| /operator/gold/{guid}/review | POST | مدیر/اپراتور، Decision=Approved/Rejected، Version، Note (برای رد الزامی) |
+| /admin/gold/settings | GET/POST | فقط مدیر، Enabled/Fee/Version |
+| /admin/gold/wallets/{int} | GET | فقط مدیر، کیف/خرید/گردش مشتری |
+| /admin/gold/wallets/{int}/enable | POST | فقط مدیر، Enabled/Version |
+| /admin/gold/wallets/{int}/credit | POST | فقط مدیر، OperationId/Kind=TomanCredit یا GoldCredit/Amount/Reason |
+همه POSTها ضدجعل دارند؛ موفقیت redirect، ورودی نامعتبر۴۰۰، تعارض۴۰۹، عدم دسترسی Policy/Identity، شناسه بیگانه۴۰۴، سرویس/نرخ unavailable۵۰۳. عملیات مالی idempotent با همان شناسه است؛ تکرار کلید شارژ با محتوای متفاوت۴۰۹ است. پاسخ خصوصی no-store؛ API عمومی/آفلاین مالی ایجاد نشده است.
