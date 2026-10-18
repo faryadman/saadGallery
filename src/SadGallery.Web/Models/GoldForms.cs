@@ -17,15 +17,24 @@ public sealed class GoldCreditForm
 }
 public class GoldVersionForm
 {
-    [StringLength(16)] public string Version { get; set; } = "";
-    public byte[]? Bytes() { try { var b = Convert.FromBase64String(Version ?? ""); return b.Length == 8 ? b : null; } catch (FormatException) { return null; } }
+    [Required(ErrorMessage = "نسخه اطلاعات مشخص نیست؛ صفحه را تازه کنید."), StringLength(16, ErrorMessage = "نسخه اطلاعات معتبر نیست؛ صفحه را تازه کنید.")]
+    public string Version { get; set; } = "";
+    public byte[]? Bytes() => Decode(Version);
+    internal static byte[]? Decode(string? version) { try { var b = Convert.FromBase64String(version ?? ""); return b.Length == 8 ? b : null; } catch (FormatException) { return null; } }
 }
 public sealed class GoldSettingsForm : GoldVersionForm
 {
     public bool Enabled { get; set; }
     [Required(ErrorMessage = "درصد کارمزد را وارد کنید؛ صفر هم مجاز است."), StringLength(40)] public string Fee { get; set; } = "";
 }
-public sealed class GoldEnableForm : GoldVersionForm { public bool Enabled { get; set; } }
+public sealed class GoldEnableForm
+{
+    public bool Enabled { get; set; }
+    // A new wallet has no rowversion. The store still requires one whenever the wallet already exists.
+    [StringLength(16, ErrorMessage = "نسخه کیف معتبر نیست؛ صفحه را تازه کنید.")]
+    public string? Version { get; set; }
+    public byte[]? Bytes() => GoldVersionForm.Decode(Version);
+}
 public sealed class GoldReviewForm : GoldVersionForm
 {
     [Required(ErrorMessage = "تأیید یا رد را انتخاب کنید.")] public GoldOrderStatus? Decision { get; set; }

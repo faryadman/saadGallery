@@ -125,7 +125,10 @@ public sealed class GoldController(IGoldTradingStore store, IAdministrationStore
     {
         try
         {
-            var result = ModelState.IsValid ? await store.EnableWalletAsync(ActorId, id, form.Enabled, form.Bytes(), ct) : GoldResult.Invalid;
+            var version = form.Bytes();
+            if (!string.IsNullOrWhiteSpace(form.Version) && version == null)
+                ModelState.AddModelError(nameof(form.Version), "نسخه کیف معتبر نیست؛ صفحه را تازه کنید.");
+            var result = ModelState.IsValid ? await store.EnableWalletAsync(ActorId, id, form.Enabled, version, ct) : GoldResult.Invalid;
             if (result == GoldResult.Forbidden) return Forbid();
             if (result == GoldResult.Saved) { TempData["Notice"] = "وضعیت مشتری ویژه ذخیره شد."; return RedirectToAction(nameof(Wallet), new { id }); }
             Failure(result); return await WalletView(id, null, 1, ct);

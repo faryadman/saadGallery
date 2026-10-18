@@ -81,6 +81,45 @@ public sealed class GoldTradingSqlTests
     private static void Denied(HttpResponseMessage response)
     { Assert.Equal(HttpStatusCode.Redirect, response.StatusCode); Assert.Contains("/Account/AccessDenied", response.Headers.Location!.ToString(), StringComparison.Ordinal); }
     [RequiresSqlServerFact]
+    public async Task InitialWalletActivationAcceptsEmptyVersionAndUnlocksFundingButExistingWalletRequiresVersion()
+    {
+        var ct = TestContext.Current.CancellationToken; await using var f = new Fixture(); await f.Init(ct);
+        var admin = await f.User(RoleNames.Admin, ct); var first = await f.User(RoleNames.Customer, ct); var second = await f.User(RoleNames.Customer, ct);
+        var path = $"/admin/gold/wallets/{first.Id}";
+        Assert.Null((await f.Store.WalletAsync(first.Id, 1, ct)).Wallet);
+        var initial = await admin.Client.GetStringAsync(path, ct);
+        Assert.Contains("name=\"Version\" value=\"\"", initial, StringComparison.Ordinal);
+        using (var r = await Post(admin.Client, path + "/enable", new() { ["Enabled"] = "true", ["Version"] = "" }, ct)) Assert.Equal(HttpStatusCode.Redirect, r.StatusCode);
+        var wallet = (await f.Store.WalletAsync(first.Id, 1, ct)).Wallet!;
+        Assert.True(wallet.Enabled); Assert.Equal((0m, 0m, 0m), (wallet.CashIrt, wallet.ReservedIrt, wallet.Grams));
+        var enabledPage = await admin.Client.GetStringAsync(path, ct);
+        var button = Regex.Match(enabledPage, "<button[^>]*>ثبت افزایش موجودی</button>", RegexOptions.CultureInvariant).Value;
+        Assert.NotEmpty(button); Assert.DoesNotContain("disabled", button, StringComparison.Ordinal);
+        foreach (var kind in new[] { "TomanCredit", "GoldCredit" })
+        {
+            using var credit = await Post(admin.Client, path + "/credit", new() { ["OperationId"] = Guid.NewGuid().ToString(), ["Kind"] = kind, ["Amount"] = kind == "TomanCredit" ? "۱۰۰٬۰۰۰" : "۰٫۲۵۰", ["Reason"] = "رگرسیون شارژ پس از فعال‌سازی" }, ct);
+            Assert.Equal(HttpStatusCode.Redirect, credit.StatusCode);
+        }
+        foreach (var version in new[] { "", Convert.ToBase64String(wallet.Version) })
+        {
+            using var conflict = await Post(admin.Client, path + "/enable", new() { ["Enabled"] = "false", ["Version"] = version }, ct);
+            Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode);
+            Assert.DoesNotContain("The Version field is required", await conflict.Content.ReadAsStringAsync(ct), StringComparison.Ordinal);
+        }
+        var latest = (await f.Store.WalletAsync(first.Id, 1, ct)).Wallet!;
+        Assert.True(latest.Enabled); Assert.Equal(100_000m, latest.CashIrt); Assert.Equal(.250m, latest.Grams);
+        using (var disabled = await Post(admin.Client, path + "/enable", new() { ["Enabled"] = "false", ["Version"] = Convert.ToBase64String(latest.Version) }, ct)) Assert.Equal(HttpStatusCode.Redirect, disabled.StatusCode);
+        var secondPath = $"/admin/gold/wallets/{second.Id}/enable";
+        using (var malformed = await Post(admin.Client, secondPath, new() { ["Enabled"] = "true", ["Version"] = "not-base64" }, ct)) Assert.Equal(HttpStatusCode.BadRequest, malformed.StatusCode);
+        Assert.Null((await f.Store.WalletAsync(second.Id, 1, ct)).Wallet);
+        using (var missing = await Post(admin.Client, secondPath, new() { ["Enabled"] = "true" }, ct)) Assert.Equal(HttpStatusCode.Redirect, missing.StatusCode);
+        using (var settings = await Post(admin.Client, "/admin/gold/settings", new() { ["Enabled"] = "false", ["Fee"] = "۱" }, ct))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, settings.StatusCode); var html = await settings.Content.ReadAsStringAsync(ct);
+            Assert.Contains("نسخه اطلاعات مشخص نیست", html, StringComparison.Ordinal); Assert.DoesNotContain("The Version field is required", html, StringComparison.Ordinal);
+        }
+    }
+    [RequiresSqlServerFact]
     public async Task RealHttpPurchaseApprovalAuthorizationLedgerAndMissingDecision()
     {
         var ct = TestContext.Current.CancellationToken; await using var f = new Fixture(); await f.Init(ct);
