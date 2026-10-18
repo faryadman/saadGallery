@@ -466,8 +466,7 @@ code {
     color: #fff;
 }
 
-.sg-catalog-hero + .sg-catalog-search ~ .pagination .page-link,
-.sg-category-chips ~ .pagination .page-link {
+.sg-catalog-hero ~ nav .pagination .page-link {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -633,3 +632,27 @@ code {
 
 .sg-admin-table { min-width: 660px; }
 .sg-admin-table th, .sg-admin-table td { padding-block: .75rem; }
+
+/* فیلترهای موبایل؛ همان فرم و مقادیر دسکتاپ در کنترل بومی باز و بسته‌شونده */
+.sg-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-height: 48px;
+    padding: .8rem 1rem;
+    border: 1px solid var(--sg-border);
+    border-inline-start: 3px solid var(--sg-gold);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--sg-navy);
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+}
+.sg-filter-toggle::-webkit-details-marker { display: none; }
+.sg-filter-toggle::after { content: '+'; margin-inline-start: auto; font-size: 1.35rem; }
+.sg-filter-disclosure[open] > .sg-filter-toggle::after { content: '−'; }
+.sg-filter-disclosure[open] > .sg-filter-toggle { margin-bottom: .75rem; }
+.sg-filter-toggle:focus-visible { outline: 2px solid var(--sg-gold-dark); outline-offset: 3px; }
+.sg-filter-active { padding: .15rem .6rem; border-radius: 20px; background: var(--sg-cream); font-size: .8rem; }
+.sg-filter-disclosure[data-filter-desktop] > .sg-filter-toggle { display: none; }

@@ -1,9 +1,12 @@
 @model SadGallery.Application.Administration.Page<SadGallery.Application.Administration.ManagedUser>
 @using SadGallery.Application.Administration
-@{ ViewData["Title"] = "کاربران و نقش‌ها"; var search = ViewData["Search"] as string; }
+@{ ViewData["Title"] = "کاربران و نقش‌ها"; var search = ViewData["Search"] as string; var filterActive = !string.IsNullOrWhiteSpace(search); }
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"><div><h1 class="h4 mb-2">کاربران و نقش‌ها</h1><p class="small text-muted mb-0">مدیریت دسترسی و فعال‌بودن حساب‌ها</p></div><a href="/Admin/Dashboard" class="btn btn-outline-secondary sg-touch">پنل مدیر</a></div>
 @if(TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
-<form method="get" action="/admin/users" class="sg-card sg-catalog-search mb-4"><div class="row g-3 align-items-end"><div class="col-12 col-md-8"><label for="user-search" class="form-label">نام نمایشی یا شناسه کاربر</label><input id="user-search" name="search" value="@search" class="form-control" maxlength="100" /></div><div class="col-12 col-md-4 d-flex gap-2"><button class="btn btn-primary sg-touch">جست‌وجو</button><a href="/admin/users" class="btn btn-outline-secondary sg-touch">پاک‌کردن</a></div></div></form>
+<details class="sg-filter-disclosure mb-4" data-responsive-filters>
+    <summary class="sg-filter-toggle"><span>فیلترها</span>@if (filterActive) { <span class="sg-filter-active">فعال</span> }</summary>
+<form method="get" action="/admin/users" class="sg-card sg-catalog-search"><div class="row g-3 align-items-end"><div class="col-12 col-md-8"><label for="user-search" class="form-label">نام نمایشی یا شناسه کاربر</label><input id="user-search" name="search" value="@search" class="form-control" maxlength="100" /></div><div class="col-12 col-md-4 d-flex gap-2"><button class="btn btn-primary sg-touch">جست‌وجو</button><a href="/admin/users" class="btn btn-outline-secondary sg-touch">پاک‌کردن</a></div></div></form>
+</details>
 <section class="sg-card"><h2 class="h6 mb-3">@PersianText.ToPersianDigits(Model.Total.ToString()) حساب</h2>
 @if(Model.Items.Count == 0) { <p class="text-muted mb-0">کاربری با این مشخصات پیدا نشد.</p> }
 else {

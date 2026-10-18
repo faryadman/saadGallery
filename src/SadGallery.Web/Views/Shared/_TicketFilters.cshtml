@@ -1,7 +1,10 @@
 @model SadGallery.Web.Models.Tickets.TicketListViewModel
 @using SadGallery.Domain.Tickets
 @using SadGallery.Web.Models.Tickets
-<section class="sg-catalog-search mb-4" aria-labelledby="ticket-filter-title">
+@{ var filterActive = new[] { "search", "status", "from", "until" }.Any(key => !string.IsNullOrWhiteSpace(Context.Request.Query[key])); }
+<details class="sg-filter-disclosure mb-4" data-responsive-filters>
+    <summary class="sg-filter-toggle"><span>فیلترها</span>@if (filterActive) { <span class="sg-filter-active">فعال</span> }</summary>
+<section class="sg-catalog-search" aria-labelledby="ticket-filter-title">
     <div class="sg-catalog-search__heading">
         <div>
             <h2 id="ticket-filter-title" class="h5 mb-1">فیلتر تیکت‌ها</h2>
@@ -40,3 +43,5 @@
         </div>
     </form>
 </section>
+
+</details>

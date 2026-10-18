@@ -5,6 +5,7 @@
 @using SadGallery.Domain.Enums
 @{
     ViewData["Title"] = "محصولات طلا";
+    var filterActive = Model.HasBudget || Model.CategoryId != null || Context.Request.Query.ContainsKey("inStockOnly");
     var countText = PersianText.ToPersianDigits(Model.TotalCount.ToString("N0", CultureInfo.InvariantCulture));
     var visibleCategories = Model.Categories.Where(category => category.ProductCount > 0).ToList();
 }
@@ -18,7 +19,9 @@
     </p>
 </section>
 
-<section class="sg-catalog-search mb-4" aria-labelledby="budget-search-title">
+<details class="sg-filter-disclosure mb-4" data-responsive-filters data-filter-error="@(Model.FilterError != null ? "true" : null)" open="@(Model.FilterError != null)">
+    <summary class="sg-filter-toggle"><span>فیلترها</span>@if (filterActive) { <span class="sg-filter-active">فعال</span> }</summary>
+<section class="sg-catalog-search" aria-labelledby="budget-search-title">
     <div class="sg-catalog-search__heading">
         <div>
             <span class="sg-eyebrow">پیدا کردن گزینهٔ مناسب</span>
@@ -89,18 +92,9 @@
     }
 </section>
 
-@if (Model.CatalogUnavailable)
-{
-    <div class="alert alert-warning sg-empty" role="alert">
-        <h2 class="h6">ویترین در این لحظه در دسترس نیست</h2>
-        <p class="mb-0">برقراری ارتباط با پایگاه داده ممکن نشد. لطفاً چند لحظه دیگر دوباره تلاش کنید.</p>
-    </div>
-}
-else if (Model.FilterError is null)
-{
-    @if (visibleCategories.Count > 0)
+    @if (!Model.CatalogUnavailable && Model.FilterError is null && visibleCategories.Count > 0)
     {
-        <nav class="sg-category-chips mb-4" aria-label="گروه‌های محصول">
+        <nav class="sg-category-chips mt-4" aria-label="گروه‌های محصول">
             <span class="small fw-semibold text-muted">دسته‌ها:</span>
             <a class="sg-category-chip @(Model.CategoryId is null ? "is-active" : null)" href="/products">همه</a>
             @foreach (var category in visibleCategories)
@@ -112,7 +106,17 @@ else if (Model.FilterError is null)
             }
         </nav>
     }
+</details>
 
+@if (Model.CatalogUnavailable)
+{
+    <div class="alert alert-warning sg-empty" role="alert">
+        <h2 class="h6">ویترین در این لحظه در دسترس نیست</h2>
+        <p class="mb-0">برقراری ارتباط با پایگاه داده ممکن نشد. لطفاً چند لحظه دیگر دوباره تلاش کنید.</p>
+    </div>
+}
+else if (Model.FilterError is null)
+{
     <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
         <div>
             <h2 class="h4 mb-1">@(Model.HasBudget ? "گزینه‌های در محدودهٔ بودجه" : "همهٔ محصولات")</h2>

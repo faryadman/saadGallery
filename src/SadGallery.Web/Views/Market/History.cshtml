@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "تاریخچه نرخ‌ها";
     var history = Model.History;
+    var filterActive = new[] { "code", "days" }.Any(key => !string.IsNullOrWhiteSpace(Context.Request.Query[key]));
 
     static string QualityBadge(RateQuality quality) => quality switch
     {
@@ -21,7 +22,9 @@
     </p>
 </section>
 
-<form method="get" asp-action="History" class="sg-card mb-3">
+<details class="sg-filter-disclosure mb-3" data-responsive-filters>
+    <summary class="sg-filter-toggle"><span>فیلترها</span>@if (filterActive) { <span class="sg-filter-active">فعال</span> }</summary>
+<form method="get" asp-action="History" class="sg-card">
     <div class="row g-2 align-items-end">
         <div class="col-md-6">
             <label class="form-label" for="code">دارایی</label>
@@ -46,6 +49,7 @@
         </div>
     </div>
 </form>
+</details>
 
 <div class="sg-card mb-3">
     <div class="sg-card__title">@history.Title — @PersianText.ToPersianDigits(history.Days.ToString()) روز اخیر</div>
