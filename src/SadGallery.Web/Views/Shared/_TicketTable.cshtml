@@ -41,13 +41,13 @@
                         <a href="@detailUrl" class="btn btn-sm btn-outline-primary sg-touch">@(ticket.Status == TicketStatus.Closed ? "مشاهده" : "مشاهده و پاسخ")</a>
                         @if(Model.IsOperator)
                         {
-                            @if(ticket.Status is TicketStatus.New or TicketStatus.Closed)
+                            @if(ticket.Status == TicketStatus.New)
                             {
                                 <form method="post" action="/operator/tickets/@ticket.Id/status@(Context.Request.QueryString)" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(ticket.RowVersion)" />
                                     <input type="hidden" name="NextStatus" value="@((int)TicketStatus.InReview)" />
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary sg-touch">@(ticket.Status == TicketStatus.Closed ? "بازگشایی" : "شروع بررسی")</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary sg-touch">شروع بررسی</button>
                                 </form>
                             }
                         }

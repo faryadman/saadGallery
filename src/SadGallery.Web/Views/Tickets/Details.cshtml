@@ -1,28 +1,29 @@
 @model SadGallery.Application.Tickets.CustomerTicket
-@{ ViewData["Title"] = "گفت‌وگوی تیکت"; }
+@using SadGallery.Domain.Tickets
+@{ ViewData["Title"] = "گفت‌وگوی تیکت"; var closed = Model.Ticket.Status == TicketStatus.Closed; }
 <div class="sg-ticket-page">
 @if (TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
 @if (!ViewData.ModelState.IsValid)
 { @Html.ValidationSummary(false, "عملیات انجام نشد", new { @class = "alert alert-danger", role = "alert" }) }
 <partial name="_TicketConversation" model="Model" />
-<section class="sg-card sg-compose-card mt-4 sg-ticket-compose" aria-labelledby="reply-title">
-    <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">＋</span><h2 id="reply-title" class="h5 mb-0">ارسال پاسخ</h2></div>
+<details class="sg-card sg-compose-card mt-4 sg-ticket-compose" data-ticket-reply open="@(!closed || !ViewData.ModelState.IsValid)">
+    <summary class="sg-touch fw-semibold mb-3">@(closed ? "ارسال پیام جدید و بازگشایی تیکت" : "ارسال پاسخ")</summary>
     <form method="post" action="/tickets/@Model.Ticket.Id/reply" enctype="multipart/form-data" data-ticket-compose>
         @Html.AntiForgeryToken()
         <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-        <label for="Body" class="form-label fw-semibold">پاسخ شما</label>
+        <label for="Body" class="form-label fw-semibold">@(closed ? "پیام جدید شما" : "پاسخ شما")</label>
         <textarea id="Body" name="Body" class="form-control sg-compose-message" maxlength="4000" rows="5" required
                   aria-describedby="replyHelp messageCounter" data-message-input>@ViewData["ReplyBody"]</textarea>
         <div class="d-flex justify-content-between gap-2 mt-2 mb-4">
-            <span id="replyHelp" class="form-text">پاسخ به تیکت بسته‌شده، آن را برای بررسی دوباره باز می‌کند.</span>
+            <span id="replyHelp" class="form-text">@(closed ? "با ارسال پیام جدید، تیکت دوباره در حال بررسی می‌شود و پشتیبانی می‌تواند پاسخ دهد." : "ادامه گفت‌وگو با پشتیبانی؛ پیام شما در همین تیکت ثبت می‌شود.")</span>
             <span id="messageCounter" class="small text-muted" data-message-counter aria-live="polite">حداکثر ۴۰۰۰ نویسه</span>
         </div>
         <partial name="_TicketPhotoPicker" />
         <div class="d-flex flex-wrap gap-2 mt-4">
-            <button class="btn btn-primary sg-touch" type="submit">ارسال پاسخ</button>
+            <button class="btn btn-primary sg-touch" type="submit">@(closed ? "ارسال پیام و بازگشایی تیکت" : "ارسال پاسخ")</button>
             <a href="/tickets" class="btn btn-outline-secondary sg-touch">بازگشت به تیکت‌ها</a>
         </div>
     </form>
-</section>
+</details>
 </div>
 @section Scripts { <script src="~/js/ticket-compose.js" asp-append-version="true"></script> }

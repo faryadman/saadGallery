@@ -18,12 +18,23 @@ public sealed class TicketWorkflowTests
             (TicketStatus.InReview,TicketStatus.AwaitingCustomer), (TicketStatus.InReview,TicketStatus.Answered),
             (TicketStatus.AwaitingCustomer,TicketStatus.InReview), (TicketStatus.AwaitingCustomer,TicketStatus.Closed),
             (TicketStatus.Answered,TicketStatus.InReview), (TicketStatus.Answered,TicketStatus.Closed),
-            (TicketStatus.Closed,TicketStatus.InReview),
         };
         foreach(var from in Enum.GetValues<TicketStatus>())
         foreach(var to in Enum.GetValues<TicketStatus>())
             Assert.Equal(allowed.Contains((from,to)),TicketWorkflow.CanTransition(from,to));
         Assert.False(TicketWorkflow.CanTransition((TicketStatus)99,TicketStatus.InReview));
+        Assert.False(TicketWorkflow.CanTransition(TicketStatus.Closed,TicketStatus.InReview));
+    }
+    [Fact]
+    public void ClosedTicketCanReceiveOnlyCustomerPublicMessage()
+    {
+        foreach (var status in Enum.GetValues<TicketStatus>())
+        {
+            Assert.True(TicketWorkflow.CanPostPublicReply(status, false));
+            Assert.Equal(status != TicketStatus.Closed, TicketWorkflow.CanPostPublicReply(status, true));
+        }
+        Assert.False(TicketWorkflow.CanPostPublicReply((TicketStatus)99, false));
+        Assert.False(TicketWorkflow.CanPostPublicReply((TicketStatus)99, true));
     }
     [Theory]
     [InlineData(TicketStatus.New,TicketStatus.New)]

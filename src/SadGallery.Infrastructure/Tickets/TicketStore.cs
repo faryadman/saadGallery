@@ -88,6 +88,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         if (!ticket.RowVersion.SequenceEqual(change.RowVersion)) return TicketWriteResult.Conflict;
         var target = change.Status ?? ticket.Status;
         if (finish ? !TicketWorkflow.CanFinish(ticket.Status) : actor.IsOperator && change.Status.HasValue && !TicketWorkflow.CanTransition(ticket.Status, target)) return TicketWriteResult.Invalid;
+        if (change.Body != null && !change.InternalNote && !TicketWorkflow.CanPostPublicReply(ticket.Status, actor.IsOperator)) return TicketWriteResult.Invalid;
         // Sending a reply and changing status are independent actions. An omitted status keeps it unchanged.
         if (change.AssignTo.HasValue && !await (from user in db.Users
             join ur in db.UserRoles on user.Id equals ur.UserId join role in db.Roles on ur.RoleId equals role.Id
@@ -107,7 +108,7 @@ public sealed class TicketStore(SadGalleryDbContext db, IClock clock) : ITicketS
         if (change.AssignTo.HasValue) ticket.AssignedOperatorUserId = change.AssignTo;
         Event(id, actor.UserId, finish ? "Ticket.Finished" : change.InternalNote ? "Ticket.InternalNoteAdded" : "Ticket.Changed",
             $"Status:{ticket.Status}->{target};Assigned:{ticket.AssignedOperatorUserId}");
-        ticket.Status = target; ticket.ClosedAtUtc = target == TicketStatus.Closed ? now : null;
+        ticket.Status = target; ticket.ClosedAtUtc = target == TicketStatus.Closed ? ticket.ClosedAtUtc ?? now : null;
         ticket.LastActivityAtUtc = now;
         // Force a parent UPDATE even when a test clock (or clock resolution) yields the same time.
         // This makes rowversion guard the message/note transaction as well as status changes.

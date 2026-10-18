@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "بررسی تیکت";
     var form = ViewData["ChangeForm"] as ChangeTicketForm ?? new();
+    var closed = Model.Public.Ticket.Status == TicketStatus.Closed;
 }
 <div class="sg-ticket-page">
 @if (TempData["Notice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
@@ -13,13 +14,16 @@
 <div class="row g-4 mt-1">
     <div class="col-12 col-lg-8">
         <section class="sg-card sg-compose-card h-100" aria-labelledby="operator-reply-title">
-            <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">＋</span><h2 id="operator-reply-title" class="h5 mb-0">پاسخ و رسیدگی</h2></div>
+            <div class="sg-compose-heading"><span class="sg-compose-step" aria-hidden="true">＋</span><h2 id="operator-reply-title" class="h5 mb-0">@(closed ? "یادداشت داخلی و پیگیری" : "پاسخ و رسیدگی")</h2></div>
+            @if (closed) { <p class="alert alert-info" role="status">تیکت اتمام یافته است؛ پاسخ‌گویی پشتیبانی بسته است. فقط پیام جدید مشتری، گفت‌وگو را دوباره باز می‌کند.</p> }
             <form method="post" action="/operator/tickets/@Model.Public.Ticket.Id">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.Public.RowVersion)" />
-                <label for="body" class="form-label fw-semibold">متن پاسخ یا یادداشت</label>
-                <textarea id="body" name="Body" class="form-control sg-compose-message" rows="5" maxlength="4000" aria-describedby="operatorReplyHelp">@form.Body</textarea>
-                <div id="operatorReplyHelp" class="form-text mb-3">تغییر وضعیت اختیاری است؛ با «بدون تغییر»، پاسخ ثبت و وضعیت فعلی حفظ می‌شود.</div>
+                <label for="body" class="form-label fw-semibold">@(closed ? "یادداشت داخلی (فقط تیم پشتیبانی)" : "متن پاسخ یا یادداشت")</label>
+                <textarea id="body" name="Body" class="form-control sg-compose-message" rows="5" maxlength="@(closed ? 2000 : 4000)" aria-describedby="operatorReplyHelp">@form.Body</textarea>
+                <div id="operatorReplyHelp" class="form-text mb-3">@(closed ? "یادداشت داخلی برای مشتری ارسال نمی‌شود و تیکت را باز نمی‌کند." : "تغییر وضعیت اختیاری است؛ با «بدون تغییر»، پاسخ ثبت و وضعیت فعلی حفظ می‌شود.")</div>
+                @if (closed) { <input type="hidden" name="InternalNote" value="true" /> }
+                else {
                 <div class="sg-ticket-note-choice mb-4">
                     <div class="form-check">
                         <input id="internalNote" class="form-check-input" type="checkbox" name="InternalNote" value="true" checked="@form.InternalNote" />
@@ -27,7 +31,9 @@
                     </div>
                     <div class="form-text">فقط تیم پشتیبانی می‌بیند؛ حداکثر ۲۰۰۰ نویسه.</div>
                 </div>
+                }
                 <div class="row g-3">
+                    @if (!closed) {
                     <div class="col-12 col-md-7">
                         <label for="status" class="form-label">وضعیت بعدی</label>
                         <select id="status" name="Status" class="form-select">
@@ -36,6 +42,7 @@
                             { <option value="@((int)status)" selected="@(form.Status == status)">@TicketLabels.Status(status, true)</option> }
                         </select>
                     </div>
+                    }
                     <div class="col-12 col-md-5">
                         <label for="assign" class="form-label">ارجاع به اپراتور</label>
                         <input id="assign" name="AssignTo" value="@form.AssignTo" type="number" min="1" class="form-control" aria-describedby="assignHelp" />

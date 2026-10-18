@@ -6,13 +6,13 @@ public enum TicketType { PriceInquiry, ProductQuestion, StockAndWeight, OrderFol
 public static class TicketWorkflow
 {
     public static bool CanFinish(TicketStatus status) => Enum.IsDefined(status) && status != TicketStatus.Closed;
+    public static bool CanPostPublicReply(TicketStatus status, bool isOperator) => Enum.IsDefined(status) && (!isOperator || status != TicketStatus.Closed);
     public static bool CanTransition(TicketStatus from, TicketStatus to) => (from, to) switch
     {
         (TicketStatus.New, TicketStatus.InReview) => true,
         (TicketStatus.InReview, TicketStatus.AwaitingCustomer or TicketStatus.Answered) => true,
         (TicketStatus.AwaitingCustomer, TicketStatus.InReview or TicketStatus.Closed) => true,
         (TicketStatus.Answered, TicketStatus.InReview or TicketStatus.Closed) => true,
-        (TicketStatus.Closed, TicketStatus.InReview) => true,
         _ => false,
     };
     public static TicketStatus AfterCustomerReply(TicketStatus status) => status switch

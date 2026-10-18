@@ -76,9 +76,34 @@ public sealed class TicketFinishSqlTests
             Assert.Equal(TicketStatus.New, (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!.Ticket.Status);
             using (var finished = await Finish(owner.Client, target, false)) Assert.Equal(HttpStatusCode.Redirect, finished.StatusCode);
             var closedTarget = (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!;
-            Assert.Equal(TicketWriteResult.Saved, await service.ChangeAsync(new(owner.Id, false), target.Ticket.Id, new("پاسخ و بازگشایی", false, null, null, closedTarget.RowVersion), ct));
+            var closedAt = closedTarget.Ticket.ClosedAtUtc;
+            foreach (var staff in new[] { op, admin })
+            {
+                var csrf = Token(await staff.Client.GetStringAsync("/Account/Login", ct));
+                using (var reply = await staff.Client.PostAsync($"/operator/tickets/{target.Ticket.Id}", new FormUrlEncodedContent(new Dictionary<string,string> {
+                    ["__RequestVerificationToken"] = csrf, ["Body"] = "پاسخ عمومی ممنوع پس از اتمام", ["RowVersion"] = Convert.ToBase64String(closedTarget.RowVersion) }), ct)) Assert.Equal(HttpStatusCode.BadRequest, reply.StatusCode);
+                using (var manual = await staff.Client.PostAsync($"/operator/tickets/{target.Ticket.Id}/status", new FormUrlEncodedContent(new Dictionary<string,string> {
+                    ["__RequestVerificationToken"] = csrf, ["NextStatus"] = "1", ["RowVersion"] = Convert.ToBase64String(closedTarget.RowVersion) }), ct)) Assert.Equal(HttpStatusCode.BadRequest, manual.StatusCode);
+                using (var manualDetails = await staff.Client.PostAsync($"/operator/tickets/{target.Ticket.Id}", new FormUrlEncodedContent(new Dictionary<string,string> {
+                    ["__RequestVerificationToken"] = csrf, ["Status"] = "1", ["RowVersion"] = Convert.ToBase64String(closedTarget.RowVersion) }), ct)) Assert.Equal(HttpStatusCode.BadRequest, manualDetails.StatusCode);
+            }
+            var stillClosed = (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!;
+            Assert.Equal(TicketStatus.Closed, stillClosed.Ticket.Status); Assert.Single(stillClosed.Messages); Assert.Equal(closedAt, stillClosed.Ticket.ClosedAtUtc);
+            Assert.DoesNotContain("بازگشایی", await op.Client.GetStringAsync("/operator/tickets", ct), StringComparison.Ordinal);
+            var closedCustomerPage = await owner.Client.GetStringAsync($"/tickets/{target.Ticket.Id}", ct);
+            Assert.Contains("ارسال پیام جدید و بازگشایی تیکت", closedCustomerPage, StringComparison.Ordinal);
+            Assert.DoesNotContain("data-ticket-reply open", closedCustomerPage, StringComparison.Ordinal);
+            Assert.Equal(TicketWriteResult.Saved, await service.ChangeAsync(new(op.Id, true), target.Ticket.Id, new("یادداشت خصوصی پس از اتمام", true, null, null, stillClosed.RowVersion), ct));
+            closedTarget = (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!;
+            Assert.Equal(TicketStatus.Closed, closedTarget.Ticket.Status); Assert.Equal(closedAt, closedTarget.Ticket.ClosedAtUtc); Assert.Single(closedTarget.Messages);
+            using (var customerMessage = await owner.Client.PostAsync($"/tickets/{target.Ticket.Id}/reply", new FormUrlEncodedContent(new Dictionary<string,string> {
+                ["__RequestVerificationToken"] = Token(await owner.Client.GetStringAsync("/Account/Login", ct)), ["Body"] = "پاسخ و بازگشایی", ["RowVersion"] = Convert.ToBase64String(closedTarget.RowVersion) }), ct)) Assert.Equal(HttpStatusCode.Redirect, customerMessage.StatusCode);
             var reopened = (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!;
             Assert.Equal(TicketStatus.InReview, reopened.Ticket.Status); Assert.Null(reopened.Ticket.ClosedAtUtc);
+            using (var staffReply = await op.Client.PostAsync($"/operator/tickets/{target.Ticket.Id}", new FormUrlEncodedContent(new Dictionary<string,string> {
+                ["__RequestVerificationToken"] = Token(await op.Client.GetStringAsync("/Account/Login", ct)), ["Body"] = "پاسخ پس از بازشدن مجاز است", ["RowVersion"] = Convert.ToBase64String(reopened.RowVersion) }), ct)) Assert.Equal(HttpStatusCode.Redirect, staffReply.StatusCode);
+            var answered = (await service.GetCustomerAsync(owner.Id, target.Ticket.Id, ct))!;
+            Assert.Equal(3, answered.Messages.Count); Assert.DoesNotContain(answered.Messages, x => x.Body.Contains("یادداشت خصوصی", StringComparison.Ordinal));
         }
         finally { await db.Database.EnsureDeletedAsync(ct); }
     }
