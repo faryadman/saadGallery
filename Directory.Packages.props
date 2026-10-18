@@ -11,7 +11,6 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-
   <ItemGroup Label="Runtime — هم‌نسخه با .NET 10 (10.0.12)">
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
@@ -27,8 +26,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
   </ItemGroup>
-
   <ItemGroup Label="تصویر (فاز ۴) — رمزگشایی و بازرمزگذاری واقعی، نه فقط بررسی پسوند">
     <!-- انتخاب کتابخانه: SkiaSharp با مجوز MIT (بدون نیاز به کلید مجوز در زمان ساخت).
          دلیل ردِ SixLabors.ImageSharp: نسخه ۴ آن برای وابستگیِ مستقیم «کلید مجوز در زمان
@@ -39,7 +38,6 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.153.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="4.153.1" />
   </ItemGroup>
-
   <ItemGroup Label="Testing">
     <!-- Microsoft.NET.Test.Sdk و coverlet لازم نیستند: پروژه‌های xunit v3 روی
          Microsoft.Testing.Platform اجرا می‌شوند (dotnet.config را ببینید).

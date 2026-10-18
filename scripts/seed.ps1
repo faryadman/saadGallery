@@ -21,7 +21,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$ConnectionString = "Server=localhost;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
+    [string]$ConnectionString = "Server=.;Database=SadGallery;Trusted_Connection=True;TrustServerCertificate=True"
 )
 
 $ErrorActionPreference = 'Stop'
