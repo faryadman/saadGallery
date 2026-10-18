@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><meta name="theme-color" content="#10233f"/><title>حالت آفلاین | گالری صاد</title><link rel="manifest" href="/manifest.webmanifest"/><link rel="icon" href="/pwa/icon.svg" type="image/svg+xml"/><link rel="apple-touch-icon" href="/pwa/icon-180.png"/><link rel="stylesheet" href="/lib/bootstrap/bootstrap.rtl.min.css"/><link rel="stylesheet" href="/css/site.css"/></head>
+<body data-pwa-offline>
+<header class="sg-footer"><div class="container py-3 d-flex align-items-center gap-3"><img src="/pwa/icon-192.png" width="48" height="48" alt="نشان گالری صاد" class="rounded-3"/><strong>گالری صاد</strong><span class="badge text-bg-warning ms-auto">ذخیره‌شده / آفلاین</span></div></header>
+<main class="container py-4">
+    <section class="sg-card sg-compose-card mb-4"><h1 class="h4 mb-3">در حال حاضر به سرور دسترسی ندارید</h1><p>اتصال اینترنت یا ارتباط با سرور را بررسی کنید. اطلاعات زیر آخرین نرخ‌های عمومی ذخیره‌شده این دستگاه است؛ نرخ تازه بازار نیست.</p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn sg-btn-gold sg-touch" data-offline-retry>تلاش دوباره</button><a href="/" class="btn btn-outline-secondary sg-touch">خانه</a><button type="button" class="btn btn-outline-secondary sg-touch" data-offline-clear>پاک‌کردن نرخ‌های ذخیره‌شده</button></div><noscript><p class="mt-3">برای خواندن نرخ ذخیره‌شده JavaScript لازم است. این صفحه هیچ اطلاعات حساب یا تیکتی نگه نمی‌دارد.</p></noscript></section>
+    <section class="sg-card"><h2 class="h5 mb-3">آخرین نرخ‌های ذخیره‌شده</h2><p class="small text-muted" data-offline-time></p><p class="alert alert-warning" data-offline-sample hidden>این اطلاعات نمونه آزمایشی است و نرخ روز بازار نیست.</p><p data-offline-empty role="status">در حال بررسی اطلاعات عمومی ذخیره‌شده…</p><div class="row g-3" data-offline-rates></div></section>
+    <p class="small text-muted mt-4">ورود، ارسال تیکت، تاریخچه اعضا و محاسبه‌گرهای سمت سرور به اتصال سرور نیاز دارند. پیام و فایل خصوصی برای ارسال بعدی در این دستگاه ذخیره نمی‌شود.</p>
+</main>
+<aside id="sg-pwa-update" class="sg-pwa-update" role="status" aria-live="polite" aria-atomic="true" hidden><h2 class="h6 mb-2" data-pwa-update-title>نسخه جدید آماده است</h2><p class="small mb-3" data-pwa-update-text>برای دریافت اصلاحات و امکانات تازه، برنامه را به‌روز کنید.</p><div class="d-flex flex-wrap gap-2"><button class="btn sg-btn-gold sg-touch" type="button" data-pwa-update>به‌روزرسانی برنامه</button><button class="btn btn-outline-light sg-touch" type="button" data-pwa-update-later>بعداً</button></div></aside>
+<footer class="sg-footer"><div class="container py-3 small">اطلاعات جهت اطلاع است؛ قیمت نهایی معامله در فروشگاه تعیین می‌شود.</div></footer>
+<script src="/js/offline-page.js"></script><script src="/js/pwa.js"></script>
+</body></html>

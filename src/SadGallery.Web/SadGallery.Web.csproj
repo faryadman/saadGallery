@@ -26,6 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Pwa/service-worker.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SadGallery.Application\SadGallery.Application.csproj" />
     <ProjectReference Include="..\SadGallery.Infrastructure\SadGallery.Infrastructure.csproj" />
   </ItemGroup>

@@ -1,0 +1,13 @@
+@using SadGallery.Web.Pwa
+@{ ViewData["Title"] = "نصب برنامه"; }
+<section class="sg-card sg-compose-card mb-4">
+    <div class="d-flex align-items-center gap-3 mb-3"><img src="/pwa/icon-192.png" width="72" height="72" alt="نشان گالری صاد" class="rounded-4" /><div><h1 class="h4 mb-2">گالری صاد، همیشه در دسترس</h1><p class="small text-muted mb-0">نسخه @PersianText.ToPersianDigits(PwaAssets.Version)</p></div></div>
+    <p>برنامه را به صفحه اصلی گوشی اضافه کنید تا با آیکون خودش باز شود. پس از اولین اتصال موفق، صفحه آفلاین و آخرین نرخ‌های عمومی مجاز در دسترس خواهند بود.</p>
+    <p class="small text-muted" data-pwa-install-status role="status">وضعیت نصب در حال بررسی است. در مرورگر پشتیبان، گزینه نصب نمایش داده می‌شود.</p>
+    <div class="d-flex flex-wrap gap-2"><button type="button" class="btn sg-btn-gold sg-touch" data-pwa-install hidden>نصب برنامه</button><button type="button" class="btn btn-outline-secondary sg-touch" data-pwa-check-update>بررسی به‌روزرسانی</button><a class="btn btn-outline-primary sg-touch" href="/">بازگشت به خانه</a></div>
+</section>
+<div class="row g-4">
+    <div class="col-12 col-lg-6"><section class="sg-card h-100"><h2 class="h5 mb-3">گوشی Android</h2><p>سایت را در Chrome باز کنید و «نصب برنامه» را بزنید. اگر این دکمه ظاهر نشد، از منوی مرورگر، «Install app» یا «Add to Home screen» را انتخاب کنید.</p><p class="small text-muted mb-0">برای نصب، آدرس باید HTTPS معتبر داشته باشد. نصب از HTTP آی‌پی شبکه خانه معمولاً در دسترس نیست؛ اجرای عادی سایت در همان شبکه ممکن است.</p></section></div>
+    <div class="col-12 col-lg-6"><section class="sg-card h-100"><h2 class="h5 mb-3">گوشی iPhone و iPad</h2><p>سایت را در Safari باز کنید، دکمه اشتراک‌گذاری (Share) را بزنید و «Add to Home Screen» و سپس «Add» را انتخاب کنید.</p><p class="small text-muted mb-0">در iOS پیشنهاد نصب خودکار نداریم. سیستم ممکن است پس از مدتی استفاده‌نکردن، داده آفلاین را پاک کند؛ یک‌بار اتصال دوباره آن را آماده می‌کند.</p></section></div>
+</div>
+<section class="sg-card mt-4"><h2 class="h5 mb-3">وقتی اتصال ندارید</h2><p>نرخ‌های ذخیره‌شده با زمان اعلام و دریافت و برچسب «ذخیره‌شده / آفلاین» نمایش داده می‌شوند. داده منقضی نمایش داده نمی‌شود. حساب کاربری، تیکت‌ها، تاریخچه اعضا و محاسبه‌گرهای سمت سرور به اتصال سرور نیاز دارند.</p><p class="mb-0">با انتشار نسخه جدید، اعلان می‌بینید و می‌توانید به‌روزرسانی را به بعد موکول کنید. پیش از تازه‌سازیِ صفحه دارای متن یا فایل ذخیره‌نشده، دوباره از شما تأیید گرفته می‌شود.</p></section>

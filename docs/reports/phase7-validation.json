@@ -1,0 +1,52 @@
+{
+  "task": "Phase 7 PWA",
+  "clientDate": "2026-10-19",
+  "lighthouseVersion": "13.5.0",
+  "fetchTimeUtc": "2026-10-18T21:15:04.770Z",
+  "testedUrl": "http://127.0.0.1:5082/pwa/install",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "categories": {
+    "accessibility": {
+      "title": "Accessibility",
+      "score": 1
+    },
+    "best-practices": {
+      "title": "Best Practices",
+      "score": 1
+    },
+    "seo": {
+      "title": "SEO",
+      "score": 1
+    }
+  },
+  "chromiumManifestErrors": [],
+  "chromiumInstallabilityErrors": [],
+  "dotnetTests": {
+    "passed": 601,
+    "failed": 0,
+    "skipped": 0
+  },
+  "nodeWorkerTests": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browserScenarios": [
+    "offline-navigation-public-fallback",
+    "private-canary-absent-from-cache-and-storage",
+    "formatted-units-quote-fetch-times-sample-warning",
+    "expired-and-empty-rates-not-displayed",
+    "offline-post-keeps-draft",
+    "http-untrusted-origin-does-not-register",
+    "A-to-B-waiting-and-banner",
+    "later-and-recall",
+    "draft-and-file-confirmation",
+    "only-requesting-tab-reloads",
+    "other-tab-draft-retained",
+    "incomplete-C-rejected",
+    "B-retained-and-D-ready"
+  ],
+  "physicalAndroidInstallation": "not tested - device unavailable",
+  "physicalIosInstallation": "not tested - device unavailable",
+  "lighthousePwaCategory": "Removed in Lighthouse 13; Chromium manifest/installability checked separately."
+}

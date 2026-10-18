@@ -22,3 +22,4 @@
 | 0008 | PWA دست‌ساز (Manifest + Service Worker) | Accepted |
 | 0009 | مدل واحد پول، وزن و عیار | Accepted |
 | [0020](ADR-0020-administration-and-audit.md) | پنل مدیریت، تنظیمات مجاز، کنترل نشست و Audit اتمیک | Accepted |
+| [0021](ADR-0021-pwa-private-cache-and-updates.md) | کش عمومی PWA، انقضا و update با انتخاب کاربر | Accepted |
