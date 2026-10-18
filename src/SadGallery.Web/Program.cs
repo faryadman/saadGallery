@@ -137,6 +137,7 @@ builder.Services.AddAuthorizationBuilder()
 
 // ---- MVC ----
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<SadGallery.Web.Pwa.PwaAssets>();
 builder.Services.AddScoped<SadGallery.Web.Services.ConnectionNoticeDisplay>();
 builder.Services.AddControllersWithViews(options =>
 {
@@ -384,6 +385,22 @@ app.UseStaticFiles(new StaticFileOptions
 });
 app.UseRouting();
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        if (context.Response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true ||
+            context.User.Identity?.IsAuthenticated == true ||
+            context.GetEndpoint()?.Metadata.GetOrderedMetadata<Microsoft.AspNetCore.Authorization.IAuthorizeData>().Count > 0 ||
+            context.Request.Path.StartsWithSegments("/Account"))
+        {
+            context.Response.Headers.CacheControl = "no-store, private";
+            context.Response.Headers.Pragma = "no-cache";
+        }
+        return Task.CompletedTask;
+    });
+    await next(context);
+});
 app.UseRateLimiter();
 app.UseAuthorization();
 

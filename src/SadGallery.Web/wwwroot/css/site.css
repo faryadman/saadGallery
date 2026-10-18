@@ -656,3 +656,28 @@ code {
 .sg-filter-toggle:focus-visible { outline: 2px solid var(--sg-gold-dark); outline-offset: 3px; }
 .sg-filter-active { padding: .15rem .6rem; border-radius: 20px; background: var(--sg-cream); font-size: .8rem; }
 .sg-filter-disclosure[data-filter-desktop] > .sg-filter-toggle { display: none; }
+
+/* اعلان به‌روزرسانی با انتخاب کاربر، مستقل از اعلان اتصال پایین صفحه */
+.sg-pwa-update {
+    position: fixed;
+    z-index: 1020;
+    top: calc(90px + env(safe-area-inset-top, 0px));
+    inset-inline-end: 1rem;
+    width: min(420px, calc(100vw - 2rem));
+    max-height: calc(100dvh - 120px);
+    overflow-y: auto;
+    padding: 1.15rem;
+    border: 1px solid var(--sg-gold);
+    border-radius: 18px;
+    background: var(--sg-navy);
+    color: #fff;
+    box-shadow: 0 12px 36px #10233f40;
+}
+.sg-pwa-update[hidden] { display: none; }
+.sg-pwa-update p { color: #e2e8f0; }
+.sg-install-link { color: #f1d36c; text-underline-offset: .2em; }
+.sg-install-link:hover, .sg-install-link:focus { color: #fff; }
+
+.sg-pwa-recall { border: 0; background: none; color: #f1d36c; min-height: 44px; padding: .35rem .5rem; text-decoration: underline; text-underline-offset: .2em; font: inherit; }
+.sg-pwa-recall:hover, .sg-pwa-recall:focus { color: #fff; }
+body[data-pwa-offline] { padding-top: env(safe-area-inset-top, 0px); }

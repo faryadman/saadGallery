@@ -1,14 +1,21 @@
+@inject SadGallery.Web.Pwa.PwaAssets PwaAssets
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>@ViewData["Title"] | گالری صاد</title>
+    <meta name="theme-color" content="#10233f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="گالری صاد" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/pwa/icon.svg" />
+    <link rel="apple-touch-icon" href="/pwa/icon-180.png" />
     <meta name="description" content="ویترین آنلاین طلا و جواهر صادگالری — نرخ روز طلا، مسکوکات، ارز و رمزارز" />
     <link rel="stylesheet" href="~/lib/bootstrap/bootstrap.rtl.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+<body data-pwa-build="@PwaAssets.BuildId">
     @{
         var currentPath = Context.Request.Path.Value ?? "/";
         bool OnPath(string path) => path == "/" ? currentPath == "/" : currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
@@ -110,6 +117,7 @@
     </header>
     <div class="sg-nav-backdrop" data-nav-backdrop aria-hidden="true" hidden></div>
     @await Component.InvokeAsync("ConnectionNotice")
+    <partial name="_PwaUpdate" />
 
     <main class="container py-4">
         @RenderBody()
@@ -118,13 +126,14 @@
     <footer class="sg-footer">
         <div class="container py-3">
             <div class="d-flex flex-wrap justify-content-between gap-2">
-                <span>گالری صاد — ویترین آنلاین طلا و جواهر</span>
+                <span>گالری صاد — ویترین آنلاین طلا و جواهر · <a class="sg-install-link" href="/pwa/install">نصب برنامه</a> <button type="button" class="sg-pwa-recall" data-pwa-show-update hidden>به‌روزرسانی آماده</button></span>
                 <span class="sg-footer__note">نرخ‌ها جهت اطلاع است و نرخ نهایی معامله در فروشگاه تعیین می‌شود.</span>
             </div>
         </div>
     </footer>
 
     <script src="~/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="~/js/pwa.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/responsive-filters.js" asp-append-version="true"></script>
     <script src="~/js/mobile-navigation.js" asp-append-version="true"></script>
